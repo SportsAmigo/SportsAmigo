@@ -1,0 +1,447 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">Reports & Analytics</h3>
+            </div>
+            <div class="card-body">
+                <!-- Time Range Filter -->
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body">
+                                <form id="reportFilterForm" class="row align-items-center">
+                                    <div class="col-md-3 mb-3 mb-md-0">
+                                        <label for="timeRange" class="form-label">Time Range</label>
+                                        <select class="form-select" id="timeRange">
+                                            <option value="7">Last 7 Days</option>
+                                            <option value="30" selected>Last 30 Days</option>
+                                            <option value="90">Last 3 Months</option>
+                                            <option value="180">Last 6 Months</option>
+                                            <option value="365">Last Year</option>
+                                            <option value="custom">Custom Range</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 mb-3 mb-md-0" id="customDateRange" style="display: none;">
+                                        <label for="startDate" class="form-label">Start Date</label>
+                                        <input type="date" class="form-control" id="startDate">
+                                    </div>
+                                    <div class="col-md-3 mb-3 mb-md-0" id="customDateRange2" style="display: none;">
+                                        <label for="endDate" class="form-label">End Date</label>
+                                        <input type="date" class="form-control" id="endDate">
+                                    </div>
+                                </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                <!-- Summary Statistics Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="text-muted">Total Events</h6>
+                                        <h3 class="mb-0">15</h3>
+                                    </div>
+                                    <div class="bg-primary rounded p-3 text-white">
+                                        <i class="fas fa-calendar-alt fa-2x"></i>
+                                    </div>
+                                </div>
+                                <p class="mt-2 mb-0 text-success"><i class="fas fa-arrow-up me-1"></i> 25% increase</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="text-muted">Total Participants</h6>
+                                        <h3 class="mb-0">342</h3>
+                                    </div>
+                                    <div class="bg-success rounded p-3 text-white">
+                                        <i class="fas fa-users fa-2x"></i>
+                                    </div>
+                                </div>
+                                <p class="mt-2 mb-0 text-success"><i class="fas fa-arrow-up me-1"></i> 18% increase</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="text-muted">Avg. Team Size</h6>
+                                        <h3 class="mb-0">12.5</h3>
+                                    </div>
+                                    <div class="bg-info rounded p-3 text-white">
+                                        <i class="fas fa-user-friends fa-2x"></i>
+                                    </div>
+                                </div>
+                                <p class="mt-2 mb-0 text-success"><i class="fas fa-arrow-up me-1"></i> 5% increase</p>
+                            </div>
+                        </div>
+                    </div>
+                            <div class="col-md-3">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="text-muted">Completion Rate</h6>
+                                        <h3 class="mb-0">92%</h3>
+                                    </div>
+                                    <div class="bg-warning rounded p-3 text-white">
+                                        <i class="fas fa-check-circle fa-2x"></i>
+                                    </div>
+                                </div>
+                                <p class="mt-2 mb-0 text-success"><i class="fas fa-arrow-up me-1"></i> 3% increase</p>
+                            </div>
+                                    </div>
+                                </div>
+                            </div>
+                
+                <!-- Event Performance Graph -->
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-header bg-white">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">Event Participation Trends</h5>
+                                    <div>
+                                        <select class="form-select form-select-sm" id="chartViewType">
+                                            <option value="monthly">Monthly</option>
+                                            <option value="weekly">Weekly</option>
+                                            <option value="daily">Daily</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="participationChart" height="300"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0">Event Distribution by Sport</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="sportDistributionChart" height="300"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                <!-- Popular Events and Demographics -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0">Most Popular Events</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Event Name</th>
+                                                <th>Date</th>
+                                                <th>Sport</th>
+                                                <th>Participants</th>
+                                                <th>Fill Rate</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>City Basketball Tournament</td>
+                                                <td>May 15, 2023</td>
+                                                <td>Basketball</td>
+                                                <td>48</td>
+                                                <td>
+                                                    <div class="progress" style="height: 8px;">
+                                                        <div class="progress-bar bg-success" role="progressbar" style="width: 96%"></div>
+                                                    </div>
+                                                    <small>96%</small>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>Summer Cricket Championship</td>
+                                                <td>Jun 20, 2023</td>
+                                                <td>Cricket</td>
+                                                <td>42</td>
+                                                <td>
+                                                    <div class="progress" style="height: 8px;">
+                                                        <div class="progress-bar bg-success" role="progressbar" style="width: 84%"></div>
+                                                    </div>
+                                                    <small>84%</small>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>Regional Football Cup</td>
+                                                <td>Jul 05, 2023</td>
+                                                <td>Football</td>
+                                                <td>38</td>
+                                                <td>
+                                                    <div class="progress" style="height: 8px;">
+                                                        <div class="progress-bar bg-info" role="progressbar" style="width: 76%"></div>
+                                                    </div>
+                                                    <small>76%</small>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>Tennis Open Tournament</td>
+                                                <td>Aug 10, 2023</td>
+                                                <td>Tennis</td>
+                                                <td>32</td>
+                                                <td>
+                                                    <div class="progress" style="height: 8px;">
+                                                        <div class="progress-bar bg-info" role="progressbar" style="width: 64%"></div>
+                                                    </div>
+                                                    <small>64%</small>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>Volleyball Tournament</td>
+                                                <td>Oct 20, 2023</td>
+                                                <td>Volleyball</td>
+                                                <td>28</td>
+                                                <td>
+                                                    <div class="progress" style="height: 8px;">
+                                                        <div class="progress-bar bg-warning" role="progressbar" style="width: 56%"></div>
+                                                    </div>
+                                                    <small>56%</small>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0">Location Statistics</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Top Locations -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <div class="card">
+                                    <div class="card-body">
+                                                <h6 class="card-title">Top Locations</h6>
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Location</th>
+                                                                <th>Events</th>
+                                                                <th>Participants</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>City Sports Arena</td>
+                                                                <td>12</td>
+                                                                <td>245</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Central Stadium</td>
+                                                                <td>8</td>
+                                                                <td>187</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>University Field</td>
+                                                                <td>6</td>
+                                                                <td>156</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Community Center</td>
+                                                                <td>5</td>
+                                                                <td>112</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>High School Gymnasium</td>
+                                                                <td>4</td>
+                                                                <td>98</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                    </div>
+                                </div>
+                            </div>
+                                    </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                <!-- Export Buttons -->
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="mb-3">Export Reports</h5>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-primary" id="exportPdfBtn">
+                                        <i class="fas fa-file-pdf me-2"></i>Export as PDF
+                                    </button>
+                                    <button class="btn btn-outline-success" id="exportExcelBtn">
+                                        <i class="fas fa-file-excel me-2"></i>Export as Excel
+                                    </button>
+                                    <button class="btn btn-outline-info" id="exportCsvBtn">
+                                        <i class="fas fa-file-csv me-2"></i>Export as CSV
+                                    </button>
+                                    <button class="btn btn-outline-secondary" id="printReportBtn">
+                                        <i class="fas fa-print me-2"></i>Print Report
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle custom date range based on time range selection
+        const timeRangeSelect = document.getElementById('timeRange');
+        const customDateRange = document.getElementById('customDateRange');
+        const customDateRange2 = document.getElementById('customDateRange2');
+        
+        timeRangeSelect.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customDateRange.style.display = 'block';
+                customDateRange2.style.display = 'block';
+            } else {
+                customDateRange.style.display = 'none';
+                customDateRange2.style.display = 'none';
+            }
+        });
+        
+        // Event Participation Trends Chart
+        const participationCtx = document.getElementById('participationChart').getContext('2d');
+        const participationChart = new Chart(participationCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: [
+                    {
+                        label: 'Events Created',
+                        data: [3, 5, 2, 4, 6, 3, 5, 4, 6, 3, 2, 4],
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 2,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Participants',
+                        data: [28, 48, 19, 36, 56, 24, 42, 38, 52, 26, 18, 32],
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 2,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        // Sport Distribution Chart
+        const sportDistributionCtx = document.getElementById('sportDistributionChart').getContext('2d');
+        const sportDistributionChart = new Chart(sportDistributionCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Basketball', 'Football', 'Cricket', 'Tennis', 'Swimming', 'Volleyball', 'Other'],
+                datasets: [{
+                    data: [25, 20, 18, 12, 10, 8, 7],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.8)',
+                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(255, 206, 86, 0.8)',
+                        'rgba(75, 192, 192, 0.8)',
+                        'rgba(153, 102, 255, 0.8)',
+                        'rgba(255, 159, 64, 0.8)',
+                        'rgba(199, 199, 199, 0.8)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+        
+        // Chart view type change handler
+        const chartViewType = document.getElementById('chartViewType');
+        chartViewType.addEventListener('change', function() {
+            // Simulate chart data update based on selected view type
+            let labels, data1, data2;
+            
+            switch(this.value) {
+                case 'weekly':
+                    labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6'];
+                    data1 = [2, 3, 1, 4, 2, 1];
+                    data2 = [18, 24, 8, 32, 16, 12];
+                    break;
+                case 'daily':
+                    labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                    data1 = [1, 0, 2, 1, 0, 3, 1];
+                    data2 = [8, 0, 16, 12, 0, 24, 10];
+                    break;
+                default: // monthly
+                    labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    data1 = [3, 5, 2, 4, 6, 3, 5, 4, 6, 3, 2, 4];
+                    data2 = [28, 48, 19, 36, 56, 24, 42, 38, 52, 26, 18, 32];
+            }
+            
+            participationChart.data.labels = labels;
+            participationChart.data.datasets[0].data = data1;
+            participationChart.data.datasets[1].data = data2;
+            participationChart.update();
+        });
+        
+        // Export buttons handlers
+        document.getElementById('exportPdfBtn').addEventListener('click', function() {
+            alert('PDF export functionality would be implemented here.');
+        });
+        
+        document.getElementById('exportExcelBtn').addEventListener('click', function() {
+            alert('Excel export functionality would be implemented here.');
+        });
+        
+        document.getElementById('exportCsvBtn').addEventListener('click', function() {
+            alert('CSV export functionality would be implemented here.');
+        });
+        
+        document.getElementById('printReportBtn').addEventListener('click', function() {
+            window.print();
+        });
+    });
+</script> 

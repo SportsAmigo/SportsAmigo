@@ -1,0 +1,258 @@
+<div class="row mb-4">
+    <div class="col">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">My Profile</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-body text-center">
+                                <div class="mb-4">
+                                    <% if (profile.profile_image || profile.photoUrl) { %>
+                                        <img src="<%= profile.profile_image || profile.photoUrl %>" alt="Profile Picture" class="rounded-circle img-thumbnail" width="150" height="150" style="object-fit: cover;">
+                                    <% } else { %>
+                                        <img src="/images/default-avatar.png" alt="Profile Picture" class="rounded-circle img-thumbnail" width="150" height="150">
+                                    <% } %>
+                                </div>
+                                <h4 class="mb-0"><%= profile.name || profile.email %></h4>
+                                <p class="text-muted"><%= profile.email %></p>
+                                <div class="d-grid gap-2 mt-3">
+                                    <button class="btn btn-primary" id="changePhotoBtn" data-bs-toggle="modal" data-bs-target="#changePhotoModal">Change Profile Picture</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">Account Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item d-flex justify-content-between px-0">
+                                        <span>Member Since</span>
+                                        <span class="text-muted"><%= profile.joinDate || profile.created_at || 'N/A' %></span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between px-0">
+                                        <span>Account Status</span>
+                                        <span class="badge bg-success">Active</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between px-0">
+                                        <span>Role</span>
+                                        <span class="badge bg-primary">Manager</span>
+                                    </li>
+                                </ul>
+                                <div class="d-grid mt-3">
+                                    <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#changePasswordModal">Change Password</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-8">
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Personal Information</h5>
+                                <button class="btn btn-sm btn-primary" id="editProfileBtn">Edit</button>
+                            </div>
+                            <div class="card-body">
+                                <form id="profileForm" action="/manager/update-profile" method="POST">
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Full Name</label>
+                                            <input type="text" name="name" class="form-control" value="<%= profile.name || '' %>" disabled>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Email</label>
+                                            <input type="email" name="email" class="form-control" value="<%= profile.email %>" readonly disabled>
+                                            <small class="form-text text-muted">Your email address cannot be changed as it is used for account identification.</small>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Phone Number</label>
+                                            <input type="tel" name="phone" class="form-control" value="<%= profile.phone || '' %>" disabled>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Age</label>
+                                            <input type="number" name="age" class="form-control" value="<%= profile.age || '' %>" disabled>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Address</label>
+                                        <input type="text" name="address" class="form-control" value="<%= profile.address || '' %>" disabled>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Bio</label>
+                                        <textarea name="bio" class="form-control" rows="3" disabled><%= profile.bio || '' %></textarea>
+                                    </div>
+                                    <div id="saveProfileBtnContainer" class="d-none">
+                                        <button type="submit" class="btn btn-success">Save Changes</button>
+                                        <button type="button" class="btn btn-secondary ms-2" id="cancelEditBtn">Cancel</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="changePhotoModal" tabindex="-1" aria-labelledby="changePhotoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="changePhotoModalLabel">Change Profile Picture</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="photoForm" action="/manager/update-photo" method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="photoInput" class="form-label">Select a new profile picture</label>
+                        <input class="form-control" type="file" id="photoInput" name="photo" accept="image/*" required>
+                        <div id="photoPreviewContainer" class="mt-3 text-center d-none">
+                            <img id="photoPreview" class="img-thumbnail rounded-circle" width="150" height="150" style="object-fit: cover;">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="savePhotoBtn">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="changePasswordModalLabel">Change Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="passwordForm" action="/manager/change-password" method="POST">
+                    <div class="mb-3">
+                        <label for="currentPassword" class="form-label">Current Password</label>
+                        <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label">New Password</label>
+                        <input type="password" class="form-control" id="newPassword" name="newPassword" required minlength="6">
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                        <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required minlength="6">
+                        <div id="passwordMismatch" class="invalid-feedback">Passwords do not match</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="savePasswordBtn">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const editProfileBtn = document.getElementById('editProfileBtn');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+        const saveProfileBtnContainer = document.getElementById('saveProfileBtnContainer');
+        const profileForm = document.getElementById('profileForm');
+        
+        editProfileBtn.addEventListener('click', function() {
+            const formInputs = profileForm.querySelectorAll('input, textarea');
+            formInputs.forEach(input => {
+                if (input.name !== 'email') { 
+                    input.disabled = false;
+                }
+            });
+            
+            saveProfileBtnContainer.classList.remove('d-none');
+            editProfileBtn.classList.add('d-none');
+        });
+        
+        cancelEditBtn.addEventListener('click', function() {
+            const formInputs = profileForm.querySelectorAll('input, textarea');
+            formInputs.forEach(input => {
+                input.disabled = true;
+            });
+            
+            saveProfileBtnContainer.classList.add('d-none');
+            editProfileBtn.classList.remove('d-none');
+        });
+        
+        const photoInput = document.getElementById('photoInput');
+        const photoPreview = document.getElementById('photoPreview');
+        const photoPreviewContainer = document.getElementById('photoPreviewContainer');
+        
+        photoInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    photoPreview.src = e.target.result;
+                    photoPreviewContainer.classList.remove('d-none');
+                };
+                
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+        
+        const savePhotoBtn = document.getElementById('savePhotoBtn');
+        const photoForm = document.getElementById('photoForm');
+        
+        savePhotoBtn.addEventListener('click', function() {
+            if (photoForm.checkValidity()) {
+                photoForm.submit();
+            } else {
+                photoForm.reportValidity();
+            }
+        });
+        
+        // Password validation
+        const newPassword = document.getElementById('newPassword');
+        const confirmPassword = document.getElementById('confirmPassword');
+        const passwordMismatch = document.getElementById('passwordMismatch');
+        const savePasswordBtn = document.getElementById('savePasswordBtn');
+        const passwordForm = document.getElementById('passwordForm');
+        
+        function validatePasswords() {
+            if (newPassword.value !== confirmPassword.value) {
+                confirmPassword.setCustomValidity('Passwords do not match');
+                passwordMismatch.style.display = 'block';
+                return false;
+            } else {
+                confirmPassword.setCustomValidity('');
+                passwordMismatch.style.display = 'none';
+                return true;
+            }
+        }
+        
+        newPassword.addEventListener('input', validatePasswords);
+        confirmPassword.addEventListener('input', validatePasswords);
+        
+        savePasswordBtn.addEventListener('click', function() {
+            if (validatePasswords() && passwordForm.checkValidity()) {
+                passwordForm.submit();
+            } else {
+                passwordForm.reportValidity();
+            }
+        });
+        
+        // Fix modal interaction by stopping event propagation
+        document.querySelectorAll('.modal-content').forEach(content => {
+            content.addEventListener('click', function(event) {
+                event.stopPropagation();
+            });
+        });
+    });
+</script> 

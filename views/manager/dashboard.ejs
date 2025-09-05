@@ -1,0 +1,187 @@
+<div class="row">
+    <% 
+    // Check if the profile is incomplete (missing essential fields)
+    const isNewUser = !user.name || !user.phone || !user.age || !user.address || !user.bio;
+    %>
+    
+    <% if (isNewUser) { %>
+    <div class="col-md-12 mb-4">
+        <div class="alert alert-warning d-flex align-items-center" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2 fs-4"></i>
+            <div>
+                <h4 class="alert-heading">Complete Your Profile</h4>
+                <p class="mb-0">Your profile is incomplete. Please complete your profile details to get the most out of Sports Amigo.</p>
+            </div>
+            <a href="/manager/profile" class="btn btn-primary ms-auto">Complete Profile</a>
+        </div>
+    </div>
+    <% } %>
+    
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h3 class="mb-0">Manager Dashboard</h3>
+            </div>
+            <div class="card-body">
+                <!-- Statistics Overview Row -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card bg-primary text-white dashboard-stat-card">
+                            <div class="card-body d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="card-title">My Teams</h5>
+                                    <h2 class="mb-0"><%= teamCount || 0 %></h2>
+                                </div>
+                                <div class="card-icon">
+                                    <i class="bi bi-people"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card bg-success text-white dashboard-stat-card">
+                            <div class="card-body d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="card-title">Total Players</h5>
+                                    <h2 class="mb-0"><%= playerCount || 0 %></h2>
+                                </div>
+                                <div class="card-icon">
+                                    <i class="bi bi-person"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Welcome Message -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h4 class="card-title">Welcome<%= !isNewUser ? ' back' : '' %>, <%= user.name || user.email %>!</h4>
+                        <% if (isNewUser) { %>
+                            <p class="card-text">Welcome to Sports Amigo! Complete your profile to get started with managing teams, organizing matches, and tracking player performance.</p>
+                            <a href="/manager/profile" class="btn btn-primary">Complete Your Profile</a>
+                        <% } else { %>
+                            <% if (upcomingEvent) { %>
+                            <p class="card-text">Your next match is <strong><%= upcomingEvent.name %></strong> on <strong><%= new Date(upcomingEvent.date).toLocaleDateString() %></strong>. Make sure your team is prepared!</p>
+                            <% } else { %>
+                            <p class="card-text">You don't have any upcoming matches scheduled.</p>
+                            <% } %>
+                            <a href="/manager/browse-events" class="btn btn-primary">Browse Events</a>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Quick Access Cards -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0">Upcoming Matches</h5>
+                            </div>
+                            <div class="card-body">
+                                <% if (isNewUser || !registeredEvents || registeredEvents.length === 0) { %>
+                                    <div class="text-center py-4">
+                                        <i class="bi bi-trophy fs-1 text-muted"></i>
+                                        <p class="mt-3 text-muted">No upcoming matches</p>
+                                        <p class="text-muted small">Create a team to start scheduling matches</p>
+                                        <a href="/manager/my-teams" class="btn btn-outline-primary mt-2">Manage Teams</a>
+                                    </div>
+                                <% } else { %>
+                                    <ul class="list-group list-group-flush">
+                                        <% registeredEvents.slice(0, 3).forEach(event => { %>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <%= event.event_name %>
+                                            <span class="badge bg-primary">
+                                                <%= new Date(event.event_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %>
+                                            </span>
+                                        </li>
+                                        <% }); %>
+                                    </ul>
+                                    <div class="mt-3">
+                                        <a href="/manager/my-events" class="btn btn-outline-primary">See All Matches</a>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">My Teams</h5>
+                            </div>
+                            <div class="card-body">
+                                <% if (teamCount === 0) { %>
+                                    <div class="text-center py-4">
+                                        <i class="bi bi-people fs-1 text-muted"></i>
+                                        <p class="mt-3 text-muted">You haven't created any teams yet</p>
+                                        <a href="/manager/create-team" class="btn btn-outline-success mt-2">Create a Team</a>
+                                    </div>
+                                <% } else { %>
+                                    <ul class="list-group list-group-flush">
+                                        <% if (teams && teams.length > 0) { %>
+                                            <% teams.slice(0, 3).forEach(team => { %>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                <%= team.name %>
+                                                <span class="badge bg-success">
+                                                    <%= team.current_members || 0 %> <i class="bi bi-person ms-1"></i>
+                                                </span>
+                                            </li>
+                                            <% }); %>
+                                        <% } %>
+                                    </ul>
+                                    <div class="mt-3">
+                                        <a href="/manager/my-teams" class="btn btn-outline-success">Manage Teams</a>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Join Requests Section for accessibility -->
+                <% if (!isNewUser && typeof pendingRequestCount !== 'undefined' && pendingRequestCount > 0) { %>
+                <div class="card mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">Pending Join Requests</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>You have <strong><%= pendingRequestCount %></strong> pending player join requests.</p>
+                        <a href="/manager/join-requests" class="btn btn-warning">Review Requests</a>
+                    </div>
+                </div>
+                <% } %>
+
+                <!-- Recent Activity -->
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card mb-4">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0">Recent Activity</h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <% if (isNewUser || !recentActivities || recentActivities.length === 0) { %>
+                                    <div class="text-center py-4">
+                                        <i class="bi bi-activity fs-1 text-muted"></i>
+                                        <p class="mt-3 text-muted">No recent activity</p>
+                                        <p class="text-muted small">Complete your profile to get started</p>
+                                    </div>
+                                <% } else { %>
+                                    <ul class="list-group list-group-flush">
+                                        <% recentActivities.forEach(activity => { %>
+                                        <li class="list-group-item">
+                                            <small class="text-muted"><%= new Date(activity.date).toLocaleDateString() %></small>
+                                            <p class="mb-0"><%= activity.description %></p>
+                                        </li>
+                                        <% }); %>
+                                    </ul>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

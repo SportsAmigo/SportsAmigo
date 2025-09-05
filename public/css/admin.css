@@ -1,0 +1,279 @@
+/* Admin Dashboard Styles */
+
+/* Sidebar */
+#sidebar {
+    min-width: 250px;
+    max-width: 250px;
+    background: #343a40;
+    color: #fff;
+    transition: all 0.3s;
+    position: fixed;
+    height: 100vh;
+    z-index: 999;
+}
+
+#sidebar.active {
+    margin-left: -250px;
+}
+
+#sidebar .sidebar-header {
+    padding: 20px;
+    background: #212529;
+}
+
+#sidebar ul.components {
+    padding: 20px 0;
+    border-bottom: 1px solid #4b545c;
+}
+
+#sidebar ul p {
+    color: #fff;
+    padding: 10px;
+}
+
+#sidebar ul li a {
+    padding: 10px 20px;
+    font-size: 1.1em;
+    display: block;
+    color: #adb5bd;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+#sidebar ul li a:hover {
+    color: #fff;
+    background: #495057;
+}
+
+#sidebar ul li.active > a, a[aria-expanded="true"] {
+    color: #fff;
+    background: #495057;
+}
+
+#sidebar ul li a i {
+    margin-right: 10px;
+}
+
+/* Submenu styles */
+ul.collapse.list-unstyled {
+    padding-left: 30px;
+}
+
+ul.collapse.list-unstyled li a {
+    font-size: 0.9em;
+    padding: 8px 15px;
+}
+
+a[data-bs-toggle="collapse"] {
+    position: relative;
+}
+
+#sidebar a[data-bs-toggle="collapse"]::after {
+    display: block;
+    position: absolute;
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+    font-family: "bootstrap-icons";
+    content: "\F285";
+}
+
+#sidebar a[aria-expanded="true"]::after {
+    content: "\F286";
+}
+
+/* Content Area */
+#content {
+    width: calc(100% - 250px);
+    min-height: 100vh;
+    padding: 0;
+    transition: all 0.3s;
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+#content.active {
+    width: 100%;
+}
+
+/* Dashboard Stat Cards */
+.dashboard-stat-card {
+    border-radius: 8px;
+    transition: transform 0.3s;
+}
+
+.dashboard-stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.card-icon {
+    font-size: 3rem;
+    opacity: 0.7;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #sidebar {
+        margin-left: -250px;
+    }
+    #sidebar.active {
+        margin-left: 0;
+    }
+    #content {
+        width: 100%;
+    }
+    #content.active {
+        width: calc(100% - 250px);
+    }
+}
+
+/* Bootstrap overrides */
+.card {
+    border: none;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+}
+
+.bg-primary {
+    background-color: #007bff !important;
+}
+
+.bg-success {
+    background-color: #28a745 !important;
+}
+
+.bg-info {
+    background-color: #17a2b8 !important;
+}
+
+.bg-warning {
+    background-color: #ffc107 !important;
+}
+
+/* Chart containers */
+.chart-container {
+    position: relative;
+    width: 100%;
+}
+
+/* Admin Styles */
+.table-responsive {
+    overflow-x: auto;
+    min-height: 400px; /* Set a fixed minimum height to prevent layout shifts */
+}
+
+/* Force table to have consistent width */
+.table {
+    width: 100% !important;
+    table-layout: fixed;
+}
+
+/* Set column widths to prevent layout shifts */
+.table th:nth-child(1), .table td:nth-child(1) { width: 20%; } /* Name */
+.table th:nth-child(2), .table td:nth-child(2) { width: 25%; } /* Email */
+.table th:nth-child(3), .table td:nth-child(3) { width: 25%; } /* Organization */
+.table th:nth-child(4), .table td:nth-child(4) { width: 15%; } /* Join Date */
+.table th:nth-child(5), .table td:nth-child(5) { width: 10%; } /* Status */
+.table th:nth-child(6), .table td:nth-child(6) { width: 5%; } /* Action */
+
+/* Prevent content shifts with fixed pagination height */
+.pagination-container {
+    min-height: 60px;
+}
+
+/* Fixed height for filter section */
+.filters-section {
+    min-height: 80px;
+}
+
+/* Prevent text overflow */
+.table td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Fix height issues with badges */
+.badge {
+    display: inline-block;
+    min-width: 70px;
+    text-align: center;
+}
+
+/* Fix for search inputs to maintain consistent width */
+.search-input {
+    width: 100% !important;
+}
+
+/* Ensure form controls have consistent height */
+.form-control, .form-select {
+    height: 38px !important;
+}
+
+/* Fix for date inputs */
+input[type="date"] {
+    min-width: 140px;
+}
+
+/* Fix for pagination to ensure it doesn't jump */
+#organizers-pagination {
+    min-height: 40px;
+}
+
+/* Fix to ensure consistent row heights */
+tbody tr {
+    height: 54px;
+}
+
+/* Fix to prevent page jumps when table is empty */
+#no-content-message {
+    min-height: 100px;
+}
+
+/* Fix for the entire page content area */
+.main-content {
+    overflow-x: hidden;
+}
+
+/* Fix for the profile dropdown in admin pages */
+.profile-dropdown-toggle {
+    display: flex !important;
+    align-items: center !important;
+    height: 38px !important;
+    padding: 4px 12px !important;
+    width: auto !important;
+    min-width: 180px !important;
+    transition: none !important;
+}
+
+.profile-img-container {
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 50% !important;
+    overflow: hidden !important;
+    margin-right: 8px !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background-color: #f1f1f1 !important;
+}
+
+.profile-img-container img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+}
+
+.profile-name {
+    max-width: 120px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* Fix the width of the top bar to prevent shifts */
+.top-bar {
+    min-height: 60px !important;
+} 

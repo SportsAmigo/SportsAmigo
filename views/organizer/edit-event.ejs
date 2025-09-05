@@ -1,0 +1,113 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h3 class="mb-0">Edit Event</h3>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <a href="/organizer/event/<%= event.id %>" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Event Details
+                    </a>
+                </div>
+
+                <form id="editEventForm" method="POST" action="/organizer/event/<%= event.id %>/edit">
+                    <!-- Event Basic Information -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">Basic Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="name" class="form-label">Event Name*</label>
+                                    <input type="text" class="form-control" id="name" name="name" value="<%= event.name %>" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="sport" class="form-label">Sport Type*</label>
+                                    <select class="form-select" id="sport" name="sport" required>
+                                        <option value="" disabled>Select Sport</option>
+                                        <option value="Basketball" <%= event.sport === 'Basketball' ? 'selected' : '' %>>Basketball</option>
+                                        <option value="Football" <%= event.sport === 'Football' ? 'selected' : '' %>>Football</option>
+                                        <option value="Cricket" <%= event.sport === 'Cricket' ? 'selected' : '' %>>Cricket</option>
+                                        <option value="Tennis" <%= event.sport === 'Tennis' ? 'selected' : '' %>>Tennis</option>
+                                        <option value="Volleyball" <%= event.sport === 'Volleyball' ? 'selected' : '' %>>Volleyball</option>
+                                        <option value="Hockey" <%= event.sport === 'Hockey' ? 'selected' : '' %>>Hockey</option>
+                                        <option value="Rugby" <%= event.sport === 'Rugby' ? 'selected' : '' %>>Rugby</option>
+                                        <option value="Other" <%= event.sport === 'Other' ? 'selected' : '' %>>Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label for="description" class="form-label">Event Description*</label>
+                                    <textarea class="form-control" id="description" name="description" rows="3" required><%= event.description %></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Date, Time and Location -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0">Date, Time & Location</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="start_date" class="form-label">Start Date*</label>
+                                    <input type="date" class="form-control" 
+                                        id="start_date" name="start_date" 
+                                        value="<%= event.start_date ? event.start_date.split('T')[0] : event.date.split('T')[0] %>">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="end_date" class="form-label">End Date <small class="text-muted">(Optional, for multi-day events)</small></label>
+                                    <input type="date" class="form-control" 
+                                        id="end_date" name="end_date" 
+                                        value="<%= event.end_date ? event.end_date.split('T')[0] : event.start_date ? event.start_date.split('T')[0] : event.date.split('T')[0] %>">
+                                    <div class="form-text">For single-day events, leave this the same as start date.</div>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label for="location" class="form-label">Location*</label>
+                                    <input type="text" class="form-control" id="location" name="location" value="<%= event.location %>">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Registration Details -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0">Registration Details</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="slots" class="form-label">Maximum Participants*</label>
+                                    <input type="number" class="form-control" id="slots" name="slots" min="1" value="<%= event.slots %>" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="status" class="form-label">Event Status*</label>
+                                    <select class="form-select" id="status" name="status" required>
+                                        <option value="Draft" <%= event.status === 'Draft' ? 'selected' : '' %>>Draft</option>
+                                        <option value="Upcoming" <%= event.status === 'Upcoming' ? 'selected' : '' %>>Upcoming</option>
+                                        <option value="Ongoing" <%= event.status === 'Ongoing' ? 'selected' : '' %>>Ongoing</option>
+                                        <option value="Completed" <%= event.status === 'Completed' ? 'selected' : '' %>>Completed</option>
+                                        <option value="Cancelled" <%= event.status === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="/organizer/event/<%= event.id %>" class="btn btn-secondary me-md-2">Cancel</a>
+                        <button type="submit" class="btn btn-success">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div> 

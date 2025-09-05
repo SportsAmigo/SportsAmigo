@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Football Events | SportsAmigo</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/events.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <style>
+        /* Custom style adjustments for football events page */
+        .sub-header {
+            height: 60vh;
+            background-image: linear-gradient(rgba(4,9,30,0.7),rgba(4,9,30,0.7)),url(images/football3.jpg);
+            background-position: center;
+            background-size: cover;
+            background-attachment: fixed; /* Creates a parallax-like effect */
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Add dynamic overlay to the header */
+        .sub-header::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.7) 0%, rgba(4, 9, 30, 0.8) 100%);
+            z-index: 1;
+        }
+        
+        /* Ensure content appears above the overlay */
+        .sub-header nav, .sub-header .text-box {
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* Position the Football Events heading higher */
+        .football-header .text-box {
+            position: relative;
+            top: -40px; /* Move the text-box higher */
+        }
+        
+        .football-header .text-box h1 {
+            font-size: 48px;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+            background: linear-gradient(to right, #ffffff, #e0e0e0);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .football-header .text-box p {
+            margin-bottom: 25px;
+            font-size: 18px;
+            color: #fff;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+        }
+        
+        .testimonials .container {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4efe9 100%);
+            padding: 30px;
+            border-radius: 15px;
+            margin-top: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        
+        /* Ensure proper loading of content */
+        .coaching-programs {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            flex-wrap: nowrap;
+            gap: 20px;
+        }
+        
+        /* Adjust testimonials without images */
+        .testimonial-card {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .testimonial-img {
+            display: none; /* Hide testimonial images */
+        }
+        
+        .testimonial-container {
+            display: flex;
+            flex-direction: row;
+        }
+        
+        .testimonial-content {
+            background-color: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            height: 100%;
+        }
+        
+        /* Enhance event cards */
+        .event-card {
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            background: white;
+        }
+        
+        .event-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+        
+        /* Improve loading performance */
+        img {
+            will-change: transform;
+            content-visibility: auto;
+        }
+        
+        /* Modal styles for league actions */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background-color: #fff;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+        
+        .modal-header {
+            padding: 20px;
+            position: relative;
+            color: white;
+            background-size: cover;
+            background-position: center;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            font-size: 24px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .close-modal:hover {
+            transform: scale(1.2);
+        }
+        
+        .modal-body {
+            padding: 30px;
+        }
+        
+        /* Form styles */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: #f44336;
+            box-shadow: 0 0 0 2px rgba(244, 67, 54, 0.2);
+            outline: none;
+        }
+        
+        .form-check {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .form-check input {
+            margin-right: 10px;
+        }
+        
+        .submit-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+            font-weight: 500;
+        }
+        
+        .submit-btn:hover {
+            background-color: #d32f2f;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
+        }
+        
+        /* Success message */
+        .success-message {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .success-message i {
+            font-size: 60px;
+            color: #4CAF50;
+            margin-bottom: 15px;
+        }
+        
+        .success-message h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .close-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+        
+        .close-btn:hover {
+            background-color: #d32f2f;
+        }
+        
+        /* League details styling */
+        .league-details {
+            color: #333;
+        }
+        
+        .league-details p {
+            margin-bottom: 25px;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .detail-item {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        
+        .detail-item h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .detail-item h4 i {
+            margin-right: 10px;
+            color: #f44336;
+        }
+        
+        .detail-item p {
+            margin: 0;
+            font-size: 15px;
+        }
+        
+        /* Standings table */
+        .standings-table {
+            margin-bottom: 30px;
+            overflow-x: auto;
+        }
+        
+        .standings-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .standings-table th,
+        .standings-table td {
+            padding: 12px 15px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .standings-table th {
+            background-color: #f5f5f5;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .standings-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .standings-table tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        /* Action buttons */
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            background-color: #f44336;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            font-size: 15px;
+        }
+        
+        .btn:hover {
+            background-color: #d32f2f;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Media queries for responsiveness */
+        @media (max-width: 768px) {
+            .details-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .modal-content {
+                width: 95%;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <section class="sub-header football-header">
+        <nav>
+            <a href="index.html"><img src="images/logooo-removebg-preview.png" class="logo-spin"></a>
+            <div class="nav-links" id="navLinks">
+                <i class="fa fa-times" onclick="hideMenu()"></i>
+                <ul>
+                    <li><a href="index.html">HOME</a></li>
+                    <li class="dropdown">
+                        <a href="events.html">EVENTS</a>
+                        <div class="dropdown-content">
+                            <a href="eventbasketball.html">BASKETBALL</a>
+                            <a href="eventcricket.html">CRICKET</a>
+                            <a href="eventfootball.html">FOOTBALL</a>
+                        </div>
+                    </li>
+                    <li><a href="about.html">ABOUT</a></li>
+                    <li><a href="contact.html">CONTACT</a></li>
+                    <li><a href="login.html">LOGIN</a></li>
+                </ul>
+            </div>
+            <i class="fa fa-bars" onclick="showMenu()"></i>
+        </nav>
+        <div class="text-box">
+            <h1>Football Events</h1>
+        </div>
+    </section>
+
+    <!-- Event Schedule -->
+    <section id="events" class="event-schedule">
+        <div class="container">
+            <h2 data-aos="fade-up">Upcoming Football Tournaments</h2>
+            <p data-aos="fade-up">Join our football tournaments and compete with the best teams in the region!</p>
+            
+            <div class="event-container">
+                <div class="event-card" data-aos="fade-up">
+                    <div class="event-date">
+                        <span class="day">25</span>
+                        <span class="month">APR</span>
+                    </div>
+                    <div class="event-details">
+                        <h3>City 5-a-side Football Cup</h3>
+                        <p class="event-location"><i class="fa fa-map-marker"></i> Downtown Football Arena</p>
+                        <p class="event-time"><i class="fa fa-clock-o"></i> 09:00 AM - 06:00 PM</p>
+                        <p>Fast-paced 5-a-side football tournament with exciting matches and professional referees. Open to all skill levels.</p>
+                        <div class="event-stats">
+                            <div class="stat">
+                                <span class="stat-value">32</span>
+                                <span class="stat-label">Teams</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value">₹15,000</span>
+                                <span class="stat-label">Prize Pool</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value">4</span>
+                                <span class="stat-label">Fields</span>
+                            </div>
+                        </div>
+                        <a href="register.html?role=player" class="event-btn">Register Now</a>
+                    </div>
+                </div>
+
+                <div class="event-card" data-aos="fade-up" data-aos-delay="100">
+                    <div class="event-date">
+                        <span class="day">08</span>
+                        <span class="month">MAY</span>
+                    </div>
+                    <div class="event-details">
+                        <h3>Inter-College Football Championship</h3>
+                        <p class="event-location"><i class="fa fa-map-marker"></i> University Sports Complex</p>
+                        <p class="event-time"><i class="fa fa-clock-o"></i> 10:00 AM - 05:00 PM</p>
+                        <p>Annual football tournament featuring the best college teams from across the state. Full 11-a-side format.</p>
+                        <div class="event-stats">
+                            <div class="stat">
+                                <span class="stat-value">24</span>
+                                <span class="stat-label">Teams</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value">₹20,000</span>
+                                <span class="stat-label">Prize Pool</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value">2</span>
+                                <span class="stat-label">Fields</span>
+                            </div>
+                        </div>
+                        <a href="register.html?role=player" class="event-btn">Register Now</a>
+                    </div>
+                </div>
+
+                <div class="event-card" data-aos="fade-up" data-aos-delay="200">
+                    <div class="event-date">
+                        <span class="day">19</span>
+                        <span class="month">MAY</span>
+                    </div>
+                    <div class="event-details">
+                        <h3>Football Skills Challenge</h3>
+                        <p class="event-location"><i class="fa fa-map-marker"></i> Elite Training Center</p>
+                        <p class="event-time"><i class="fa fa-clock-o"></i> 02:00 PM - 07:00 PM</p>
+                        <p>Show off your dribbling, shooting, and passing skills in this exciting individual competition for players of all ages.</p>
+                        <div class="event-stats">
+                            <div class="stat">
+                                <span class="stat-value">100+</span>
+                                <span class="stat-label">Participants</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value">₹8,000</span>
+                                <span class="stat-label">Prize Pool</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value">6</span>
+                                <span class="stat-label">Skill Zones</span>
+                            </div>
+                        </div>
+                        <a href="register.html?role=player" class="event-btn">Register Now</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Football Leagues -->
+    <section class="leagues">
+        <div class="container">
+            <h2 data-aos="fade-up">Ongoing Football Leagues</h2>
+            <p data-aos="fade-up">Join our seasonal football leagues to compete regularly with teams across the city</p>
+            
+            <div class="league-table" data-aos="fade-up">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>League Name</th>
+                            <th>Duration</th>
+                            <th>Teams</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>SportsAmigo Premier Football League</td>
+                            <td>Mar - Jul 2025</td>
+                            <td>16 Teams</td>
+                            <td><span class="status ongoing">In Progress</span></td>
+                            <td><a href="#" class="table-btn view-details-btn" data-league="SportsAmigo Premier Football League">View Details</a></td>
+                        </tr>
+                        <tr>
+                            <td>Weekend Warriors Football</td>
+                            <td>Apr - Aug 2025</td>
+                            <td>12 Teams</td>
+                            <td><span class="status registration">Registration Open</span></td>
+                            <td><a href="register.html?role=manager" class="table-btn register-btn" data-league="Weekend Warriors Football">Register</a></td>
+                        </tr>
+                        <tr>
+                            <td>Corporate Football Challenge</td>
+                            <td>Jun - Sep 2025</td>
+                            <td>20 Teams</td>
+                            <td><span class="status upcoming">Upcoming</span></td>
+                            <td><a href="#" class="table-btn notify-btn" data-league="Corporate Football Challenge">Notify Me</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="testimonials">
+        <div class="container">
+            <h2 data-aos="fade-up">What Our Players Say</h2>
+            <p data-aos="fade-up">Hear from the players who have participated in our football events</p>
+            
+            <div class="testimonial-container">
+                <div class="testimonial-card" data-aos="fade-up">
+                    <div class="testimonial-img">
+                        <img src="images/footballer1.jpg" alt="Player Testimonial">
+                    </div>
+                    <div class="testimonial-content">
+                        <p>"The 5-a-side tournament was brilliantly organized. The playing surfaces were immaculate, and the competition was fierce but fair. Looking forward to the next edition!"</p>
+                        <h3>Rohit Kumar</h3>
+                        <p class="testimonial-role">Team Captain</p>
+                        <div class="testimonial-rating">
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="testimonial-card" data-aos="fade-up" data-aos-delay="100">
+                    <div class="testimonial-img">
+                        <img src="images/footballer2.jpg" alt="Player Testimonial">
+                    </div>
+                    <div class="testimonial-content">
+                        <p>"My son has been attending the Youth Football Academy for 3 months now, and the improvement in his skills and confidence is remarkable. The coaches are excellent with children."</p>
+                        <h3>Anita Desai</h3>
+                        <p class="testimonial-role">Parent</p>
+                        <div class="testimonial-rating">
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star-half-o"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta">
+        <h1>Ready to Join Our Football Community?</h1>
+        <p>Register now to participate in tournaments, join teams, and stay updated with football events</p>
+        <a href="register.html" class="hero-btn">REGISTER NOW</a>
+    </section>
+
+    <section class="footer">
+        <h4 style="position: relative; display: inline-block; font-size: 32px; font-weight: 700; margin-bottom: 30px; background: linear-gradient(to right, #f44336, #ff9800); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 2px; text-transform: uppercase;">About SportsAmigo</h4>
+        <p style="border-left: 4px solid #f44336; padding-left: 20px; text-align: left; max-width: 700px; margin: 10px auto 30px; position: relative; background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 0 10px 10px 0; font-size: 16px; line-height: 1.8; font-weight: 400; letter-spacing: 0.5px; color: rgba(255, 255, 255, 0.9);">SportsAmigo is the ultimate sports management platform connecting players, teams, and communities. Our mission is to make sports more accessible, organized, and enjoyable for everyone.</p>
+        <div class="icons">
+            <a href="https://facebook.com/sportsamigo" target="_blank"><i class="fa fa-facebook"></i></a>
+            <a href="https://twitter.com/sportsamigo" target="_blank"><i class="fa fa-twitter"></i></a>
+            <a href="https://instagram.com/sportsamigo" target="_blank"><i class="fa fa-instagram"></i></a>
+            <a href="https://linkedin.com/company/sportsamigo" target="_blank"><i class="fa fa-linkedin"></i></a>
+        </div>
+        <p>Made with <i class="fa fa-heart-o"></i> by SportsAmigo Team</p>
+    </section>
+
+    <!-- JavaScript Files -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="public/js/events.js"></script>
+    <script>
+        // Initialize AOS animation library
+        AOS.init({
+            duration: 800,
+            easing: 'ease-in-out',
+            once: true
+        });
+        
+        // Mobile menu functionality
+        var navLinks = document.getElementById("navLinks");
+        function showMenu() {
+            navLinks.style.right = "0";
+        }
+        function hideMenu() {
+            navLinks.style.right = "-200px";
+        }
+        
+        // Function to show registration modal
+        function showRegistrationModal(eventName) {
+            // Create modal elements
+            const modalOverlay = document.createElement('div');
+            modalOverlay.className = 'modal-overlay';
+            
+            const modalContent = document.createElement('div');
+            modalContent.className = 'modal-content';
+            
+            // Modal header
+            const modalHeader = document.createElement('div');
+            modalHeader.className = 'modal-header';
+            modalHeader.innerHTML = `
+                <h3>Register for ${eventName}</h3>
+                <span class="close-modal">&times;</span>
+            `;
+            
+            // Modal body with registration form
+            const modalBody = document.createElement('div');
+            modalBody.className = 'modal-body';
+            
+            // Initial form structure
+            const formHTML = `
+                <form id="event-registration-form">
+                    <div class="form-group">
+                        <label for="team-name">Team Name</label>
+                        <input type="text" id="team-name" name="team-name" placeholder="Enter your team name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="captain-name">Captain Name</label>
+                        <input type="text" id="captain-name" name="captain-name" placeholder="Enter team captain's name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="team-size">Team Size</label>
+                        <select id="team-size" name="team-size" required>
+                            <option value="">Select team size</option>
+                            <option value="5">5 players (5-a-side)</option>
+                            <option value="7">7 players (7-a-side)</option>
+                            <option value="11">11 players (Full team)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="experience">Team Experience Level</label>
+                        <select id="experience" name="experience" required>
+                            <option value="">Select level</option>
+                            <option value="beginner">Beginner</option>
+                            <option value="intermediate">Intermediate</option>
+                            <option value="advanced">Advanced</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="message">Additional Information</label>
+                        <textarea id="message" name="message" rows="4" placeholder="Any specific requirements or questions?"></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">Complete Registration</button>
+                </form>
+                <div class="success-message">
+                    <i class="fa fa-check-circle"></i>
+                    <h3>Registration Successful!</h3>
+                    <p>Thank you for registering for ${eventName}. We've sent a confirmation email with further details.</p>
+                    <button class="close-btn">Close</button>
+                </div>
+            `;
+            
+            modalBody.innerHTML = formHTML;
+            
+            // Assemble modal
+            modalContent.appendChild(modalHeader);
+            modalContent.appendChild(modalBody);
+            modalOverlay.appendChild(modalContent);
+            
+            // Add modal to the body
+            document.body.appendChild(modalOverlay);
+            
+            // Show modal with animation
+            setTimeout(() => {
+                modalOverlay.classList.add('active');
+            }, 10);
+            
+            // Form submission handler
+            const form = modalBody.querySelector('form');
+            const successMessage = modalBody.querySelector('.success-message');
+            
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                // Normally this would be an AJAX call to your server
+                // For demo, we'll just show a success message
+                form.style.display = 'none';
+                successMessage.style.display = 'block';
+            });
+            
+            // Close modal function
+            const closeModal = () => {
+                modalOverlay.classList.remove('active');
+                setTimeout(() => {
+                    document.body.removeChild(modalOverlay);
+                }, 300);
+            };
+            
+            // Setup close button events
+            modalContent.querySelector('.close-modal').addEventListener('click', closeModal);
+            
+            // Close on success message button click
+            const closeBtn = modalBody.querySelector('.close-btn');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', closeModal);
+            }
+            
+            // Close on outside click
+            modalOverlay.addEventListener('click', function(e) {
+                if (e.target === modalOverlay) {
+                    closeModal();
+                }
+            });
+        }
+        
+        // Function to show league registration modal
+        function showLeagueRegistrationModal(leagueName) {
+            // Create modal elements
+            const modalOverlay = document.createElement('div');
+            modalOverlay.className = 'modal-overlay';
+            
+            const modalContent = document.createElement('div');
+            modalContent.className = 'modal-content';
+            
+            // Modal header
+            const modalHeader = document.createElement('div');
+            modalHeader.className = 'modal-header';
+            modalHeader.innerHTML = `
+                <h3>Register for ${leagueName}</h3>
+                <span class="close-modal">&times;</span>
+            `;
+            
+            // Modal body with registration form
+            const modalBody = document.createElement('div');
+            modalBody.className = 'modal-body';
+            
+            modalBody.innerHTML = `
+                <form id="league-registration-form">
+                    <div class="form-group">
+                        <label for="team-name">Team Name:</label>
+                        <input type="text" id="team-name" name="team-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="captain-name">Captain Name:</label>
+                        <input type="text" id="captain-name" name="captain-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email:</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone:</label>
+                        <input type="tel" id="phone" name="phone" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="players">Number of Players:</label>
+                        <input type="number" id="players" name="players" min="5" max="15" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="experience">Team Experience Level:</label>
+                        <select id="experience" name="experience" required>
+                            <option value="">Select Level</option>
+                            <option value="beginner">Beginner</option>
+                            <option value="intermediate">Intermediate</option>
+                            <option value="advanced">Advanced</option>
+                            <option value="professional">Professional</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="submit-btn">Submit Registration</button>
+                </form>
+            `;
+            
+            // Assemble modal
+            modalContent.appendChild(modalHeader);
+            modalContent.appendChild(modalBody);
+            modalOverlay.appendChild(modalContent);
+            
+            // Add modal to the body
+            document.body.appendChild(modalOverlay);
+            
+            // Show modal
+            setTimeout(() => {
+                modalOverlay.classList.add('active');
+            }, 10);
+            
+            // Close modal function
+            const closeModal = () => {
+                modalOverlay.classList.remove('active');
+                setTimeout(() => {
+                    document.body.removeChild(modalOverlay);
+                }, 300);
+            };
+            
+            // Close button event
+            modalContent.querySelector('.close-modal').addEventListener('click', closeModal);
+            
+            // Close on outside click
+            modalOverlay.addEventListener('click', function(e) {
+                if (e.target === modalOverlay) {
+                    closeModal();
+                }
+            });
+        }
+        
+        // Implement lazy loading for images to improve performance
+        document.addEventListener('DOMContentLoaded', function() {
+            const lazyImages = document.querySelectorAll('img[data-src]');
+            
+            if ('IntersectionObserver' in window) {
+                const imageObserver = new IntersectionObserver(function(entries, observer) {
+                    entries.forEach(function(entry) {
+                        if (entry.isIntersecting) {
+                            const img = entry.target;
+                            img.src = img.dataset.src;
+                            img.removeAttribute('data-src');
+                            imageObserver.unobserve(img);
+                        }
+                    });
+                });
+                
+                lazyImages.forEach(function(img) {
+                    imageObserver.observe(img);
+                });
+            } else {
+                // Fallback for browsers without IntersectionObserver support
+                lazyImages.forEach(function(img) {
+                    img.src = img.dataset.src;
+                    img.removeAttribute('data-src');
+                });
+            }
+            
+            // Preload critical images
+            const preloadImages = [
+                'images/football-bg.jpg',
+                'images/logooo-removebg-preview.png'
+            ];
+            
+            preloadImages.forEach(function(src) {
+                const img = new Image();
+                img.src = src;
+            });
+        });
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Attach event listeners to league action buttons
+            document.querySelectorAll('.view-details-btn').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const leagueName = this.getAttribute('data-league');
+                    showLeagueDetailsModal(leagueName);
+                });
+            });
+            
+            document.querySelectorAll('.register-btn').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const leagueName = this.getAttribute('data-league');
+                    showLeagueRegistrationModal(leagueName);
+                });
+            });
+            
+            document.querySelectorAll('.notify-btn').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const leagueName = this.getAttribute('data-league');
+                    showLeagueNotificationModal(leagueName);
+                });
+            });
+        });
+        
+        // Function to show league details modal
+        function showLeagueDetailsModal(leagueName) {
+            // League data (in a real application, this would come from a database)
+            const leagueData = {
+                'SportsAmigo Premier Football League': {
+                    description: 'Our flagship football competition featuring the best teams in the city competing in a season-long tournament.',
+                    format: 'Round-robin followed by playoffs',
+                    matches: '15 matches per team',
+                    venue: 'SportsAmigo Central Stadium',
+                    days: 'Saturdays and Sundays',
+                    timings: '9:00 AM - 6:00 PM',
+                    currentStandings: [
+                        { team: 'FC Thunder', played: 10, won: 8, drawn: 1, lost: 1, points: 25 },
+                        { team: 'Real United', played: 10, won: 7, drawn: 2, lost: 1, points: 23 },
+                        { team: 'City Stars', played: 10, won: 6, drawn: 2, lost: 2, points: 20 },
+                        { team: 'Atletico FC', played: 10, won: 5, drawn: 3, lost: 2, points: 18 }
+                    ]
+                }
+            };
+            
+            // Get the data for the selected league, or use default text if not found
+            const league = leagueData[leagueName] || {
+                description: 'League details will be available soon.',
+                format: 'To be announced',
+                matches: 'To be announced',
+                venue: 'Various venues across the city',
+                days: 'Weekends',
+                timings: 'Various timings',
+                currentStandings: []
+            };
+            
+            // Create modal elements
+            const modalOverlay = document.createElement('div');
+            modalOverlay.className = 'modal-overlay';
+            
+            const modalContent = document.createElement('div');
+            modalContent.className = 'modal-content';
+            
+            // Modal header
+            const modalHeader = document.createElement('div');
+            modalHeader.className = 'modal-header';
+            modalHeader.style.backgroundImage = 'linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url(images/football3.jpg)';
+            modalHeader.innerHTML = `
+                <h3>${leagueName}</h3>
+                <span class="close-modal">&times;</span>
+            `;
+            
+            // Modal body with league details
+            const modalBody = document.createElement('div');
+            modalBody.className = 'modal-body';
+            
+            // Build standings HTML if available
+            let standingsHTML = '';
+            if (league.currentStandings && league.currentStandings.length > 0) {
+                standingsHTML = `
+                    <h4>Current Standings</h4>
+                    <div class="standings-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Team</th>
+                                    <th>P</th>
+                                    <th>W</th>
+                                    <th>D</th>
+                                    <th>L</th>
+                                    <th>PTS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${league.currentStandings.map(team => `
+                                    <tr>
+                                        <td>${team.team}</td>
+                                        <td>${team.played}</td>
+                                        <td>${team.won}</td>
+                                        <td>${team.drawn}</td>
+                                        <td>${team.lost}</td>
+                                        <td><strong>${team.points}</strong></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+            
+            modalBody.innerHTML = `
+                <div class="league-details">
+                    <p>${league.description}</p>
+                    
+                    <div class="details-grid">
+                        <div class="detail-item">
+                            <h4><i class="fa fa-trophy"></i> Format</h4>
+                            <p>${league.format}</p>
+                        </div>
+                        <div class="detail-item">
+                            <h4><i class="fa fa-futbol-o"></i> Matches</h4>
+                            <p>${league.matches}</p>
+                        </div>
+                        <div class="detail-item">
+                            <h4><i class="fa fa-map-marker"></i> Venue</h4>
+                            <p>${league.venue}</p>
+                        </div>
+                        <div class="detail-item">
+                            <h4><i class="fa fa-calendar"></i> Match Days</h4>
+                            <p>${league.days}</p>
+                        </div>
+                        <div class="detail-item">
+                            <h4><i class="fa fa-clock-o"></i> Timings</h4>
+                            <p>${league.timings}</p>
+                        </div>
+                    </div>
+                    
+                    ${standingsHTML}
+                    
+                    <div class="action-buttons">
+                        <a href="#" class="btn download-btn"><i class="fa fa-download"></i> Download Schedule</a>
+                        <a href="#" class="btn"><i class="fa fa-envelope"></i> Contact Organizer</a>
+                    </div>
+                </div>
+            `;
+            
+            // Assemble modal
+            modalContent.appendChild(modalHeader);
+            modalContent.appendChild(modalBody);
+            modalOverlay.appendChild(modalContent);
+            
+            // Add modal to the body
+            document.body.appendChild(modalOverlay);
+            
+            // Show modal with animation
+            setTimeout(() => {
+                modalOverlay.classList.add('active');
+            }, 10);
+            
+            // Close modal function
+            const closeModal = () => {
+                modalOverlay.classList.remove('active');
+                setTimeout(() => {
+                    document.body.removeChild(modalOverlay);
+                }, 300);
+            };
+            
+            // Setup close button events
+            modalContent.querySelector('.close-modal').addEventListener('click', closeModal);
+            
+            // Close on outside click
+            modalOverlay.addEventListener('click', function(e) {
+                if (e.target === modalOverlay) {
+                    closeModal();
+                }
+            });
+            
+            // Add event listeners for action buttons
+            const downloadBtn = modalBody.querySelector('.download-btn');
+            if (downloadBtn) {
+                downloadBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    alert('Schedule PDF will be downloaded (This is a demo feature)');
+                });
+            }
+        }
+        
+        // Function to show notification modal for upcoming leagues
+        function showLeagueNotificationModal(leagueName) {
+            // Create modal elements
+            const modalOverlay = document.createElement('div');
+            modalOverlay.className = 'modal-overlay';
+            
+            const modalContent = document.createElement('div');
+            modalContent.className = 'modal-content';
+            
+            // Modal header
+            const modalHeader = document.createElement('div');
+            modalHeader.className = 'modal-header';
+            modalHeader.innerHTML = `
+                <h3>Get Notified about ${leagueName}</h3>
+                <span class="close-modal">&times;</span>
+            `;
+            
+            // Modal body with notification form
+            const modalBody = document.createElement('div');
+            modalBody.className = 'modal-body';
+            
+            modalBody.innerHTML = `
+                <p>We'll send you updates when registration opens for this league.</p>
+                <form id="notification-form">
+                    <div class="form-group">
+                        <label for="notify-name">Your Name:</label>
+                        <input type="text" id="notify-name" name="notify-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="notify-email">Email:</label>
+                        <input type="email" id="notify-email" name="notify-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="notify-phone">Phone (optional):</label>
+                        <input type="tel" id="notify-phone" name="notify-phone">
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" id="notify-team" name="notify-team">
+                        <label for="notify-team">I'm interested in registering a team</label>
+                    </div>
+                    <button type="submit" class="submit-btn">Subscribe to Updates</button>
+                </form>
+                <div class="success-message" style="display:none;">
+                    <i class="fa fa-check-circle"></i>
+                    <h3>You're on the list!</h3>
+                    <p>We'll notify you when registration opens for ${leagueName}.</p>
+                    <button class="close-btn">Close</button>
+                </div>
+            `;
+            
+            // Assemble modal
+            modalContent.appendChild(modalHeader);
+            modalContent.appendChild(modalBody);
+            modalOverlay.appendChild(modalContent);
+            
+            // Add modal to the body
+            document.body.appendChild(modalOverlay);
+            
+            // Show modal
+            setTimeout(() => {
+                modalOverlay.classList.add('active');
+            }, 10);
+            
+            // Form submission handler
+            const form = modalBody.querySelector('form');
+            const successMessage = modalBody.querySelector('.success-message');
+            
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                // Normally this would be an AJAX call to your server
+                // For demo, we'll just show a success message
+                form.style.display = 'none';
+                successMessage.style.display = 'block';
+            });
+            
+            // Close modal function
+            const closeModal = () => {
+                modalOverlay.classList.remove('active');
+                setTimeout(() => {
+                    document.body.removeChild(modalOverlay);
+                }, 300);
+            };
+            
+            // Close button event
+            modalContent.querySelector('.close-modal').addEventListener('click', closeModal);
+            
+            // Close on success message button click
+            const closeBtn = modalBody.querySelector('.close-btn');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', closeModal);
+            }
+            
+            // Close on outside click
+            modalOverlay.addEventListener('click', function(e) {
+                if (e.target === modalOverlay) {
+                    closeModal();
+                }
+            });
+        }
+    </script>
+</body>
+</html>

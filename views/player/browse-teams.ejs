@@ -1,0 +1,182 @@
+<!-- Player Browse Teams Page -->
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h2 class="mb-0"><i class="fas fa-users-viewfinder me-2"></i> Browse Teams</h2>
+                    <p class="lead mt-2 mb-0">
+                        Discover teams you can join and connect with players who share your passion for sports.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <label for="teamSearch" class="form-label">Search Teams</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="teamSearch" placeholder="Search by team name...">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="sportFilter" class="form-label">Filter by Sport</label>
+                            <select class="form-select" id="sportFilter">
+                                <option value="">All Sports</option>
+                                <option value="Basketball">Basketball</option>
+                                <option value="Football">Football</option>
+                                <option value="Cricket">Cricket</option>
+                                <option value="Tennis">Tennis</option>
+                                <option value="Swimming">Swimming</option>
+                                <option value="Volleyball">Volleyball</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error/Success Messages -->
+    <% if (messages.error) { %>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle me-2"></i> <%= messages.error %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <% } %>
+    
+    <% if (messages.success) { %>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle me-2"></i> <%= messages.success %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <% } %>
+
+    <!-- Teams Grid -->
+    <div class="row" id="teamsContainer">
+        <% if (availableTeams && availableTeams.length > 0) { %>
+            <% availableTeams.forEach(team => { %>
+                <div class="col-md-6 col-lg-4 mb-4 team-card" data-sport="<%= team.sport_type %>">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0"><%= team.name %></h5>
+                            <span class="badge bg-primary"><%= team.sport_type %></span>
+                        </div>
+                        <div class="card-body">
+                            <p><%= team.description || 'No description available' %></p>
+                            <div class="mb-3">
+                                <strong>Manager:</strong> <%= team.manager_name %>
+                                <a href="mailto:<%= team.manager_email %>" class="ms-2"><i class="fas fa-envelope"></i></a>
+                            </div>
+                            <% 
+                                // Calculate percentage for progress bar
+                                var percentage = Math.min(100, (team.current_members / team.max_members) * 100);
+                            %>
+                            <div class="progress mb-3" style="height: 25px;">
+                                <div class="progress-bar" role="progressbar" 
+                                    style="width: <%= percentage %>%;" 
+                                    aria-valuenow="<%= team.current_members %>" 
+                                    aria-valuemin="0" 
+                                    aria-valuemax="<%= team.max_members %>">
+                                    <%= team.current_members %> / <%= team.max_members %> Members
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer d-grid">
+                            <% if (team.already_joined) { %>
+                                <button class="btn btn-success" disabled>
+                                    <i class="fas fa-check-circle me-2"></i> Already a Member
+                                </button>
+                            <% } else if (requestStatusMap && requestStatusMap[team.id]) { %>
+                                <% if (requestStatusMap[team.id] === 'pending') { %>
+                                    <button class="btn btn-warning" disabled>
+                                        <i class="fas fa-clock me-2"></i> Request Pending
+                                    </button>
+                                <% } else if (requestStatusMap[team.id] === 'approved') { %>
+                                    <button class="btn btn-success" disabled>
+                                        <i class="fas fa-check me-2"></i> Request Approved
+                                    </button>
+                                <% } else if (requestStatusMap[team.id] === 'rejected') { %>
+                                    <button class="btn btn-danger" disabled>
+                                        <i class="fas fa-times me-2"></i> Request Rejected
+                                    </button>
+                                <% } %>
+                            <% } else { %>
+                                <form action="/player/request-join-team" method="POST">
+                                    <input type="hidden" name="teamId" value="<%= team.id %>">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-user-plus me-2"></i> Request to Join
+                                    </button>
+                                </form>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            <% }); %>
+        <% } else { %>
+            <div class="col-12">
+                <div class="alert alert-info text-center" role="alert">
+                    <i class="fas fa-info-circle me-2"></i> No available teams found. Check back later for new teams to join!
+                </div>
+            </div>
+        <% } %>
+        
+        <!-- No results message (initially hidden) -->
+        <div id="noResults" class="col-12 d-none">
+            <div class="alert alert-warning text-center" role="alert">
+                <i class="fas fa-search me-2"></i> No teams match your search. Try different search terms or filters.
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Client-side filtering
+document.addEventListener('DOMContentLoaded', function() {
+    const teamSearch = document.getElementById('teamSearch');
+    const sportFilter = document.getElementById('sportFilter');
+    const teamsContainer = document.getElementById('teamsContainer');
+    const teamCards = document.querySelectorAll('.team-card');
+    const noResults = document.getElementById('noResults');
+    
+    function filterTeams() {
+        const searchTerm = teamSearch.value.toLowerCase();
+        const sportTerm = sportFilter.value;
+        
+        let visibleCount = 0;
+        
+        teamCards.forEach(card => {
+            const teamName = card.querySelector('.card-header h5').textContent.toLowerCase();
+            const teamSport = card.getAttribute('data-sport');
+            
+            const matchesSearch = teamName.includes(searchTerm);
+            const matchesSport = sportTerm === '' || teamSport === sportTerm;
+            
+            if (matchesSearch && matchesSport) {
+                card.classList.remove('d-none');
+                visibleCount++;
+            } else {
+                card.classList.add('d-none');
+            }
+        });
+        
+        // Show/hide no results message
+        if (visibleCount === 0 && teamCards.length > 0) {
+            noResults.classList.remove('d-none');
+        } else {
+            noResults.classList.add('d-none');
+        }
+    }
+    
+    // Add event listeners for search and filter
+    teamSearch.addEventListener('input', filterTeams);
+    sportFilter.addEventListener('change', filterTeams);
+});
+</script> 

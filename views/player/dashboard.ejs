@@ -1,0 +1,183 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h3 class="mb-0">Player Dashboard</h3>
+            </div>
+            <div class="card-body">
+                <!-- Statistics Overview Row -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card bg-primary text-white dashboard-stat-card">
+                            <div class="card-body d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="card-title">My Events</h5>
+                                    <h2 class="mb-0"><%= events ? events.length : 0 %></h2>
+                                </div>
+                                <div class="card-icon">
+                                    <i class="bi bi-calendar-event"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card bg-success text-white dashboard-stat-card">
+                            <div class="card-body d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="card-title">My Teams</h5>
+                                    <h2 class="mb-0"><%= teams ? teams.length : 0 %></h2>
+                                </div>
+                                <div class="card-icon">
+                                    <i class="bi bi-people"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card bg-info text-white dashboard-stat-card">
+                            <div class="card-body d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="card-title">Achievements</h5>
+                                    <h2 class="mb-0">0</h2>
+                                </div>
+                                <div class="card-icon">
+                                    <i class="bi bi-trophy"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Welcome Message -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h4 class="card-title">Welcome back, <%= user.first_name || user.email %>!</h4>
+                        <% if (events && events.length > 0) { 
+                            const nextEvent = events[0]; // First event (should be sorted by date)
+                        %>
+                            <p class="card-text">Your next event is <strong><%= nextEvent.name %></strong> on <strong><%= new Date(nextEvent.event_date).toLocaleDateString() %></strong>. Make sure to check your team's schedule and be prepared!</p>
+                            <a href="/player/event/<%= nextEvent.id %>" class="btn btn-primary">View Event Details</a>
+                        <% } else { %>
+                            <p class="card-text">You don't have any upcoming events. Browse available events or join a team to participate!</p>
+                            <a href="/player/browse-events" class="btn btn-primary">Browse Events</a>
+                            <a href="/player/browse-teams" class="btn btn-outline-success ms-2">Join a Team</a>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Quick Access Cards -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0">Upcoming Events</h5>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush">
+                                    <% if (events && events.length > 0) { %>
+                                        <% events.slice(0, 3).forEach(event => { %>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                <%= event.name %>
+                                                <div>
+                                                    <span class="badge bg-info me-1"><%= event.team_name %></span>
+                                                    <span class="badge bg-primary"><%= new Date(event.event_date).toLocaleDateString() %></span>
+                                                </div>
+                                            </li>
+                                        <% }) %>
+                                    <% } else { %>
+                                        <li class="list-group-item text-center">
+                                            No upcoming events
+                                        </li>
+                                    <% } %>
+                                </ul>
+                                <div class="mt-3">
+                                    <a href="/player/my-events" class="btn btn-outline-primary">See All Events</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">My Teams</h5>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush">
+                                    <% if (teams && teams.length > 0) { %>
+                                        <% teams.slice(0, 2).forEach(team => { %>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <strong><%= team.name %></strong> (<%= team.sport_type %>)
+                                                    <div class="text-muted small">
+                                                        Members: <%= team.members ? team.members.length : 0 %>/<%= team.max_members %>
+                                                    </div>
+                                                </div>
+                                                <span class="badge bg-success">Active</span>
+                                            </li>
+                                        <% }) %>
+                                    <% } else { %>
+                                        <li class="list-group-item text-center">
+                                            You haven't joined any teams yet
+                                        </li>
+                                    <% } %>
+                                </ul>
+                                <div class="mt-3">
+                                    <a href="/player/my-teams" class="btn btn-outline-success">View Teams</a>
+                                    <a href="/player/browse-teams" class="btn btn-outline-info ms-2">Join New Team</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card mb-4">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0">Event Schedule</h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Event</th>
+                                                <th>Date</th>
+                                                <th>Team</th>
+                                                <th>Location</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <% if (events && events.length > 0) { %>
+                                                <% events.forEach(event => { %>
+                                                    <tr>
+                                                        <td><%= event.name %></td>
+                                                        <td><%= new Date(event.event_date).toLocaleDateString() %></td>
+                                                        <td><%= event.team_name %></td>
+                                                        <td><%= event.location %></td>
+                                                        <td>
+                                                            <a href="/player/event/<%= event.id %>" class="btn btn-sm btn-outline-primary">Details</a>
+                                                        </td>
+                                                    </tr>
+                                                <% }) %>
+                                            <% } else { %>
+                                                <tr>
+                                                    <td colspan="5" class="text-center">No events scheduled</td>
+                                                </tr>
+                                            <% } %>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

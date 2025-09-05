@@ -1,0 +1,150 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">Team Performance</h3>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h4>Navigation Test:</h4>
+                    <div class="btn-group">
+                        <a href="/manager/browse-events" class="btn btn-primary">Go to Browse Events</a>
+                        <a href="/manager/my-team" class="btn btn-success">Go to My Team</a>
+                        <a href="/manager" class="btn btn-info">Go to Dashboard</a>
+                    </div>
+                </div>
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Performance Overview</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row text-center">
+                                    <div class="col-md-3">
+                                        <div class="card bg-light mb-3">
+                                            <div class="card-body">
+                                                <h3 class="card-title">12</h3>
+                                                <p class="card-text text-muted">Total Matches</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="card bg-success text-white mb-3">
+                                            <div class="card-body">
+                                                <h3 class="card-title">8</h3>
+                                                <p class="card-text">Wins</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="card bg-danger text-white mb-3">
+                                            <div class="card-body">
+                                                <h3 class="card-title">3</h3>
+                                                <p class="card-text">Losses</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="card bg-warning text-dark mb-3">
+                                            <div class="card-body">
+                                                <h3 class="card-title">1</h3>
+                                                <p class="card-text">Draws</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mt-4">
+                                    <div class="col-md-8 offset-md-2">
+                                        <h5 class="text-center mb-3">Win-Loss Record</h5>
+                                        <div class="progress" style="height: 30px;">
+                                            <div class="progress-bar bg-success" role="progressbar" style="width: 67%;" aria-valuenow="67" aria-valuemin="0" aria-valuemax="100">67% Wins</div>
+                                            <div class="progress-bar bg-danger" role="progressbar" style="width: 25%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">25% Losses</div>
+                                            <div class="progress-bar bg-warning" role="progressbar" style="width: 8%;" aria-valuenow="8" aria-valuemin="0" aria-valuemax="100">8% Draws</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">Recent Match Results</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="bg-light">
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Event</th>
+                                                <th>Opponent</th>
+                                                <th>Score</th>
+                                                <th>Result</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>May 10, 2023</td>
+                                                <td>City Basketball Tournament</td>
+                                                <td>Thunder United</td>
+                                                <td>87 - 76</td>
+                                                <td><span class="badge bg-success">Win</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>May 5, 2023</td>
+                                                <td>Regional League</td>
+                                                <td>City Hawks</td>
+                                                <td>76 - 78</td>
+                                                <td><span class="badge bg-danger">Loss</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>April 28, 2023</td>
+                                                <td>Spring Tournament</td>
+                                                <td>Eagles FC</td>
+                                                <td>92 - 85</td>
+                                                <td><span class="badge bg-success">Win</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>April 22, 2023</td>
+                                                <td>Spring Tournament</td>
+                                                <td>Royal Tigers</td>
+                                                <td>88 - 88</td>
+                                                <td><span class="badge bg-warning">Draw</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>April 15, 2023</td>
+                                                <td>Spring Tournament</td>
+                                                <td>Lightning Bolts</td>
+                                                <td>95 - 82</td>
+                                                <td><span class="badge bg-success">Win</span></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.modal-content').forEach(content => {
+            content.addEventListener('click', function(event) {
+                event.stopPropagation();
+            });
+        });
+        
+    });
+</script> 

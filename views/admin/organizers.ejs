@@ -1,0 +1,268 @@
+<!-- Organizers Management -->
+<link rel="stylesheet" href="/css/admin.css">
+
+<div class="container-fluid mt-4">
+    <!-- Organizer Actions Row -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="Search organizers..." id="organizer-search">
+                <button class="btn btn-primary" type="button">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+        <div class="col-md-6 text-end">
+            <div class="btn-group">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" data-filter="all">All Organizers</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="active">Active</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="inactive">Inactive</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Organizers List -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Organizers</h5>
+            <span class="badge bg-primary"><%= organizers.length %> Total</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 22%;">Name</th>
+                            <th style="width: 20%;">Email</th>
+                            <th style="width: 15%;">Organization</th>
+                            <th style="width: 15%;">Joined Date</th>
+                            <th style="width: 10%;">Status</th>
+                            <th style="width: 8%; min-width: 100px; white-space: nowrap;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (organizers && organizers.length > 0) { %>
+                            <% organizers.forEach(organizer => { %>
+                                <tr class="real-data-row">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div>
+                                                <h6 class="fw-semibold mb-0"><%= organizer.name %></h6>
+                                                <small class="text-muted"><%= organizer.location || 'No location' %></small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><%= organizer.email %></td>
+                                    <td><%= organizer.organization %></td>
+                                    <td><%= organizer.joinedDate %></td>
+                                    <td>
+                                        <span class="badge bg-success">
+                                            <%= organizer.status || 'Active' %>
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-danger delete-organizer" 
+                                                data-organizer-id="<%= organizer.id %>"
+                                                title="Delete organizer">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <div class="py-5">
+                                        <i class="fas fa-calendar-check fa-3x text-muted mb-3"></i>
+                                        <h5>No organizers found</h5>
+                                        <p class="text-muted">There are no organizers registered in the system.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-white">
+            <nav aria-label="Organizer pagination">
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1">Previous</a>
+                    </li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Adding alternating row colors for better readability */
+    .table tbody tr:nth-of-type(odd) {
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+    
+    /* Improved hover state */
+    .table tbody tr:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+    
+    /* Consistent badge styling */
+    .badge.bg-success {
+        font-weight: 500;
+        padding: 5px 10px;
+    }
+    
+    /* Delete button styling */
+    .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+    }
+    
+    .btn-danger:hover {
+        background-color: #bb2d3b;
+        border-color: #b02a37;
+    }
+    
+    /* Header cell styling to prevent wrapping */
+    th {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    /* Ensure the action column is always visible */
+    .table th:last-child, 
+    .table td:last-child {
+        position: sticky;
+        right: 0;
+        background-color: inherit;
+        z-index: 1;
+    }
+    
+    /* Add a subtle shadow to indicate scrollable content */
+    .table th:last-child {
+        box-shadow: -5px 0 5px -5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .table td:last-child {
+        box-shadow: -5px 0 5px -5px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Fix for alternating row colors */
+    .table tbody tr:nth-of-type(odd) td:last-child {
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+    
+    .table tbody tr:nth-of-type(even) td:last-child {
+        background-color: #fff;
+    }
+    
+    .table tbody tr:hover td:last-child {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Search functionality
+        const searchInput = document.getElementById('organizer-search');
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function() {
+                const searchTerm = this.value.toLowerCase();
+                const tableRows = document.querySelectorAll('tbody tr');
+                
+                tableRows.forEach(row => {
+                    const organizerName = row.querySelector('h6')?.textContent.toLowerCase();
+                    const organizerEmail = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase();
+                    
+                    if ((organizerName && organizerName.includes(searchTerm)) || 
+                        (organizerEmail && organizerEmail.includes(searchTerm))) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        }
+        
+        // Filter functionality
+        document.querySelectorAll('[data-filter]').forEach(filter => {
+            filter.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const filterValue = this.getAttribute('data-filter');
+                const tableRows = document.querySelectorAll('tbody tr');
+                
+                tableRows.forEach(row => {
+                    if (filterValue === 'all') {
+                        row.style.display = '';
+                    } else if (filterValue === 'active' || filterValue === 'inactive') {
+                        const statusBadge = row.querySelector('.badge');
+                        if (statusBadge) {
+                            const isActive = statusBadge.classList.contains('bg-success');
+                            if ((filterValue === 'active' && isActive) || 
+                                (filterValue === 'inactive' && !isActive)) {
+                                row.style.display = '';
+                            } else {
+                                row.style.display = 'none';
+                            }
+                        }
+                    }
+                });
+            });
+        });
+        
+        // Delete organizer functionality
+        document.querySelectorAll('.delete-organizer').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const organizerId = this.getAttribute('data-organizer-id');
+                
+                if (confirm('Are you sure you want to delete this organizer? This action cannot be undone.')) {
+                    // Send delete request
+                    fetch(`/admin/organizers/${organizerId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Remove the organizer row
+                            this.closest('tr').remove();
+                            alert('Organizer deleted successfully');
+                            
+                            // Update the count in the badge
+                            const countBadge = document.querySelector('.card-header .badge');
+                            if (countBadge) {
+                                const currentCount = parseInt(countBadge.textContent);
+                                if (!isNaN(currentCount)) {
+                                    countBadge.textContent = (currentCount - 1) + ' Total';
+                                }
+                            }
+                        } else {
+                            alert(data.message || 'Failed to delete organizer');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error deleting organizer:', error);
+                        alert('An error occurred while deleting the organizer');
+                    });
+                }
+            });
+        });
+    });
+</script> 

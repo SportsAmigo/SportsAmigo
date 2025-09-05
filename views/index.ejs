@@ -1,0 +1,173 @@
+<%- include('partials/header') %>
+
+<section class="header">
+    <nav>
+        <a href="/"><img src="/images/logo.png" alt="South African Sports Association Logo"></a>
+        <div class="nav-links" id="navLinks">
+            <i class="fa fa-times" onclick="hideMenu()"></i>
+            <ul>
+                <li><a href="/">HOME</a></li>
+                <li><a href="/about">ABOUT</a></li>
+                <li class="dropdown">
+                    <a href="/events">EVENTS</a>
+                    <div class="dropdown-content">
+                        <a href="/events/football">Football</a>
+                        <a href="/events/cricket">Cricket</a>
+                        <a href="/events/basketball">Basketball</a>
+                    </div>
+                </li>
+                <li><a href="/contact">CONTACT</a></li>
+                <li><a href="/partner">PARTNER</a></li>
+                <li><a href="/support">SUPPORT</a></li>
+                <li><a href="/login">LOGIN</a></li>
+            </ul>
+        </div>
+        <i class="fa fa-bars" onclick="showMenu()"></i>
+    </nav>
+
+    <div class="text-box">
+        <h1>South African Sports Association</h1>
+        <p>Join the largest sports community in South Africa and experience the thrill of competition, the joy of teamwork, and the pride of victory.</p>
+        <a href="/about" class="hero-btn">Visit Us To Know More</a>
+    </div>
+</section>
+
+<!-- Upcoming Events -->
+<section class="upcoming-events">
+    <h1>Upcoming Events</h1>
+    <p>Discover our exciting lineup of sporting events and competitions across South Africa</p>
+
+    <div class="row">
+        <div class="event-col">
+            <h3>Football Championship</h3>
+            <p>The annual football championship bringing together the best teams from across South Africa. Join us for this thrilling event at Cape Town Stadium.</p>
+        </div>
+        <div class="event-col">
+            <h3>Cricket Test Series</h3>
+            <p>Experience the excitement of cricket as South Africa hosts international teams for a test series at the iconic Newlands Cricket Ground.</p>
+        </div>
+        <div class="event-col">
+            <h3>Basketball Tournament</h3>
+            <p>The premier basketball tournament showcasing the best talent in South African basketball at the Ellis Park Arena in Johannesburg.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Player Spotlight -->
+<section class="player-spotlight">
+    <h1>Player Spotlight</h1>
+    <p>Celebrating the achievements and contributions of South African athletes</p>
+
+    <div class="row">
+        <div class="player-col">
+            <img src="/images/player1.jpg" alt="Football Player">
+            <div class="layer">
+                <h3>FOOTBALL STARS</h3>
+            </div>
+        </div>
+        <div class="player-col">
+            <img src="/images/player2.jpg" alt="Cricket Player">
+            <div class="layer">
+                <h3>CRICKET HEROES</h3>
+            </div>
+        </div>
+        <div class="player-col">
+            <img src="/images/player3.jpg" alt="Basketball Player">
+            <div class="layer">
+                <h3>BASKETBALL LEGENDS</h3>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Popular Sports -->
+<section class="popular-sports">
+    <h1>Popular Sports</h1>
+    <p>Discover the most popular sports in South Africa and get involved</p>
+
+    <div class="row">
+        <div class="sport-col">
+            <img src="/images/football.jpg" alt="Football">
+            <div class="layer">
+                <h3>FOOTBALL</h3>
+            </div>
+        </div>
+        <div class="sport-col">
+            <img src="/images/cricket.jpg" alt="Cricket">
+            <div class="layer">
+                <h3>CRICKET</h3>
+            </div>
+        </div>
+        <div class="sport-col">
+            <img src="/images/basketball.jpg" alt="Basketball">
+            <div class="layer">
+                <h3>BASKETBALL</h3>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Facilities -->
+<section class="facilities">
+    <h1>Our Facilities</h1>
+    <p>World-class sporting facilities to support athletes and teams across South Africa</p>
+
+    <div class="row">
+        <div class="facilities-col">
+            <img src="/images/stadium.jpg" alt="Stadium">
+            <h3>World Class Stadiums</h3>
+            <p>Our state-of-the-art stadiums offer the perfect venue for sporting events of all sizes, from local competitions to international tournaments.</p>
+        </div>
+        <div class="facilities-col">
+            <img src="/images/training.jpg" alt="Training Center">
+            <h3>Training Centers</h3>
+            <p>Dedicated training facilities equipped with the latest technology and equipment to help athletes reach their full potential.</p>
+        </div>
+        <div class="facilities-col">
+            <img src="/images/gym.jpg" alt="Gym">
+            <h3>Modern Gymnasiums</h3>
+            <p>Fully equipped gymnasiums designed to meet the needs of athletes across all sports, with professional trainers available for guidance.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials -->
+<section class="testimonials">
+    <h1>What Our Members Say</h1>
+    <p>Hear from athletes, coaches, and administrators who are part of our community</p>
+
+    <div class="row">
+        <div class="testimonials-col">
+            <img src="/images/user1.jpg" alt="User 1">
+            <div>
+                <p>The South African Sports Association has provided me with incredible opportunities to grow as an athlete. The coaching and facilities are world-class, and the community is supportive and inspiring.</p>
+                <h3>Sipho Mthembu</h3>
+                <i class="fa fa-star"></i>
+                <i class="fa fa-star"></i>
+                <i class="fa fa-star"></i>
+                <i class="fa fa-star"></i>
+                <i class="fa fa-star-half-o"></i>
+            </div>
+        </div>
+        <div class="testimonials-col">
+            <img src="/images/user2.jpg" alt="User 2">
+            <div>
+                <p>As a coach, I've seen firsthand how the Association nurtures talent and creates pathways for athletes to succeed. The resources and support provided are exceptional, and the events are organized professionally.</p>
+                <h3>Thandi Nkosi</h3>
+                <i class="fa fa-star"></i>
+                <i class="fa fa-star"></i>
+                <i class="fa fa-star"></i>
+                <i class="fa fa-star"></i>
+                <i class="fa fa-star"></i>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call To Action -->
+<section class="cta">
+    <h1>Join Our Sports Community Today</h1>
+    <a href="/register" class="hero-btn">REGISTER NOW</a>
+</section>
+
+<%- include('partials/footer') %> 

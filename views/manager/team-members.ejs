@@ -1,0 +1,175 @@
+<!-- Team Members Management Page -->
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h2 class="mb-0"><i class="fas fa-users me-2"></i> Team Members: <%= team.name %></h2>
+                    <p class="lead mt-2 mb-0">
+                        Manage your team's roster and player membership
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Info Card -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="card-title">Team Information</h5>
+                            <p><strong>Sport:</strong> <%= team.sport_type %></p>
+                            <p><strong>Description:</strong> <%= team.description || 'No description available' %></p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="card-title">Team Status</h5>
+                            <div class="progress mb-3" style="height: 25px;">
+                                <% var percentage = Math.min(100, ((team.members && team.members.length) / team.max_members) * 100); %>
+                                <div class="progress-bar" role="progressbar" 
+                                    style="width: <%= percentage %>%;" 
+                                    aria-valuenow="<%= team.members && team.members.length %>" 
+                                    aria-valuemin="0" 
+                                    aria-valuemax="<%= team.max_members %>">
+                                    <%= team.members && team.members.length %> / <%= team.max_members %> Members
+                                </div>
+                            </div>
+                            <a href="/manager/my-teams" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i> Back to My Teams
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Members List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Current Members</h5>
+                </div>
+                <div class="card-body">
+                    <% if (team.members && team.members.length > 0) { %>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Player</th>
+                                        <th>Join Date</th>
+                                        <th>Status</th>
+                                        <th class="text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% team.members.forEach(member => { %>
+                                        <tr>
+                                            <td>
+                                                <% 
+                                                    // Get player info from the players array
+                                                    let player = null;
+                                                    if (players) {
+                                                        players.forEach(p => {
+                                                            if (p.id === member.player_id) {
+                                                                player = p;
+                                                            }
+                                                        });
+                                                    }
+                                                %>
+                                                <% if (player) { %>
+                                                    <%= player.first_name %> <%= player.last_name %>
+                                                    <small class="text-muted d-block"><%= player.email %></small>
+                                                <% } else { %>
+                                                    Player ID: <%= member.player_id %>
+                                                <% } %>
+                                            </td>
+                                            <td><%= new Date(member.join_date).toLocaleDateString() %></td>
+                                            <td>
+                                                <span class="badge bg-<%= member.status === 'active' ? 'success' : 'secondary' %>">
+                                                    <%= member.status %>
+                                                </span>
+                                            </td>
+                                            <td class="text-center">
+                                                <form action="/manager/team/<%= team.id %>/remove-player/<%= member.player_id %>" method="POST" class="d-inline">
+                                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to remove this player from the team?')">
+                                                        <i class="fas fa-user-minus me-1"></i> Remove
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                </tbody>
+                            </table>
+                        </div>
+                    <% } else { %>
+                        <div class="alert alert-info text-center" role="alert">
+                            <i class="fas fa-info-circle me-2"></i> Your team doesn't have any members yet.
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Players Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Add Players</h5>
+                </div>
+                <div class="card-body">
+                    <% if (players && players.length > 0) { %>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Player</th>
+                                        <th>Email</th>
+                                        <th class="text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% 
+                                        // Filter out players who are already team members
+                                        const teamMemberIds = team.members ? team.members.map(m => m.player_id) : [];
+                                        const availablePlayers = players.filter(p => !teamMemberIds.includes(p.id));
+                                    %>
+                                    
+                                    <% if (availablePlayers.length > 0) { %>
+                                        <% availablePlayers.forEach(player => { %>
+                                            <tr>
+                                                <td><%= player.first_name %> <%= player.last_name %></td>
+                                                <td><%= player.email %></td>
+                                                <td class="text-center">
+                                                    <form action="/manager/team/<%= team.id %>/add-player" method="POST" class="d-inline">
+                                                        <input type="hidden" name="player_id" value="<%= player.id %>">
+                                                        <button type="submit" class="btn btn-success btn-sm">
+                                                            <i class="fas fa-user-plus me-1"></i> Add to Team
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        <% }); %>
+                                    <% } else { %>
+                                        <tr>
+                                            <td colspan="3" class="text-center">No available players to add.</td>
+                                        </tr>
+                                    <% } %>
+                                </tbody>
+                            </table>
+                        </div>
+                    <% } else { %>
+                        <div class="alert alert-info text-center" role="alert">
+                            <i class="fas fa-info-circle me-2"></i> No players available to add to your team.
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

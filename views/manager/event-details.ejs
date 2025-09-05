@@ -1,0 +1,261 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">Event Details</h3>
+                <a href="/manager/browse-events" class="btn btn-light btn-sm">Back to Events</a>
+            </div>
+            <div class="card-body">
+                <% if (locals.message && message.type) { %>
+                    <div class="alert alert-<%= message.type %> alert-dismissible fade show" role="alert">
+                        <%= message.text %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                <% } %>
+                
+                <% if (event) { %>
+                    <div class="row">
+                        <!-- Main Event Information -->
+                        <div class="col-md-8">
+                            <div class="card border shadow-sm mb-4">
+                                <div class="card-header bg-<%= event.sport === 'Basketball' ? 'primary' : event.sport === 'Football' ? 'success' : event.sport === 'Cricket' ? 'warning' : 'info' %> text-white">
+                                    <h5 class="mb-0"><%= event.sport %> Event</h5>
+                                </div>
+                                <div class="card-body">
+                                    <h3 class="card-title mb-4"><%= event.name %></h3>
+                                    
+                                    <div class="row mb-4">
+                                        <div class="col-md-6">
+                                            <ul class="list-group list-group-flush">
+                                                <li class="list-group-item"><strong><i class="bi bi-calendar-event"></i> Date:</strong> <%= new Date(event.date).toLocaleDateString() %></li>
+                                                <% if (event.time) { %>
+                                                    <li class="list-group-item"><strong><i class="bi bi-clock"></i> Time:</strong> <%= event.time %></li>
+                                                <% } %>
+                                                <li class="list-group-item"><strong><i class="bi bi-geo-alt"></i> Location:</strong> <%= event.location %></li>
+                                                <li class="list-group-item"><strong><i class="bi bi-trophy"></i> Sport:</strong> <%= event.sport %></li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <ul class="list-group list-group-flush">
+                                                <li class="list-group-item"><strong><i class="bi bi-person"></i> Organizer:</strong> <%= event.organizer %></li>
+                                                <li class="list-group-item"><strong><i class="bi bi-flag"></i> Status:</strong> 
+                                                    <span class="badge bg-<%= event.status === 'upcoming' ? 'success' : event.status === 'completed' ? 'secondary' : 'warning' %>">
+                                                        <%= event.status ? event.status.charAt(0).toUpperCase() + event.status.slice(1) : 'Upcoming' %>
+                                                    </span>
+                                                </li>
+                                                <li class="list-group-item"><strong><i class="bi bi-calendar-check"></i> Registration Deadline:</strong> 
+                                                    <%= event.registration_deadline ? new Date(event.registration_deadline).toLocaleDateString() : 'Not specified' %>
+                                                </li>
+                                                <% if (event.entry_fee) { %>
+                                                    <li class="list-group-item"><strong><i class="bi bi-cash"></i> Entry Fee:</strong> $<%= event.entry_fee %></li>
+                                                <% } %>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Event Description -->
+                                    <div class="mb-4">
+                                        <h5>Description</h5>
+                                        <div class="p-3 bg-light rounded">
+                                            <p><%= event.description || 'No description provided' %></p>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Event Actions - Only show if not already registered and there are eligible teams -->
+                                    <% 
+                                    // Check if we have eligible teams (matching the sport type)
+                                    let eligibleTeams = teams.filter(team => team.sport_type === event.sport);
+                                    let canRegister = eligibleTeams.length > 0 && !event.isRegistered; 
+                                    %>
+                                    
+                                    <% if (canRegister) { %>
+                                        <div class="d-grid gap-2">
+                                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#registerEventModal">
+                                                <i class="bi bi-clipboard-check"></i> Register Team
+                                            </button>
+                                        </div>
+                                    <% } else if (event.isRegistered) { %>
+                                        <div class="alert alert-success">
+                                            <i class="bi bi-check-circle"></i> You have already registered for this event. View your registration in the <a href="/manager/my-events">My Events</a> page.
+                                        </div>
+                                    <% } else if (teams.length === 0) { %>
+                                        <div class="alert alert-warning">
+                                            <i class="bi bi-exclamation-triangle"></i> You need to <a href="/manager/create-team">create a team</a> before you can register for events.
+                                        </div>
+                                    <% } else { %>
+                                        <div class="alert alert-warning">
+                                            <i class="bi bi-exclamation-triangle"></i> You don't have any teams that match this sport type (<strong><%= event.sport %></strong>). Create a team with this sport type to register.
+                                        </div>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Sidebar Information -->
+                        <div class="col-md-4">
+                            <!-- Registration Info Card -->
+                            <div class="card border shadow-sm mb-4">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">Registration Information</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-3"><strong>Max Teams:</strong> <%= event.max_teams || 'Not specified' %></p>
+                                    <p class="mb-3"><strong>Registration Status:</strong> 
+                                        <span class="badge bg-success">Open</span>
+                                    </p>
+                                    
+                                    <div class="alert alert-info">
+                                        <small>
+                                            <i class="bi bi-info-circle"></i> 
+                                            <% if (canRegister) { %>
+                                                To register for this event, click the "Register Team" button and select which of your teams you'd like to register.
+                                            <% } else if (event.isRegistered) { %>
+                                                You've already registered for this event. Check the My Events page for updates.
+                                            <% } else { %>
+                                                You need a team that matches this event's sport type (<%= event.sport %>) to register.
+                                            <% } %>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Your Teams Card -->
+                            <div class="card border shadow-sm mb-4">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">Your Teams</h5>
+                                </div>
+                                <div class="card-body">
+                                    <% if (locals.teams && teams.length > 0) { %>
+                                        <ul class="list-group list-group-flush">
+                                            <% teams.forEach(team => { %>
+                                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                    <%= team.name %>
+                                                    <span class="badge bg-<%= team.sport_type === event.sport ? 'success' : 'secondary' %> rounded-pill">
+                                                        <%= team.sport_type %>
+                                                        <% if (team.sport_type === event.sport) { %>
+                                                            <i class="bi bi-check"></i>
+                                                        <% } %>
+                                                    </span>
+                                                </li>
+                                            <% }); %>
+                                        </ul>
+                                    <% } else { %>
+                                        <div class="alert alert-warning">
+                                            <small>You don't have any teams yet. <a href="/manager/create-team">Create a team</a> to register for events.</small>
+                                        </div>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <div class="alert alert-warning">
+                        <p>Event not found or has been removed.</p>
+                        <a href="/manager/browse-events" class="btn btn-primary mt-2">Back to Browse Events</a>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Event Registration Modal -->
+<div class="modal fade" id="registerEventModal" tabindex="-1" aria-labelledby="registerEventModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="registerEventModalLabel">Register for <%= event.name %></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <% if (locals.teams && teams.length > 0) { %>
+                    <form id="registrationForm" action="/manager/event/<%= event.id %>/register" method="POST">
+                        <div class="mb-3">
+                            <label for="team_id" class="form-label">Select Team</label>
+                            <select class="form-select" id="team_id" name="team_id" required>
+                                <option value="">-- Select a team --</option>
+                                <% teams.forEach(team => { %>
+                                    <option value="<%= team._id %>"><%= team.name %> (<%= team.sport_type %>)</option>
+                                <% }); %>
+                            </select>
+                            <div class="form-text">Choose which of your teams to register for this event.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Notes (Optional)</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Any special requests or information for the organizer"></textarea>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Register Team</button>
+                        </div>
+                    </form>
+                <% } else { %>
+                    <div class="alert alert-info">
+                        <p class="mb-0">You don't have any teams yet. You need to create a team before you can register for this event.</p>
+                    </div>
+                    <div class="d-grid">
+                        <a href="/manager/create-team" class="btn btn-primary">Create Team</a>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle team registration form submission
+        const submitBtn = document.getElementById('submitRegistration');
+        const teamSelect = document.getElementById('teamSelect');
+        const form = document.getElementById('registrationForm');
+        
+        if (submitBtn && teamSelect && form) {
+            // Disable register button if no team is selected
+            teamSelect.addEventListener('change', function() {
+                submitBtn.disabled = !this.value;
+                console.log('Team selected:', this.value);
+            });
+            
+            // Initialize button state
+            submitBtn.disabled = !teamSelect.value;
+            
+            // Handle form submission
+            submitBtn.addEventListener('click', function(e) {
+                e.preventDefault(); // Prevent default behavior
+                
+                // Debug log to verify the selected team value
+                console.log('Submitting form with team ID:', teamSelect.value);
+                
+                if (form.checkValidity()) {
+                    // Show loading state
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Registering...';
+                    this.disabled = true;
+                    
+                    // Double check team_id is set
+                    if (!teamSelect.value) {
+                        alert('Please select a team');
+                        this.innerHTML = 'Register Team';
+                        this.disabled = false;
+                        return;
+                    }
+                    
+                    // Submit the form
+                    form.submit();
+                } else {
+                    form.reportValidity();
+                }
+            });
+        }
+        
+        // Initialize alerts to auto-dismiss
+        const alerts = document.querySelectorAll('.alert-dismissible');
+        alerts.forEach(alert => {
+            const bsAlert = new bootstrap.Alert(alert);
+            setTimeout(() => {
+                bsAlert.close();
+            }, 5000);
+        });
+    });
+</script> 

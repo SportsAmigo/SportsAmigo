@@ -1,0 +1,245 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">Add Player to <%= team.name %></h3>
+            </div>
+            <div class="card-body">
+                <ul class="nav nav-tabs mb-4" id="addPlayerTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="existing-tab" data-bs-toggle="tab" data-bs-target="#existing" type="button" role="tab" aria-controls="existing" aria-selected="true">
+                            Add Existing Player
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="new-tab" data-bs-toggle="tab" data-bs-target="#new" type="button" role="tab" aria-controls="new" aria-selected="false">
+                            Create New Player
+                        </button>
+                    </li>
+                </ul>
+                
+                <div class="tab-content" id="addPlayerTabContent">
+                    <!-- Add Existing Player Tab -->
+                    <div class="tab-pane fade show active" id="existing" role="tabpanel" aria-labelledby="existing-tab">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="card border-0 shadow-sm mb-4">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">Available Players</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <input type="text" class="form-control" id="playerSearch" placeholder="Search for players...">
+                                        </div>
+                                        
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Name</th>
+                                                        <th>Position</th>
+                                                        <th>Experience</th>
+                                                        <th>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <% if (availablePlayers && availablePlayers.length > 0) { %>
+                                                        <% availablePlayers.forEach(player => { %>
+                                                            <tr>
+                                                                <td><%= player.name %></td>
+                                                                <td><%= player.position %></td>
+                                                                <td>3 years</td>
+                                                                <td>
+                                                                    <button class="btn btn-sm btn-primary add-player-btn" data-player-id="<%= player.id %>" data-player-name="<%= player.name %>">
+                                                                        Add to Team
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        <% }); %>
+                                                    <% } else { %>
+                                                        <tr>
+                                                            <td colspan="4" class="text-center">No available players found</td>
+                                                        </tr>
+                                                    <% } %>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Create New Player Tab -->
+                    <div class="tab-pane fade" id="new" role="tabpanel" aria-labelledby="new-tab">
+                        <form id="newPlayerForm" action="/manager/team/<%= team.id %>/add-player" method="POST">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card border-0 shadow-sm mb-4">
+                                        <div class="card-header bg-light">
+                                            <h5 class="mb-0">Player Information</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <label for="playerName" class="form-label">Name</label>
+                                                <input type="text" class="form-control" id="playerName" name="name" required>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label for="playerPosition" class="form-label">Position</label>
+                                                <select class="form-select" id="playerPosition" name="position" required>
+                                                    <option value="">-- Select Position --</option>
+                                                    <option value="Point Guard">Point Guard</option>
+                                                    <option value="Shooting Guard">Shooting Guard</option>
+                                                    <option value="Small Forward">Small Forward</option>
+                                                    <option value="Power Forward">Power Forward</option>
+                                                    <option value="Center">Center</option>
+                                                </select>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label for="playerEmail" class="form-label">Email</label>
+                                                <input type="email" class="form-control" id="playerEmail" name="email" required>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label for="playerPhone" class="form-label">Phone</label>
+                                                <input type="tel" class="form-control" id="playerPhone" name="phone">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="card border-0 shadow-sm mb-4">
+                                        <div class="card-header bg-light">
+                                            <h5 class="mb-0">Additional Information</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <label for="playerJerseyNumber" class="form-label">Jersey Number</label>
+                                                <input type="number" class="form-control" id="playerJerseyNumber" name="jersey_number" min="0" max="99">
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label for="playerExperience" class="form-label">Experience (years)</label>
+                                                <input type="number" class="form-control" id="playerExperience" name="experience" min="0">
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label for="playerBio" class="form-label">Player Bio</label>
+                                                <textarea class="form-control" id="playerBio" name="bio" rows="3"></textarea>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label for="playerPhoto" class="form-label">Player Photo</label>
+                                                <input type="file" class="form-control" id="playerPhoto" name="photo">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="submit" class="btn btn-primary">Add New Player</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <a href="/manager/my-team" class="btn btn-secondary">Back to Team</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tab switching
+        const tabs = document.querySelectorAll('.nav-link');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                tabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                
+                const tabPanes = document.querySelectorAll('.tab-pane');
+                tabPanes.forEach(pane => pane.classList.remove('show', 'active'));
+                
+                const target = document.querySelector(this.getAttribute('data-bs-target'));
+                target.classList.add('show', 'active');
+            });
+        });
+        
+        // Search functionality for existing players
+        const playerSearch = document.getElementById('playerSearch');
+        if (playerSearch) {
+            playerSearch.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const rows = document.querySelectorAll('#existing tbody tr');
+                
+                rows.forEach(row => {
+                    const name = row.querySelector('td:first-child').textContent.toLowerCase();
+                    const position = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                    
+                    if (name.includes(searchTerm) || position.includes(searchTerm)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        }
+        
+        // Add player button functionality
+        const addPlayerBtns = document.querySelectorAll('.add-player-btn');
+        addPlayerBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const playerId = this.getAttribute('data-player-id');
+                const playerName = this.getAttribute('data-player-name');
+                
+                // Show loading state
+                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+                this.disabled = true;
+                
+                // Simulate API call to add player
+                setTimeout(() => {
+                    alert(`Added ${playerName} to team successfully!`);
+                    window.location.href = '/manager/my-team';
+                }, 1000);
+            });
+        });
+        
+        // New player form submission
+        const newPlayerForm = document.getElementById('newPlayerForm');
+        if (newPlayerForm) {
+            newPlayerForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Show loading state
+                const submitBtn = this.querySelector('button[type="submit"]');
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...';
+                submitBtn.disabled = true;
+                
+                // Simulate processing
+                setTimeout(() => {
+                    alert('New player added successfully!');
+                    window.location.href = '/manager/my-team';
+                }, 1000);
+            });
+        }
+        
+        const backBtn = document.querySelector('.btn-secondary');
+        backBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+            this.disabled = true;
+            
+            setTimeout(() => {
+                window.location.href = this.getAttribute('href');
+            }, 500);
+        });
+    });
+</script> 

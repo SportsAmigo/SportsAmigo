@@ -1,0 +1,202 @@
+<!-- System Statistics Page -->
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- Stats Summary Cards -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0 me-3">
+                            <i class="fas fa-users fa-2x text-primary"></i>
+                        </div>
+                        <div>
+                            <h6 class="card-title mb-0">Total Users</h6>
+                            <h3 class="mb-0"><%= stats.users.total %></h3>
+                        </div>
+                    </div>
+                    <div class="text-muted small">
+                        <span class="me-3"><i class="fas fa-running me-1"></i>Players: <%= stats.users.players %></span>
+                        <span class="me-3"><i class="fas fa-user-cog me-1"></i>Managers: <%= stats.users.managers %></span>
+                        <span><i class="fas fa-user-tie me-1"></i>Organizers: <%= stats.users.organizers %></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0 me-3">
+                            <i class="fas fa-people-group fa-2x text-success"></i>
+                        </div>
+                        <div>
+                            <h6 class="card-title mb-0">Total Teams</h6>
+                            <h3 class="mb-0"><%= stats.teams.total %></h3>
+                        </div>
+                    </div>
+                    <div class="text-muted small">
+                        <% if (stats.teams.byType && stats.teams.byType.length > 0) { %>
+                            <% for (let i = 0; i < Math.min(3, stats.teams.byType.length); i++) { %>
+                                <span class="me-3"><i class="fas fa-circle me-1"></i><%= stats.teams.byType[i]._id %>: <%= stats.teams.byType[i].count %></span>
+                            <% } %>
+                        <% } else { %>
+                            <span>No team type data available</span>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0 me-3">
+                            <i class="fas fa-trophy fa-2x text-warning"></i>
+                        </div>
+                        <div>
+                            <h6 class="card-title mb-0">Total Events</h6>
+                            <h3 class="mb-0"><%= stats.events.total %></h3>
+                        </div>
+                    </div>
+                    <div class="text-muted small">
+                        <span class="me-3"><i class="fas fa-calendar-day me-1"></i>Upcoming: <%= stats.events.upcoming %></span>
+                        <span><i class="fas fa-check-circle me-1"></i>Completed: <%= stats.events.past %></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-3">
+        <!-- User Distribution Chart -->
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">User Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="userDistributionChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Teams by Sport Type -->
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">Teams by Sport Type</h5>
+                </div>
+                <div class="card-body">
+                    <% if (stats.teams.byType && stats.teams.byType.length > 0) { %>
+                        <canvas id="teamSportChart" height="250"></canvas>
+                    <% } else { %>
+                        <div class="text-center py-5">
+                            <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                            <p>No team sport type data available</p>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Make stats available as a JavaScript object
+    const statsData = {
+        users: {
+            players: <%= stats.users.players %>,
+            managers: <%= stats.users.managers %>,
+            organizers: <%= stats.users.organizers %>,
+            total: <%= stats.users.total %>
+        },
+        teams: {
+            total: <%= stats.teams.total %>,
+            byType: <%- JSON.stringify(stats.teams.byType || []) %>
+        },
+        events: {
+            total: <%= stats.events.total || 0 %>,
+            upcoming: <%= stats.events.upcoming || 0 %>,
+            past: <%= stats.events.past || 0 %>
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // User Distribution Chart
+        const userCtx = document.getElementById('userDistributionChart').getContext('2d');
+        const userDistChart = new Chart(userCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Players', 'Managers', 'Organizers'],
+                datasets: [{
+                    data: [
+                        statsData.users.players, 
+                        statsData.users.managers, 
+                        statsData.users.organizers
+                    ],
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(153, 102, 255, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+        
+        // Teams by Sport Type Chart
+        if (statsData.teams.byType && statsData.teams.byType.length > 0) {
+            const teamCtx = document.getElementById('teamSportChart').getContext('2d');
+            
+            // Extract data from the statsData object
+            const sportLabels = statsData.teams.byType.map(item => item._id);
+            const sportData = statsData.teams.byType.map(item => item.count);
+            
+            const teamSportChart = new Chart(teamCtx, {
+                type: 'bar',
+                data: {
+                    labels: sportLabels,
+                    datasets: [{
+                        label: 'Number of Teams',
+                        data: sportData,
+                        backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script> 

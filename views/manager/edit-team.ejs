@@ -1,0 +1,74 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">Edit Team</h3>
+            </div>
+            <div class="card-body">
+                <form action="/manager/team/<%= team.id %>/update" method="POST">
+                    <div class="mb-3">
+                        <label for="teamName" class="form-label">Team Name</label>
+                        <input type="text" class="form-control" id="teamName" name="name" value="<%= team.name %>" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="teamSport" class="form-label">Sport</label>
+                        <select class="form-select" id="teamSport" name="sport" required>
+                            <option value="Basketball" <%= team.sport === 'Basketball' ? 'selected' : '' %>>Basketball</option>
+                            <option value="Football" <%= team.sport === 'Football' ? 'selected' : '' %>>Football</option>
+                            <option value="Cricket" <%= team.sport === 'Cricket' ? 'selected' : '' %>>Cricket</option>
+                            <option value="Tennis" <%= team.sport === 'Tennis' ? 'selected' : '' %>>Tennis</option>
+                            <option value="Swimming" <%= team.sport === 'Swimming' ? 'selected' : '' %>>Swimming</option>
+                            <option value="Volleyball" <%= team.sport === 'Volleyball' ? 'selected' : '' %>>Volleyball</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="teamStatus" class="form-label">Status</label>
+                        <select class="form-select" id="teamStatus" name="status" required>
+                            <option value="Active" <%= team.status === 'Active' ? 'selected' : '' %>>Active</option>
+                            <option value="Inactive" <%= team.status === 'Inactive' ? 'selected' : '' %>>Inactive</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="teamDescription" class="form-label">Team Description</label>
+                        <textarea class="form-control" id="teamDescription" name="description" rows="3">A competitive basketball team from the local league</textarea>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="/manager/my-team" class="btn btn-secondary me-md-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        const submitBtn = form.querySelector('button[type="submit"]');
+        
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show loading state
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+            submitBtn.disabled = true;
+            
+            // Simulate processing
+            setTimeout(() => {
+                window.location.href = '/manager/my-team';
+            }, 1000);
+        });
+        
+        // Cancel button functionality
+        const cancelBtn = document.querySelector('.btn-secondary');
+        cancelBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = '/manager/my-team';
+        });
+    });
+</script> 

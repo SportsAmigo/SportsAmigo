@@ -1,0 +1,121 @@
+<%- include('partials/header', {title: 'About Us - South African Sports Association', headerType: 'about'}) %>
+
+<nav>
+    <a href="/"><img src="/images/logo.png" alt="South African Sports Association Logo"></a>
+    <div class="nav-links" id="navLinks">
+        <i class="fa fa-times" onclick="hideMenu()"></i>
+        <ul>
+            <li><a href="/">HOME</a></li>
+            <li><a href="/about">ABOUT</a></li>
+            <li class="dropdown">
+                <a href="/events">EVENTS</a>
+                <div class="dropdown-content">
+                    <a href="/events/football">Football</a>
+                    <a href="/events/cricket">Cricket</a>
+                    <a href="/events/basketball">Basketball</a>
+                </div>
+            </li>
+            <li><a href="/contact">CONTACT</a></li>
+            <li><a href="/partner">PARTNER</a></li>
+            <li><a href="/support">SUPPORT</a></li>
+            <li><a href="/login">LOGIN</a></li>
+        </ul>
+    </div>
+    <i class="fa fa-bars" onclick="showMenu()"></i>
+</nav>
+
+<h1>About Us</h1>
+
+<!-- About Us Content -->
+<section class="about-us">
+    <div class="row">
+        <div class="about-col">
+            <h1>We are South Africa's Premier Sports Organization</h1>
+            <p>The South African Sports Association (SASA) was established in 1995 with the mission to promote and develop sports across South Africa. Following the end of apartheid, our organization was formed to unite the country through the power of sports and to provide equal opportunities for all South Africans to participate in sporting activities.</p>
+            <p>Over the years, we have grown to become the leading sports organization in South Africa, working closely with national sports federations, government bodies, and international organizations to elevate South African sports on the global stage.</p>
+            <p>Our vision is to create a nation where sports is accessible to all, regardless of background, and where South African athletes can compete and excel at the highest levels of international competition.</p>
+            <a href="/contact" class="hero-btn red-btn">CONTACT US</a>
+        </div>
+        <div class="about-col">
+            <img src="/images/about.jpg" alt="About South African Sports Association">
+        </div>
+    </div>
+</section>
+
+<!-- Our Mission -->
+<section class="facilities">
+    <h1>Our Mission</h1>
+    <p>What drives us every day at the South African Sports Association</p>
+
+    <div class="row">
+        <div class="facilities-col">
+            <img src="/images/mission1.jpg" alt="Promote Sports">
+            <h3>Promote Sports</h3>
+            <p>We are committed to promoting sports at all levels across South Africa, from grassroots community programs to elite professional competitions.</p>
+        </div>
+        <div class="facilities-col">
+            <img src="/images/mission2.jpg" alt="Develop Athletes">
+            <h3>Develop Athletes</h3>
+            <p>We provide pathways and support systems for athletes to develop their skills and reach their full potential, both nationally and internationally.</p>
+        </div>
+        <div class="facilities-col">
+            <img src="/images/mission3.jpg" alt="Unite Communities">
+            <h3>Unite Communities</h3>
+            <p>We use the power of sports to bring together diverse communities, foster social cohesion, and build a stronger, more united South Africa.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Our Leadership -->
+<section class="testimonials">
+    <h1>Our Leadership</h1>
+    <p>Meet the dedicated team guiding the South African Sports Association</p>
+
+    <div class="row">
+        <div class="testimonials-col">
+            <img src="/images/leader1.jpg" alt="Thabo Mbeki">
+            <div>
+                <p>With over 25 years of experience in sports administration, Thabo leads our organization with vision and integrity. His background in both professional sports and business management has been instrumental in our growth.</p>
+                <h3>Thabo Mbeki</h3>
+                <h5>President</h5>
+            </div>
+        </div>
+        <div class="testimonials-col">
+            <img src="/images/leader2.jpg" alt="Nomsa Dlamini">
+            <div>
+                <p>Nomsa brings her Olympic experience and passion for athlete development to our organization. She oversees our high-performance programs and works tirelessly to create opportunities for South African athletes.</p>
+                <h3>Nomsa Dlamini</h3>
+                <h5>Executive Director</h5>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Our Achievements -->
+<section class="upcoming-events">
+    <h1>Our Achievements</h1>
+    <p>Celebrating our milestones and contributions to South African sports</p>
+
+    <div class="row">
+        <div class="event-col">
+            <h3>National Reach</h3>
+            <p>We have established sports programs in all nine provinces of South Africa, reaching over 500,000 participants annually through our various initiatives and events.</p>
+        </div>
+        <div class="event-col">
+            <h3>International Success</h3>
+            <p>Our supported athletes have won 45 Olympic medals since our founding, and our teams have achieved podium finishes in numerous world championships across different sports.</p>
+        </div>
+        <div class="event-col">
+            <h3>Community Impact</h3>
+            <p>Our community sports programs have been recognized internationally for their positive social impact, particularly in underserved areas where we've built over 100 sports facilities.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Call To Action -->
+<section class="cta">
+    <h1>Join Our Mission To Transform South African Sports</h1>
+    <a href="/partner" class="hero-btn">BECOME A PARTNER</a>
+</section>
+
+<%- include('partials/footer') %> 

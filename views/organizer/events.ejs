@@ -1,0 +1,61 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>My Events</h1>
+        <a href="/organizer/create-event" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-2"></i>Create New Event
+        </a>
+    </div>
+    
+    <% if (messages.error) { %>
+        <div class="alert alert-danger"><%= messages.error %></div>
+    <% } %>
+    <% if (messages.success) { %>
+        <div class="alert alert-success"><%= messages.success %></div>
+    <% } %>
+    
+    <% if (events && events.length > 0) { %>
+        <div class="row">
+            <% events.forEach(event => { %>
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-header <%= event.status === 'upcoming' ? 'bg-success' : 'bg-secondary' %> text-white">
+                            <%= event.status.charAt(0).toUpperCase() + event.status.slice(1) %>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title"><%= event.name %></h5>
+                            <h6 class="card-subtitle mb-2 text-muted">
+                                <%= new Date(event.event_date).toLocaleDateString() %> at <%= event.event_time %>
+                            </h6>
+                            <p class="card-text">
+                                <strong>Location:</strong> <%= event.location %><br>
+                                <strong>Sport:</strong> <%= event.sport_type %><br>
+                                <strong>Teams:</strong> <%= event.registered_teams || 0 %> / <%= event.max_teams || 'Unlimited' %>
+                            </p>
+                            <p class="card-text"><%= event.description ? event.description.substring(0, 100) + (event.description.length > 100 ? '...' : '') : 'No description provided.' %></p>
+                            
+                            <div class="d-flex justify-content-between mt-3">
+                                <a href="/organizer/event/<%= event.id %>" class="btn btn-primary">Manage Event</a>
+                                <% if (event.status === 'draft') { %>
+                                    <form action="/organizer/publish-event" method="POST" class="d-inline">
+                                        <input type="hidden" name="eventId" value="<%= event.id %>">
+                                        <button type="submit" class="btn btn-success">Publish</button>
+                                    </form>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+    <% } else { %>
+        <div class="alert alert-info">
+            <p>You haven't created any events yet.</p>
+            <a href="/organizer/create-event" class="btn btn-primary">Create Your First Event</a>
+        </div>
+    <% } %>
+</div>
+
+<%- include('../partials/footer') %> 

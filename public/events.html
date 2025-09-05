@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Events - SportsAmigo</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <style>
+        /* Custom style adjustments for events page */
+        .sub-header {
+            height: 60vh;
+            background-image: linear-gradient(rgba(4,9,30,0.7),rgba(4,9,30,0.7)),url(images/bann.avif);
+            background-position: center;
+            background-size: cover;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Animated background overlay */
+        .sub-header::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.3) 0%, rgba(4, 9, 30, 0.6) 100%);
+            z-index: 1;
+            animation: gradientShift 10s ease infinite alternate;
+        }
+        
+        @keyframes gradientShift {
+            0% {
+                background: linear-gradient(135deg, rgba(76, 175, 80, 0.3) 0%, rgba(4, 9, 30, 0.6) 100%);
+            }
+            50% {
+                background: linear-gradient(135deg, rgba(33, 150, 243, 0.3) 0%, rgba(4, 9, 30, 0.6) 100%);
+            }
+            100% {
+                background: linear-gradient(135deg, rgba(244, 67, 54, 0.3) 0%, rgba(4, 9, 30, 0.6) 100%);
+            }
+        }
+        
+        /* Ensure content appears above the overlay */
+        .sub-header nav, .sub-header .text-box {
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* Logo Animation Styles */
+        .logo-container {
+            position: relative;
+            display: inline-block;
+            overflow: visible;
+        }
+        
+        /* Sports icons that float around the logo */
+        .sports-icon {
+            position: absolute;
+            color: rgba(244, 67, 54, 0.7);
+            animation: iconFloat 6s infinite ease-in-out;
+            font-size: 16px;
+            pointer-events: none;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+        
+        .icon-basketball {
+            top: -10px;
+            right: 10px;
+            animation-delay: 0.5s;
+        }
+        
+        .icon-football {
+            bottom: -5px;
+            right: 30px;
+            animation-delay: 1.5s;
+            color: rgba(33, 150, 243, 0.7);
+        }
+        
+        .icon-cricket {
+            top: 50%;
+            right: -10px;
+            animation-delay: 2.5s;
+            color: rgba(76, 175, 80, 0.7);
+        }
+        
+        @keyframes iconFloat {
+            0%, 100% {
+                transform: translateY(0) scale(1);
+                opacity: 0.5;
+            }
+            25% {
+                transform: translate(5px, -5px) scale(1.2);
+                opacity: 1;
+                color: #f44336;
+            }
+            50% {
+                transform: translateY(0) scale(1);
+                opacity: 0.5;
+            }
+            75% {
+                transform: translate(-5px, 5px) scale(0.8);
+                opacity: 0.7;
+                color: #ff9800;
+            }
+        }
+        
+        /* Energy pulse effect */
+        .energy-pulse {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(244, 67, 54, 0.3) 0%, rgba(255, 255, 255, 0) 70%);
+            border-radius: 50%;
+            opacity: 0;
+            animation: pulse 3s infinite ease-out;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 0.7;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1.8);
+                opacity: 0;
+            }
+        }
+        
+        /* Logo highlighting animation */
+        .logo-spin {
+            animation: logoEffect 5s infinite alternate;
+            transform-origin: center;
+            position: relative;
+            z-index: 2;
+        }
+        
+        @keyframes logoEffect {
+            0% {
+                filter: drop-shadow(0 0 4px rgba(244, 67, 54, 0.6));
+                transform: scale(1);
+            }
+            50% {
+                filter: drop-shadow(0 0 10px rgba(255, 152, 0, 0.8));
+                transform: scale(1.05);
+            }
+            100% {
+                filter: drop-shadow(0 0 4px rgba(244, 67, 54, 0.6));
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <section class="sub-header">
+        <nav>
+            <a href="index.html" class="logo-container">
+                <div class="energy-pulse"></div>
+                <img src="images/logooo-removebg-preview.png" class="logo-spin">
+                <i class="fa fa-circle sports-icon icon-basketball"></i>
+                <i class="fa fa-futbol-o sports-icon icon-football"></i>
+                <i class="fa fa-trophy sports-icon icon-cricket"></i>
+            </a>
+            <div class="nav-links" id="navLinks">
+                <i class="fa fa-times" onclick="hideMenu()"></i>
+                <ul>
+                    <li><a href="index.html">HOME</a></li>
+                    <li class="dropdown">
+                        <a href="events.html">EVENTS</a>
+                        <div class="dropdown-content">
+                            <a href="eventbasketball.html">BASKETBALL</a>
+                            <a href="eventcricket.html">CRICKET</a>
+                            <a href="eventfootball.html">FOOTBALL</a>
+                        </div>
+                    </li>
+                    <li><a href="about.html">ABOUT</a></li>
+                    <li><a href="contact.html">CONTACT</a></li>
+                    <li><a href="/login">LOGIN</a></li>
+                </ul>
+            </div>
+            <i class="fa fa-bars" onclick="showMenu()"></i>
+        </nav>
+        <div class="text-box" style="top: 30%; left: 50%; transform: translate(-50%, -60%); text-align: center;">
+            <h1>Sports Events</h1>
+            <p>Discover and participate in exciting sports events across different categories</p>
+        </div>
+    </section>
+
+    <!-- Events Categories Section -->
+    <section class="events-categories">
+        <div class="container">
+            <h2>Choose Your Sport</h2>
+            <p>Explore events in your favorite sports categories</p>
+            
+            <div class="row">
+                <div class="events-col">
+                    <img src="images/basketball-sport-environment-filed.jpg" alt="Basketball">
+                    <div class="layer">
+                        <h3>BASKETBALL</h3>
+                        <a href="eventbasketball.html" class="event-link">View Events</a>
+                    </div>
+                </div>
+                <div class="events-col">
+                    <img src="images/cricket-equipments-green-grass.jpg" alt="Cricket">
+                    <div class="layer">
+                        <h3>CRICKET</h3>
+                        <a href="eventcricket.html" class="event-link">View Events</a>
+                    </div>
+                </div>
+                <div class="events-col">
+                    <img src="images/close-up-sport-environment-with-soccer-ball.jpg" alt="Football">
+                    <div class="layer">
+                        <h3>FOOTBALL</h3>
+                        <a href="eventfootball.html" class="event-link">View Events</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Events Section -->
+    <section class="featured-events">
+        <div class="container">
+            <h2>Featured Events</h2>
+            <p>Highlights of upcoming tournaments and competitions</p>
+            
+            <div class="featured-events-container">
+                <div class="featured-event-card">
+                    <div class="event-date">
+                        <span class="day">15</span>
+                        <span class="month">APR</span>
+                    </div>
+                    <div class="event-details">
+                        <h3>City 3x3 Basketball Challenge</h3>
+                        <p class="event-location"><i class="fa fa-map-marker"></i> Central Arena, Downtown</p>
+                        <p>The ultimate 3x3 basketball tournament with exciting prizes and professional referees.</p>
+                        <button class="event-btn" onclick="openModal('basketball-modal')">Learn More</button>
+                    </div>
+                </div>
+                
+                <div class="featured-event-card">
+                    <div class="event-date">
+                        <span class="day">20</span>
+                        <span class="month">APR</span>
+                    </div>
+                    <div class="event-details">
+                        <h3>T20 City Championship</h3>
+                        <p class="event-location"><i class="fa fa-map-marker"></i> Central Cricket Ground</p>
+                        <p>City-wide T20 cricket tournament featuring teams from across the region.</p>
+                        <button class="event-btn" onclick="openModal('cricket-modal')">Learn More</button>
+                    </div>
+                </div>
+                
+                <div class="featured-event-card">
+                    <div class="event-date">
+                        <span class="day">25</span>
+                        <span class="month">APR</span>
+                    </div>
+                    <div class="event-details">
+                        <h3>City 5-a-side Football Cup</h3>
+                        <p class="event-location"><i class="fa fa-map-marker"></i> Downtown Football Arena</p>
+                        <p>Fast-paced 5-a-side football tournament with exciting matches and professional referees.</p>
+                        <button class="event-btn" onclick="openModal('football-modal')">Learn More</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta">
+        <h1>Ready to Participate in Exciting Sports Events?<br>Register Now!</h1>
+        <a href="register.html" class="hero-btn">SIGN UP</a>
+    </section>
+
+    <section class="footer">
+        <h4 style="position: relative; display: inline-block; font-size: 32px; font-weight: 700; margin-bottom: 30px; background: linear-gradient(to right, #f44336, #ff9800); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 2px; text-transform: uppercase;">About SportsAmigo</h4>
+        <p style="border-left: 4px solid #f44336; padding-left: 20px; text-align: left; max-width: 700px; margin: 10px auto 30px; position: relative; background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 0 10px 10px 0; font-size: 16px; line-height: 1.8; font-weight: 400; letter-spacing: 0.5px; color: rgba(255, 255, 255, 0.9);">SportsAmigo is the ultimate sports management platform connecting players, teams, and communities. Our mission is to make sports more accessible, organized, and enjoyable for everyone.</p>
+        <div class="icons">
+            <a href="https://facebook.com/sportsamigo" target="_blank"><i class="fa fa-facebook"></i></a>
+            <a href="https://twitter.com/sportsamigo" target="_blank"><i class="fa fa-twitter"></i></a>
+            <a href="https://instagram.com/sportsamigo" target="_blank"><i class="fa fa-instagram"></i></a>
+            <a href="https://linkedin.com/company/sportsamigo" target="_blank"><i class="fa fa-linkedin"></i></a>
+        </div>
+        <p>Made with <i class="fa fa-heart-o"></i> by SportsAmigo Team</p>
+    </section>
+
+    <!-- Event Detail Modals -->
+    <div id="basketball-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('basketball-modal')">&times;</span>
+            <div class="modal-header" style="background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url(images/basketball-sport-environment-filed.jpg);">
+                <h2>City 3x3 Basketball Challenge</h2>
+                <div class="event-tags">
+                    <span class="event-tag"><i class="fa fa-calendar"></i> April 15, 2023</span>
+                    <span class="event-tag"><i class="fa fa-map-marker"></i> Central Arena, Downtown</span>
+                    <span class="event-tag"><i class="fa fa-clock-o"></i> 9:00 AM - 6:00 PM</span>
+                </div>
+            </div>
+            <div class="modal-body">
+                <h3>Event Description</h3>
+                <p>The City 3x3 Basketball Challenge is the premier street basketball tournament in the region, bringing together teams of all skill levels to compete in a fast-paced, action-packed day of hoops.</p>
+                
+                <h3>Tournament Format</h3>
+                <ul>
+                    <li><strong>Team Size:</strong> 3 players + 1 substitute</li>
+                    <li><strong>Divisions:</strong> Men's Open, Women's Open, U18, U16</li>
+                    <li><strong>Format:</strong> Group stage followed by knockout rounds</li>
+                    <li><strong>Game Duration:</strong> 10 minutes or first to 21 points</li>
+                </ul>
+                
+                <h3>Prizes</h3>
+                <ul>
+                    <li><strong>1st Place:</strong> $1,000 + Championship Trophy</li>
+                    <li><strong>2nd Place:</strong> $500</li>
+                    <li><strong>3rd Place:</strong> $250</li>
+                    <li><strong>MVP Award:</strong> Custom jersey and basketball</li>
+                </ul>
+                
+                <h3>Registration Details</h3>
+                <ul>
+                    <li><strong>Entry Fee:</strong> $120 per team</li>
+                    <li><strong>Registration Deadline:</strong> April 10, 2023</li>
+                    <li><strong>Contact:</strong> basketball@sportsamigo.com</li>
+                </ul>
+                
+                <div class="modal-actions">
+                    <a href="eventbasketball.html" class="modal-btn primary">Go to Event Page</a>
+                    <button class="modal-btn secondary" onclick="closeModal('basketball-modal')">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="cricket-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('cricket-modal')">&times;</span>
+            <div class="modal-header" style="background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url(images/cricket-equipments-green-grass.jpg);">
+                <h2>T20 City Championship</h2>
+                <div class="event-tags">
+                    <span class="event-tag"><i class="fa fa-calendar"></i> April 20-30, 2023</span>
+                    <span class="event-tag"><i class="fa fa-map-marker"></i> Central Cricket Ground</span>
+                    <span class="event-tag"><i class="fa fa-clock-o"></i> Multiple matches daily</span>
+                </div>
+            </div>
+            <div class="modal-body">
+                <h3>Event Description</h3>
+                <p>The T20 City Championship is the most prestigious cricket tournament in the city, featuring 16 teams competing in the exciting T20 format. Witness thrilling matches, spectacular batting, and fierce bowling as teams battle for the championship title.</p>
+                
+                <h3>Tournament Format</h3>
+                <ul>
+                    <li><strong>Team Size:</strong> 11 players + 4 substitutes</li>
+                    <li><strong>Format:</strong> 4 groups of 4 teams, followed by quarterfinals, semifinals, and final</li>
+                    <li><strong>Match Duration:</strong> 20 overs per side</li>
+                    <li><strong>Tournament Duration:</strong> 10 days</li>
+                </ul>
+                
+                <h3>Prizes</h3>
+                <ul>
+                    <li><strong>Champion Team:</strong> $3,000 + Trophy</li>
+                    <li><strong>Runner-up:</strong> $1,500</li>
+                    <li><strong>Best Batsman:</strong> $500 + Medal</li>
+                    <li><strong>Best Bowler:</strong> $500 + Medal</li>
+                    <li><strong>Player of the Tournament:</strong> $1,000 + Medal</li>
+                </ul>
+                
+                <h3>Registration Details</h3>
+                <ul>
+                    <li><strong>Entry Fee:</strong> $300 per team</li>
+                    <li><strong>Registration Deadline:</strong> April 10, 2023</li>
+                    <li><strong>Contact:</strong> cricket@sportsamigo.com</li>
+                </ul>
+                
+                <div class="modal-actions">
+                    <a href="eventcricket.html" class="modal-btn primary">Go to Event Page</a>
+                    <button class="modal-btn secondary" onclick="closeModal('cricket-modal')">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="football-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('football-modal')">&times;</span>
+            <div class="modal-header" style="background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url(images/close-up-sport-environment-with-soccer-ball.jpg);">
+                <h2>City 5-a-side Football Cup</h2>
+                <div class="event-tags">
+                    <span class="event-tag"><i class="fa fa-calendar"></i> April 25-26, 2023</span>
+                    <span class="event-tag"><i class="fa fa-map-marker"></i> Downtown Football Arena</span>
+                    <span class="event-tag"><i class="fa fa-clock-o"></i> 10:00 AM - 8:00 PM</span>
+                </div>
+            </div>
+            <div class="modal-body">
+                <h3>Event Description</h3>
+                <p>The City 5-a-side Football Cup is a high-energy, fast-paced football tournament played on smaller pitches with smaller goals. This exciting format emphasizes skill, quick thinking, and teamwork. Join us for a weekend of non-stop football action!</p>
+                
+                <h3>Tournament Format</h3>
+                <ul>
+                    <li><strong>Team Size:</strong> 5 players + 3 substitutes</li>
+                    <li><strong>Divisions:</strong> Open, Corporate, U21, Veterans (35+)</li>
+                    <li><strong>Format:</strong> Group stage followed by knockout rounds</li>
+                    <li><strong>Game Duration:</strong> 20 minutes (10 minutes per half)</li>
+                </ul>
+                
+                <h3>Prizes</h3>
+                <ul>
+                    <li><strong>1st Place:</strong> $2,000 + Championship Trophy</li>
+                    <li><strong>2nd Place:</strong> $1,000</li>
+                    <li><strong>3rd Place:</strong> $500</li>
+                    <li><strong>Golden Boot:</strong> Custom trophy for top scorer</li>
+                    <li><strong>Best Goalkeeper:</strong> Custom trophy</li>
+                </ul>
+                
+                <h3>Registration Details</h3>
+                <ul>
+                    <li><strong>Entry Fee:</strong> $200 per team</li>
+                    <li><strong>Registration Deadline:</strong> April 20, 2023</li>
+                    <li><strong>Contact:</strong> football@sportsamigo.com</li>
+                </ul>
+                
+                <div class="modal-actions">
+                    <a href="eventfootball.html" class="modal-btn primary">Go to Event Page</a>
+                    <button class="modal-btn secondary" onclick="closeModal('football-modal')">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for Toggle Menu -->
+    <script>
+        var navLinks = document.getElementById("navLinks");
+        
+        function showMenu() {
+            navLinks.style.right = "0";
+        }
+        
+        function hideMenu() {
+            navLinks.style.right = "-200px";
+        }
+
+        // Modal functions
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = "block";
+            document.body.style.overflow = "hidden"; // Prevent scrolling behind modal
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = "none";
+            document.body.style.overflow = "auto"; // Re-enable scrolling
+        }
+        
+        // Close modal when clicking outside the content
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = "none";
+                document.body.style.overflow = "auto";
+            }
+        }
+    </script>
+
+    <!-- Additional CSS for Events Page -->
+    <style>
+        .events-categories {
+            padding: 80px 0;
+            text-align: center;
+        }
+        
+        .events-categories h2 {
+            font-size: 36px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .events-categories p {
+            color: #777;
+            font-size: 14px;
+            font-weight: 300;
+            line-height: 22px;
+            padding: 10px;
+            margin-bottom: 50px;
+        }
+        
+        .events-col {
+            flex-basis: 32%;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .events-col img {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            display: block;
+        }
+        
+        .layer {
+            background: transparent;
+            height: 100%;
+            width: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: 0.5s;
+        }
+        
+        .layer:hover {
+            background: rgba(226, 0, 0, 0.7);
+        }
+        
+        .layer h3 {
+            width: 100%;
+            font-weight: 500;
+            color: #fff;
+            font-size: 26px;
+            bottom: 40%;
+            left: 50%;
+            transform: translateX(-50%);
+            position: absolute;
+            opacity: 0;
+            transition: 0.5s;
+        }
+        
+        .event-link {
+            display: inline-block;
+            text-decoration: none;
+            color: #fff;
+            border: 1px solid #fff;
+            padding: 12px 34px;
+            font-size: 13px;
+            background: transparent;
+            position: absolute;
+            bottom: 25%;
+            left: 50%;
+            transform: translateX(-50%);
+            cursor: pointer;
+            opacity: 0;
+            transition: 0.5s;
+        }
+        
+        .event-link:hover {
+            border: 1px solid #f44336;
+            background: #f44336;
+        }
+        
+        .layer:hover h3, .layer:hover .event-link {
+            opacity: 1;
+        }
+        
+        .featured-events {
+            padding: 80px 0;
+            background-color: #f8f9fa;
+        }
+        
+        .featured-events h2 {
+            text-align: center;
+            font-size: 36px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .featured-events p {
+            text-align: center;
+            color: #777;
+            font-size: 14px;
+            font-weight: 300;
+            line-height: 22px;
+            padding: 10px;
+            margin-bottom: 50px;
+        }
+        
+        .featured-events-container {
+            display: flex;
+            flex-wrap: nowrap;
+            justify-content: space-between;
+            gap: 20px;
+            overflow-x: auto;
+        }
+        
+        .featured-event-card {
+            flex-basis: calc(33.33% - 20px);
+            flex-shrink: 0;
+            min-width: 280px;
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .featured-event-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+        
+        .event-date {
+            background: #f44336;
+            color: #fff;
+            border-radius: 5px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            min-width: 60px;
+        }
+        
+        .event-date .day {
+            font-size: 24px;
+            font-weight: 700;
+        }
+        
+        .event-date .month {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .event-details {
+            flex: 1;
+        }
+        
+        .event-details h3 {
+            margin-bottom: 10px;
+            font-size: 18px;
+            color: #333;
+        }
+        
+        .event-location {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        .event-location i {
+            margin-right: 5px;
+            color: #f44336;
+        }
+        
+        .event-btn {
+            display: inline-block;
+            text-decoration: none;
+            color: #fff;
+            border: 1px solid #f44336;
+            padding: 8px 20px;
+            font-size: 13px;
+            background: #f44336;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: 0.3s;
+        }
+        
+        .event-btn:hover {
+            background: #d32f2f;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 50px 0;
+        }
+        
+        .modal-content {
+            background-color: #fff;
+            max-width: 800px;
+            width: 90%;
+            margin: 0 auto;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
+            animation: modalFadeIn 0.3s ease-out;
+        }
+        
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .modal-header {
+            padding: 40px 30px;
+            color: white;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+        
+        .modal-header h2 {
+            font-size: 32px;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+        
+        .event-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .event-tag {
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
+        .event-tag i {
+            margin-right: 5px;
+        }
+        
+        .modal-body {
+            padding: 30px;
+        }
+        
+        .modal-body h3 {
+            color: #333;
+            margin: 25px 0 15px;
+            font-size: 20px;
+        }
+        
+        .modal-body h3:first-child {
+            margin-top: 0;
+        }
+        
+        .modal-body p {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .modal-body ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .modal-body li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            color: #555;
+        }
+        
+        .modal-body li:last-child {
+            border-bottom: none;
+        }
+        
+        .modal-actions {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .modal-btn {
+            padding: 12px 25px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+        }
+        
+        .modal-btn.primary {
+            background-color: #f44336;
+            color: white;
+        }
+        
+        .modal-btn.primary:hover {
+            background-color: #d32f2f;
+        }
+        
+        .modal-btn.secondary {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        
+        .modal-btn.secondary:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 30px;
+            color: white;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: all 0.3s;
+            text-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+        }
+        
+        .close-modal:hover {
+            opacity: 1;
+        }
+        
+        /* Responsive design */
+        @media(max-width: 768px) {
+            .events-col {
+                flex-basis: 100%;
+            }
+            
+            .layer h3 {
+                opacity: 1;
+                bottom: 45%;
+            }
+            
+            .event-link {
+                opacity: 1;
+                bottom: 30%;
+            }
+        }
+        
+        /* Enhanced Typography for Key Sections */
+        .player-spotlight h1, 
+        .popular-sports h1, 
+        .footer h4 {
+            position: relative;
+            display: inline-block;
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            background: linear-gradient(to right, #f44336, #ff9800);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        
+        .player-spotlight h1::after,
+        .popular-sports h1::after,
+        .footer h4::after {
+            content: "";
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(to right, #f44336, #ff9800);
+            border-radius: 2px;
+        }
+        
+        .player-spotlight p, 
+        .popular-sports p, 
+        .footer p {
+            font-size: 16px;
+            line-height: 1.8;
+            color: #555;
+            max-width: 800px;
+            margin: 0 auto 40px;
+            position: relative;
+            padding: 0 20px;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+        }
+        
+        .player-spotlight p::before,
+        .popular-sports p::before {
+            content: "\201C";
+            font-family: Georgia, serif;
+            font-size: 80px;
+            color: rgba(244, 67, 54, 0.1);
+            position: absolute;
+            left: -15px;
+            top: -40px;
+        }
+        
+        .player-spotlight p::after,
+        .popular-sports p::after {
+            content: "\201D";
+            font-family: Georgia, serif;
+            font-size: 80px;
+            color: rgba(244, 67, 54, 0.1);
+            position: absolute;
+            right: -15px;
+            bottom: -70px;
+        }
+        
+        /* Special styling for footer section */
+        .footer h4 {
+            font-size: 32px;
+            margin-top: 0;
+            padding-top: 20px;
+        }
+        
+        .footer p {
+            color: rgba(255, 255, 255, 0.8);
+            font-style: italic;
+            position: relative;
+            padding: 0 30px;
+        }
+        
+        .footer p::before,
+        .footer p::after {
+            display: none;
+        }
+        
+        .footer p.mission-statement {
+            border-left: 4px solid #f44336;
+            padding-left: 20px;
+            text-align: left;
+            max-width: 700px;
+            margin: 10px auto 30px;
+            font-style: normal;
+            position: relative;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 0 10px 10px 0;
+        }
+        
+        /* Responsive styles for enhanced typography */
+        @media(max-width: 768px) {
+            .player-spotlight h1, 
+            .popular-sports h1, 
+            .footer h4 {
+                font-size: 32px;
+            }
+            
+            .player-spotlight p, 
+            .popular-sports p, 
+            .footer p {
+                font-size: 14px;
+                padding: 0 15px;
+            }
+        }
+    </style>
+    
+    <!-- JavaScript Files -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        // Initialize AOS animation library
+        AOS.init({
+            duration: 800,
+            easing: 'ease-in-out',
+            once: true
+        });
+        
+        // Mobile menu functionality
+        var navLinks = document.getElementById("navLinks");
+        function showMenu() {
+            navLinks.style.right = "0";
+        }
+        function hideMenu() {
+            navLinks.style.right = "-200px";
+        }
+    </script>
+</body>
+</html> 

@@ -1,0 +1,146 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">Edit Player: <%= player.name %></h3>
+            </div>
+            <div class="card-body">
+                <form action="/manager/player/<%= player.id %>/update" method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm mb-4">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">Player Information</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="playerName" class="form-label">Name</label>
+                                        <input type="text" class="form-control" id="playerName" name="name" value="<%= player.name %>" required>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="playerPosition" class="form-label">Position</label>
+                                        <select class="form-select" id="playerPosition" name="position" required>
+                                            <option value="">-- Select Position --</option>
+                                            <option value="Point Guard" <%= player.position === 'Point Guard' ? 'selected' : '' %>>Point Guard</option>
+                                            <option value="Shooting Guard" <%= player.position === 'Shooting Guard' ? 'selected' : '' %>>Shooting Guard</option>
+                                            <option value="Small Forward" <%= player.position === 'Small Forward' ? 'selected' : '' %>>Small Forward</option>
+                                            <option value="Power Forward" <%= player.position === 'Power Forward' ? 'selected' : '' %>>Power Forward</option>
+                                            <option value="Center" <%= player.position === 'Center' ? 'selected' : '' %>>Center</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="playerEmail" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="playerEmail" name="email" value="<%= player.email %>" required>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="playerPhone" class="form-label">Phone</label>
+                                        <input type="tel" class="form-control" id="playerPhone" name="phone" value="<%= player.phone %>">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm mb-4">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">Team Information</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="playerTeam" class="form-label">Team</label>
+                                        <input type="text" class="form-control" id="playerTeam" value="<%= player.team %>" disabled>
+                                        <div class="form-text">Team cannot be changed here.</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="playerJerseyNumber" class="form-label">Jersey Number</label>
+                                        <input type="number" class="form-control" id="playerJerseyNumber" name="jersey_number" value="23" min="0" max="99">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="playerExperience" class="form-label">Experience (years)</label>
+                                        <input type="number" class="form-control" id="playerExperience" name="experience" value="3" min="0">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="playerStatus" class="form-label">Status</label>
+                                        <select class="form-select" id="playerStatus" name="status">
+                                            <option value="Active" selected>Active</option>
+                                            <option value="Injured">Injured</option>
+                                            <option value="Inactive">Inactive</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="card border-0 shadow-sm mb-4">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">Additional Information</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="playerBio" class="form-label">Player Bio</label>
+                                        <textarea class="form-control" id="playerBio" name="bio" rows="3">Experienced player with great defensive skills.</textarea>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="playerPhoto" class="form-label">Player Photo</label>
+                                        <input type="file" class="form-control" id="playerPhoto" name="photo">
+                                        <div class="form-text">Current photo will be kept if no new photo is uploaded.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="/manager/player/<%= player.id %>" class="btn btn-secondary me-md-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        const submitBtn = form.querySelector('button[type="submit"]');
+        
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show loading state
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+            submitBtn.disabled = true;
+            
+            // Simulate processing
+            setTimeout(() => {
+                window.location.href = '/manager/player/<%= player.id %>';
+            }, 1000);
+        });
+        
+        // Cancel button functionality
+        const cancelBtn = document.querySelector('.btn-secondary');
+        cancelBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Show loading state
+            this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+            this.disabled = true;
+            
+            // Redirect after a short delay
+            setTimeout(() => {
+                window.location.href = this.getAttribute('href');
+            }, 500);
+        });
+    });
+</script> 

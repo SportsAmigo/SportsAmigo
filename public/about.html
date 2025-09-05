@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - SportsAmigo</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        /* Custom style adjustments for about page */
+        .sub-header {
+            height: 60vh;
+            background-image: linear-gradient(rgba(4,9,30,0.7),rgba(4,9,30,0.7)),url(images/bann.avif);
+            background-position: center;
+            background-size: cover;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Animated background overlay */
+        .sub-header::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.3) 0%, rgba(4, 9, 30, 0.6) 100%);
+            z-index: 1;
+            animation: gradientShift 10s ease infinite alternate;
+        }
+        
+        @keyframes gradientShift {
+            0% {
+                background: linear-gradient(135deg, rgba(76, 175, 80, 0.3) 0%, rgba(4, 9, 30, 0.6) 100%);
+            }
+            50% {
+                background: linear-gradient(135deg, rgba(33, 150, 243, 0.3) 0%, rgba(4, 9, 30, 0.6) 100%);
+            }
+            100% {
+                background: linear-gradient(135deg, rgba(244, 67, 54, 0.3) 0%, rgba(4, 9, 30, 0.6) 100%);
+            }
+        }
+        
+        /* Ensure content appears above the overlay */
+        .sub-header nav, .sub-header .text-box {
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* Logo Animation Styles */
+        .logo-container {
+            position: relative;
+            display: inline-block;
+            overflow: visible;
+        }
+        
+        /* Sports icons that float around the logo */
+        .sports-icon {
+            position: absolute;
+            color: rgba(244, 67, 54, 0.7);
+            animation: iconFloat 6s infinite ease-in-out;
+            font-size: 16px;
+            pointer-events: none;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+        
+        .icon-basketball {
+            top: -10px;
+            right: 10px;
+            animation-delay: 0.5s;
+        }
+        
+        .icon-football {
+            bottom: -5px;
+            right: 30px;
+            animation-delay: 1.5s;
+            color: rgba(33, 150, 243, 0.7);
+        }
+        
+        .icon-cricket {
+            top: 50%;
+            right: -10px;
+            animation-delay: 2.5s;
+            color: rgba(76, 175, 80, 0.7);
+        }
+        
+        @keyframes iconFloat {
+            0%, 100% {
+                transform: translateY(0) scale(1);
+                opacity: 0.5;
+            }
+            25% {
+                transform: translate(5px, -5px) scale(1.2);
+                opacity: 1;
+                color: #f44336;
+            }
+            50% {
+                transform: translateY(0) scale(1);
+                opacity: 0.5;
+            }
+            75% {
+                transform: translate(-5px, 5px) scale(0.8);
+                opacity: 0.7;
+                color: #ff9800;
+            }
+        }
+        
+        /* Energy pulse effect */
+        .energy-pulse {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(244, 67, 54, 0.3) 0%, rgba(255, 255, 255, 0) 70%);
+            border-radius: 50%;
+            opacity: 0;
+            animation: pulse 3s infinite ease-out;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 0.7;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1.8);
+                opacity: 0;
+            }
+        }
+        
+        /* Logo highlighting animation */
+        .logo-spin {
+            animation: logoEffect 5s infinite alternate;
+            transform-origin: center;
+            position: relative;
+            z-index: 2;
+        }
+        
+        @keyframes logoEffect {
+            0% {
+                filter: drop-shadow(0 0 4px rgba(244, 67, 54, 0.6));
+                transform: scale(1);
+            }
+            50% {
+                filter: drop-shadow(0 0 10px rgba(255, 152, 0, 0.8));
+                transform: scale(1.05);
+            }
+            100% {
+                filter: drop-shadow(0 0 4px rgba(244, 67, 54, 0.6));
+                transform: scale(1);
+            }
+        }
+        
+        /* Enhanced styling for about, mission and values sections */
+        .about-content {
+            padding: 80px 0;
+        }
+        
+        .about-left img {
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.5s;
+        }
+        
+        .about-left img:hover {
+            transform: scale(1.03);
+        }
+        
+        .section-heading, .section-title, .subsection-heading {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            position: relative;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        
+        .section-heading::after, .section-title::after, .subsection-heading::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -10px;
+            height: 4px;
+            width: 60px;
+            background: linear-gradient(to right, #f44336, #ff9800);
+            border-radius: 2px;
+        }
+        
+        .section-title {
+            text-align: center;
+            font-size: 36px;
+            margin-bottom: 50px;
+        }
+        
+        .section-title::after {
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+        }
+        
+        .about-right h2 {
+            font-size: 32px;
+        }
+        
+        .story-content p, .mission-content p {
+            font-family: 'Open Sans', sans-serif;
+            font-size: 16px;
+            line-height: 1.8;
+            color: #555;
+            margin-bottom: 20px;
+        }
+        
+        .explore-btn {
+            display: inline-block;
+            text-decoration: none;
+            color: #fff;
+            border: 1px solid #f44336;
+            padding: 12px 34px;
+            font-size: 14px;
+            background: #f44336;
+            position: relative;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            letter-spacing: 1px;
+        }
+        
+        .explore-btn:hover {
+            background: transparent;
+            color: #f44336;
+            border: 1px solid #f44336;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
+        }
+        
+        .mission-section {
+            padding: 80px 0;
+            background-color: #f9f9f9;
+        }
+        
+        .mission-col, .values-col {
+            flex-basis: 48%;
+            padding: 20px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+        }
+        
+        .subsection-heading {
+            font-size: 24px;
+        }
+        
+        .mission-col h3::after, .values-col h3::after {
+            width: 50px;
+        }
+        
+        /* Mission list styling */
+        .mission-list {
+            list-style: none;
+            margin: 20px 0 30px;
+            padding-left: 5px;
+        }
+        
+        .mission-list li {
+            font-family: 'Open Sans', sans-serif;
+            margin-bottom: 12px;
+            font-size: 15px;
+            color: #555;
+            display: flex;
+            align-items: flex-start;
+            transition: transform 0.3s;
+        }
+        
+        .mission-list li:hover {
+            transform: translateX(5px);
+        }
+        
+        .mission-list li i {
+            color: #f44336;
+            margin-right: 12px;
+            font-size: 18px;
+            margin-top: 3px;
+        }
+        
+        /* Values list styling */
+        .values-list {
+            list-style: none;
+            margin-top: 20px;
+        }
+        
+        .values-list li {
+            display: flex;
+            margin-bottom: 25px;
+            padding: 15px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            background: #fff;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .values-list li:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .value-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #f44336, #ff9800);
+            color: white;
+            border-radius: 50%;
+            margin-right: 15px;
+            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
+        }
+        
+        .value-icon i {
+            font-size: 24px;
+        }
+        
+        .value-content {
+            flex: 1;
+        }
+        
+        .value-content h4 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        .value-content p {
+            font-family: 'Open Sans', sans-serif;
+            font-size: 15px;
+            color: #555;
+            line-height: 1.6;
+        }
+        
+        /* Responsive styles */
+        @media(max-width: 768px) {
+            .mission-col, .values-col {
+                flex-basis: 100%;
+                margin-bottom: 30px;
+            }
+            
+            .about-left {
+                margin-bottom: 30px;
+            }
+            
+            .section-heading, .section-title {
+                font-size: 28px;
+            }
+            
+            .subsection-heading {
+                font-size: 22px;
+            }
+            
+            .value-icon {
+                min-width: 50px;
+                height: 50px;
+            }
+            
+            .value-icon i {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <section class="sub-header">
+        <nav>
+            <a href="index.html" class="logo-container">
+                <div class="energy-pulse"></div>
+                <img src="images/logooo-removebg-preview.png" class="logo-spin">
+                <i class="fa fa-circle sports-icon icon-basketball"></i>
+                <i class="fa fa-futbol-o sports-icon icon-football"></i>
+                <i class="fa fa-trophy sports-icon icon-cricket"></i>
+            </a>
+            <div class="nav-links" id="navLinks">
+                <i class="fa fa-times" onclick="hideMenu()"></i>
+                <ul>
+                    <li><a href="index.html">HOME</a></li>
+                    <li class="dropdown">
+                        <a href="events.html">EVENTS</a>
+                        <div class="dropdown-content">
+                            <a href="eventbasketball.html">BASKETBALL</a>
+                            <a href="eventcricket.html">CRICKET</a>
+                            <a href="eventfootball.html">FOOTBALL</a>
+                        </div>
+                    </li>
+                    <li><a href="about.html">ABOUT</a></li>
+                    <li><a href="contact.html">CONTACT</a></li>
+                    <li><a href="/login">LOGIN</a></li>
+                </ul>
+            </div>
+            <i class="fa fa-bars" onclick="showMenu()"></i>
+        </nav>
+        <div class="text-box" style="top: 30%; left: 50%; transform: translate(-50%, -60%); text-align: center;">
+            <h1>About Us</h1>
+            <p>Learn more about SportsAmigo and our mission to connect sports enthusiasts</p>
+        </div>
+    </section>
+    
+    <!-- About Content -->
+    <section class="about-content">
+        <div class="container">
+            <div class="row">
+                <div class="about-left">
+                    <img src="images/logooo.jpg" alt="About SportsAmigo" data-aos="fade-right">
+                </div>
+                <div class="about-right">
+                    <h2 class="section-heading" data-aos="fade-up">Our Story</h2>
+                    <div class="story-content" data-aos="fade-up" data-aos-delay="100">
+                        <p>SportsAmigo was founded in 2025 by a group of sports enthusiasts who saw a gap in how sports events were organized and managed in India. What began as a small project to help local basketball tournaments has now grown into a comprehensive platform supporting multiple sports across the country.</p>
+                        <p>The idea was simple: create a platform that makes it easier for players to find events, for managers to organize teams, and for event organizers to run successful tournaments. Today, SportsAmigo serves thousands of sports enthusiasts, connecting players, teams, and organizers in ways that weren't possible before.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Mission and Values -->
+    <section class="mission-section">
+        <div class="container">
+            <h2 class="section-title" data-aos="fade-up">Our Mission & Values</h2>
+            <div class="row">
+                <div class="mission-col" data-aos="fade-right">
+                    <h3 class="subsection-heading">Our Mission</h3>
+                    <div class="mission-content">
+                        <p>To democratize sports management and make sports more accessible to everyone by providing innovative digital solutions that connect players, teams, and organizers.</p>
+                        <p>At SportsAmigo, we believe that organized sports should be accessible to anyone with a passion to play, regardless of their background or resources. Our platform removes traditional barriers by providing:</p>
+                        <ul class="mission-list">
+                            <li><i class="fa fa-arrow-circle-right"></i> Simplified event discovery and registration for players</li>
+                            <li><i class="fa fa-arrow-circle-right"></i> Streamlined team management tools for coaches and managers</li>
+                            <li><i class="fa fa-arrow-circle-right"></i> Comprehensive event organization capabilities for tournament hosts</li>
+                            <li><i class="fa fa-arrow-circle-right"></i> Community-building features to connect sports enthusiasts</li>
+                            <li><i class="fa fa-arrow-circle-right"></i> Inclusive participation opportunities for athletes of all skill levels</li>
+                        </ul>
+                        <p>Through technology and innovation, we aim to transform the landscape of amateur and semi-professional sports in India, creating a more vibrant, connected, and accessible sporting ecosystem for generations to come.</p>
+                    </div>
+                </div>
+                <div class="values-col" data-aos="fade-left">
+                    <h3 class="subsection-heading">Our Values</h3>
+                    <ul class="values-list">
+                        <li data-aos="fade-up" data-aos-delay="100">
+                            <div class="value-icon">
+                                <i class="fa fa-users"></i>
+                            </div>
+                            <div class="value-content">
+                                <h4>Inclusivity</h4>
+                                <p>We believe sports should be accessible to everyone regardless of skill level, background, or experience.</p>
+                            </div>
+                        </li>
+                        <li data-aos="fade-up" data-aos-delay="200">
+                            <div class="value-icon">
+                                <i class="fa fa-handshake-o"></i>
+                            </div>
+                            <div class="value-content">
+                                <h4>Community</h4>
+                                <p>We foster a sense of belonging and connection through shared sporting experiences.</p>
+                            </div>
+                        </li>
+                        <li data-aos="fade-up" data-aos-delay="300">
+                            <div class="value-icon">
+                                <i class="fa fa-lightbulb-o"></i>
+                            </div>
+                            <div class="value-content">
+                                <h4>Innovation</h4>
+                                <p>We constantly seek new ways to improve the sporting experience through technology.</p>
+                            </div>
+                        </li>
+                        <li data-aos="fade-up" data-aos-delay="400">
+                            <div class="value-icon">
+                                <i class="fa fa-trophy"></i>
+                            </div>
+                            <div class="value-content">
+                                <h4>Excellence</h4>
+                                <p>We strive for excellence in everything we do, from platform performance to customer service.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Sports We Support -->
+    <section class="sports-section">
+        <div class="container">
+            <h2 class="section-title">Major Sports We Support</h2>
+            <p class="section-description">SportsAmigo currently focuses on three major sports, with plans to expand to more in the future.</p>
+            
+            <div class="sports-offerings">
+                <div class="sport-card">
+                    <div class="sport-icon">
+                        <img src="images/basket2.jpg" alt="Basketball">
+                    </div>
+                    <h3>Basketball</h3>
+                    <p>From street basketball to professional leagues, we support all levels of basketball events across India.</p>
+                    <ul>
+                        <li>3v3 tournaments</li>
+                        <li>5v5 leagues</li>
+                        <li>School competitions</li>
+                        <li>Corporate events</li>
+                    </ul>
+                    <a href="eventbasketball.html" class="sport-link" onclick="window.location.href='eventbasketball.html'; return false;">Explore Basketball Events</a>
+                </div>
+                
+                <div class="sport-card">
+                    <div class="sport-icon">
+                        <img src="images/cricket3.jpg" alt="Cricket">
+                    </div>
+                    <h3>Cricket</h3>
+                    <p>India's most beloved sport, we offer tools for organizing cricket events of all formats and sizes.</p>
+                    <ul>
+                        <li>T20 tournaments</li>
+                        <li>One-day matches</li>
+                        <li>Tennis ball cricket</li>
+                        <li>Box cricket</li>
+                    </ul>
+                    <a href="eventcricket.html" class="sport-link" onclick="window.location.href='eventcricket.html'; return false;">Explore Cricket Events</a>
+                </div>
+                
+                <div class="sport-card">
+                    <div class="sport-icon">
+                        <img src="images/football3.jpg" alt="Football">
+                    </div>
+                    <h3>Football</h3>
+                    <p>The world's most popular sport is growing rapidly in India, and we're here to support that growth.</p>
+                    <ul>
+                        <li>5-a-side tournaments</li>
+                        <li>11-a-side leagues</li>
+                        <li>Futsal competitions</li>
+                        <li>Friendly matches</li>
+                    </ul>
+                    <a href="eventfootball.html" class="sport-link" onclick="window.location.href='eventfootball.html'; return false;">Explore Football Events</a>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Team Section -->
+    <!-- <section class="team-section">
+        <div class="container">
+            <h2 class="section-title" data-aos="fade-up" style="font-size: 3rem; text-transform: uppercase; position: relative; margin-bottom: 50px; text-align: center; color: #333; font-weight: 700; letter-spacing: 2px;">
+                <span style="position: relative; display: inline-block;">
+                    Meet Our Team
+                    <span style="position: absolute; bottom: -10px; left: 0; width: 100%; height: 4px; background: linear-gradient(to right, #f44336, #ff9800);"></span>
+                </span>
+            </h2>
+            
+            <div class="team-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 40px; margin-top: 50px;">
+                <div class="team-member" data-aos="fade-up" style="background: #fff; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: all 0.3s ease; text-align: center; position: relative;">
+                    <div class="member-image" style="position: relative; height: 300px; overflow: hidden;">
+                        <img src="images/NishanthBalanUg2.png" alt="User" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;">
+                        <div class="member-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(0,0,0,0) 50%, rgba(0,0,0,0.8) 100%);"></div>
+                    </div>
+                    <div class="member-info" style="padding: 25px 20px; position: relative;">
+                        <h3 style="margin: 0 0 10px; font-size: 1.8rem; font-weight: 600; color: #333;">Nishanth</h3>
+                        <p class="member-role" style="margin: 0 0 15px; font-size: 1rem; color: #f44336; font-weight: 500;">Founder & CEO</p>
+                        <p style="color: #666; margin-bottom: 20px; font-size: 0.9rem;">Sports enthusiast with a vision to transform how sports are organized and experienced in South Africa.</p>
+                        <div class="member-social" style="display: flex; justify-content: center; gap: 15px;">
+                            <a href="#" style="color: #333; font-size: 1.2rem; transition: all 0.3s;"><i class="fa fa-linkedin"></i></a>
+                            <a href="#" style="color: #333; font-size: 1.2rem; transition: all 0.3s;"><i class="fa fa-twitter"></i></a>
+                            <a href="#" style="color: #333; font-size: 1.2rem; transition: all 0.3s;"><i class="fa fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="team-member" data-aos="fade-up" data-aos-delay="100" style="background: #fff; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: all 0.3s ease; text-align: center; position: relative;">
+                    <div class="member-image" style="position: relative; height: 300px; overflow: hidden;">
+                        <img src="images/jeevan.png" alt="User" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;">
+                        <div class="member-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(0,0,0,0) 50%, rgba(0,0,0,0.8) 100%);"></div>
+                    </div>
+                    <div class="member-info" style="padding: 25px 20px; position: relative;">
+                        <h3 style="margin: 0 0 10px; font-size: 1.8rem; font-weight: 600; color: #333;">Jeevan</h3>
+                        <p class="member-role" style="margin: 0 0 15px; font-size: 1rem; color: #f44336; font-weight: 500;">Technical Director</p>
+                        <p style="color: #666; margin-bottom: 20px; font-size: 0.9rem;">Tech expert who brings innovation to the SportsAmigo platform, making it user-friendly and efficient.</p>
+                        <div class="member-social" style="display: flex; justify-content: center; gap: 15px;">
+                            <a href="#" style="color: #333; font-size: 1.2rem; transition: all 0.3s;"><i class="fa fa-linkedin"></i></a>
+                            <a href="#" style="color: #333; font-size: 1.2rem; transition: all 0.3s;"><i class="fa fa-twitter"></i></a>
+                            <a href="#" style="color: #333; font-size: 1.2rem; transition: all 0.3s;"><i class="fa fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="team-member" data-aos="fade-up" data-aos-delay="200" style="background: #fff; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: all 0.3s ease; text-align: center; position: relative;">
+                    <div class="member-image" style="position: relative; height: 300px; overflow: hidden;">
+                        <img src="images/ragav.png" alt="User" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;">
+                        <div class="member-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(0,0,0,0) 50%, rgba(0,0,0,0.8) 100%);"></div>
+                    </div>
+                    <div class="member-info" style="padding: 25px 20px; position: relative;">
+                        <h3 style="margin: 0 0 10px; font-size: 1.8rem; font-weight: 600; color: #333;">Ragav</h3>
+                        <p class="member-role" style="margin: 0 0 15px; font-size: 1rem; color: #f44336; font-weight: 500;">Operations Manager</p>
+                        <p style="color: #666; margin-bottom: 20px; font-size: 0.9rem;">Sports management professional who oversees all events, ensuring smooth operations and exceptional experiences.</p>
+                        <div class="member-social" style="display: flex; justify-content: center; gap: 15px;">
+                            <a href="#" style="color: #333; font-size: 1.2rem; transition: all 0.3s;"><i class="fa fa-linkedin"></i></a>
+                            <a href="#" style="color: #333; font-size: 1.2rem; transition: all 0.3s;"><i class="fa fa-twitter"></i></a>
+                            <a href="#" style="color: #333; font-size: 1.2rem; transition: all 0.3s;"><i class="fa fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section> -->
+    
+    <!-- Testimonials Section -->
+    <section class="testimonials-section">
+        <div class="container">
+            <h2 class="section-title">What Our Users Say</h2>
+            
+            <div class="testimonial-container">
+                <div class="testimonial">
+                    <div class="testimonial-text">
+                        <p>"SportsAmigo has revolutionized how we organize our college basketball tournaments. What used to take weeks now takes just days."</p>
+                    </div>
+                    <div class="testimonial-info">
+                        <img src="images/NishanthBalanUg2.png" alt="User">
+                        <div>
+                            <h4>NishanthBalan</h4>
+                            <p>Sports Coordinator, Delhi University</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="testimonial">
+                    <div class="testimonial-text">
+                        <p>"As a team manager, I've been able to grow my cricket team from 11 players to a full club with multiple teams thanks to SportsAmigo's platform."</p>
+                    </div>
+                    <div class="testimonial-info">
+                        <img src="images/jeevan.png" alt="User">
+                        <div>
+                            <h4>Jeevan</h4>
+                            <p>Cricket Team Manager</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="testimonial">
+                    <div class="testimonial-text">
+                        <p>"Finding football tournaments used to be a hassle. Now I just log into SportsAmigo and can see all events in my area. Game changer!"</p>
+                    </div>
+                    <div class="testimonial-info">
+                        <img src="images/ragav.png" alt="User">
+                        <div>
+                            <h4>Ragav</h4>
+                            <p>Football Player</p>
+                        </div>
+                    </div>
+                </div>
+        </div>
+    </div>
+    </section>
+    
+    <section class="cta">
+        <h1>Ready to Join the SportsAmigo Community?<br>Register Today!</h1>
+        <a href="register.html" class="hero-btn">SIGN UP NOW</a>
+    </section>
+
+     <section class="footer">
+        <h4 style="position: relative; display: inline-block; font-size: 32px; font-weight: 700; margin-bottom: 30px; background: linear-gradient(to right, #f44336, #ff9800); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 2px; text-transform: uppercase;">About SportsAmigo</h4>
+        <p style="border-left: 4px solid #f44336; padding-left: 20px; text-align: left; max-width: 700px; margin: 10px auto 30px; position: relative; background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 0 10px 10px 0; font-size: 16px; line-height: 1.8; font-weight: 400; letter-spacing: 0.5px; color: rgba(255, 255, 255, 0.9);">SportsAmigo is the ultimate sports management platform connecting players, teams, and communities. Our mission is to make sports more accessible, organized, and enjoyable for everyone.</p>
+        <div class="icons">
+            <a href="https://facebook.com/sportsamigo" target="_blank"><i class="fa fa-facebook"></i></a>
+            <a href="https://twitter.com/sportsamigo" target="_blank"><i class="fa fa-twitter"></i></a>
+            <a href="https://instagram.com/sportsamigo" target="_blank"><i class="fa fa-instagram"></i></a>
+            <a href="https://linkedin.com/company/sportsamigo" target="_blank"><i class="fa fa-linkedin"></i></a>
+        </div>
+        <p>Made with <i class="fa fa-heart-o"></i> by SportsAmigo Team</p>
+     </section>
+
+    <script>
+        var navLinks = document.getElementById("navLinks");
+        
+        function showMenu() {
+        navLinks.style.right = "0";
+        }
+        
+        function hideMenu() {
+            navLinks.style.right = "-200px";
+        }
+        
+        // Handle dropdown on mobile
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get all navigation links
+            const navItems = document.querySelectorAll('.nav-links ul li a');
+            
+            // Add click event listener to each link to ensure proper navigation
+            navItems.forEach(link => {
+                if (!link.closest('.dropdown-content')) {
+                    link.addEventListener('click', function(e) {
+                        // Only prevent default for dropdown toggles on mobile
+                        if (window.innerWidth <= 700 && link.parentElement.classList.contains('dropdown')) {
+                            e.preventDefault();
+                            link.parentElement.classList.toggle('active');
+                        }
+                        // For all other links or on desktop, allow normal navigation
+                    });
+                }
+            });
+            
+            // Make sure dropdown content links always navigate
+            const dropdownLinks = document.querySelectorAll('.dropdown-content a');
+            dropdownLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    // Ensure dropdown links always navigate
+                    // Close mobile menu if open
+                    if (window.innerWidth <= 700) {
+                        hideMenu();
+                    }
+                });
+            });
+            
+            // Ensure sport links work correctly
+            const sportLinks = document.querySelectorAll('.sport-link');
+            sportLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    // Force navigation to the specified href
+                    window.location.href = this.getAttribute('href');
+                });
+            });
+        });
+    </script>
+    
+    <!-- Additional CSS for About Page -->
+    <style>
+        /* Remove dark background from entire page */
+        body {
+            /* background-color: #0a0a0a;
+            color: #fff; */
+        }
+        
+        /* About Content Section */
+        .about-content {
+            width: 80%;
+            margin: auto;
+            padding: 60px 0;
+        }
+        
+        .about-left {
+            flex-basis: 45%;
+        }
+        
+        .about-left img {
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .about-right {
+            flex-basis: 50%;
+            padding: 30px;
+        }
+        
+        .about-right h2 {
+            font-size: 36px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .about-right p {
+            color: #777;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        /* Navigation Bar Improvements */
+        .nav-links ul li {
+            list-style: none;
+            display: inline-block;
+            padding: 8px 12px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-links ul li a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-links ul li::after {
+            content: '';
+            width: 0%;
+            height: 2px;
+            background: #f44336;
+            display: block;
+            margin: auto;
+            transition: 0.5s;
+        }
+        
+        .nav-links ul li:hover::after {
+            width: 100%;
+        }
+        
+        /* Dropdown Menu */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            min-width: 180px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            border-radius: 5px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            top: 100%;
+            left: 0;
+        }
+        
+        .dropdown-content a {
+            color: white;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            text-align: left;
+            font-size: 13px !important;
+            transition: all 0.3s ease;
+        }
+        
+        .dropdown-content a:hover {
+            background-color: #f44336;
+            padding-left: 20px;
+        }
+        
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+        
+        /* Mobile Menu */
+        @media(max-width: 700px) {
+            .nav-links {
+                position: fixed;
+                background: #f44336;
+                height: 100vh;
+                width: 200px;
+                top: 0;
+                right: -200px;
+                text-align: left;
+                z-index: 2;
+                transition: 0.5s;
+                overflow-y: auto;
+            }
+            
+            .nav-links ul {
+                padding: 30px;
+            }
+            
+            .nav-links ul li {
+                display: block;
+                margin: 20px 0;
+            }
+            
+            .nav-links ul li a {
+                color: white;
+            }
+            
+            .nav-links ul li::after {
+                display: none;
+            }
+            
+            .dropdown-content {
+                position: relative;
+                background-color: rgba(255, 255, 255, 0.1);
+                min-width: 100%;
+                box-shadow: none;
+                display: none;
+                margin-top: 10px;
+                left: 0;
+            }
+            
+            .dropdown.active .dropdown-content {
+                display: block;
+            }
+            
+            .fa {
+                display: block;
+                color: #fff;
+                margin: 10px;
+                font-size: 22px;
+                cursor: pointer;
+            }
+        }
+        
+        /* Mission & Values Section */
+        .mission-section {
+            padding: 80px 0;
+            background-color: #f8f9fa;
+        }
+        
+        .section-title {
+            text-align: center;
+            font-size: 36px;
+            font-weight: 600;
+            margin-bottom: 50px;
+            color: #333;
+            position: relative;
+        }
+        
+        .section-title:after {
+            content: '';
+            width: 100px;
+            height: 3px;
+            background: #f44336;
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .mission-col, .values-col {
+            flex-basis: 48%;
+        }
+        
+        .mission-col h3, .values-col h3 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .mission-col p {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .mission-list {
+            list-style: none;
+            margin-bottom: 25px;
+            padding-left: 5px;
+        }
+        
+        .mission-list li {
+            margin-bottom: 10px;
+            font-size: 15px;
+            color: #666;
+            display: flex;
+            align-items: flex-start;
+        }
+        
+        .mission-list li i {
+            color: #f44336;
+            margin-right: 10px;
+            font-size: 16px;
+            margin-top: 3px;
+        }
+        
+        .values-list {
+            list-style: none;
+        }
+        
+        .values-list li {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+        
+        .values-list li:hover {
+            transform: translateY(-5px);
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        .values-list i {
+            color: #f44336;
+            font-size: 24px;
+            margin-right: 15px;
+            margin-top: 5px;
+        }
+        
+        .values-list h4 {
+            font-size: 18px;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        
+        .values-list p {
+            font-size: 16px;
+            color: #666;
+            line-height: 1.5;
+        }
+        
+        /* Sports Section */
+        .sports-section {
+            padding: 80px 0;
+        }
+        
+        .section-description {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 18px;
+            margin-bottom: 50px;
+            width: 70%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .sports-offerings {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: nowrap;
+            gap: 20px;
+            margin: 0 auto;
+            max-width: 1200px;
+        }
+        
+        .sport-card {
+            flex: 1;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border-top: 5px solid #f44336;
+        }
+        
+        .sport-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .sport-card:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent 50%, rgba(244, 67, 54, 0.1) 100%);
+            z-index: 0;
+        }
+        
+        .sport-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .sport-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .sport-card h3 {
+            text-align: center;
+            font-size: 22px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .sport-card p {
+            color: #666;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        
+        .sport-card ul {
+            margin-bottom: 20px;
+            padding-left: 20px;
+        }
+        
+        .sport-card li {
+            color: #666;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+        
+        .sport-link {
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            color: #f44336;
+            font-weight: 500;
+            transition: color 0.3s;
+            padding: 10px 15px;
+            border: 2px solid #f44336;
+            border-radius: 30px;
+            margin-top: 10px;
+            position: relative;
+            z-index: 10;
+            cursor: pointer;
+        }
+        
+        .sport-link:hover {
+            color: #fff;
+            background-color: #f44336;
+        }
+        
+        /* Team Section */
+        .team-section {
+            padding: 80px 0;
+            background-color: #f8f9fa;
+        }
+        
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-gap: 30px;
+            margin-top: 50px;
+        }
+        
+        /* Modify to put Madhu Manas and Donil Jaison in the same row */
+        .team-grid .team-member:nth-child(4),
+        .team-grid .team-member:nth-child(5) {
+            grid-column: auto; /* Reset previous positioning */
+        }
+        
+        .team-member {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+            border-left: 4px solid #f44336;
+            height: 100%;
+        }
+        
+        .team-member:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+        }
+        
+        .team-info {
+            padding: 30px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .team-info h3 {
+            font-size: 22px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .role {
+            color: #f44336;
+            font-weight: 500;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        
+        .bio {
+            color: #666;
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+        
+        .social-links {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .social-links a {
+            width: 30px;
+            height: 30px;
+            background: #f44336;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+        
+        .social-links a:hover {
+            background: #d32f2f;
+        }
+        
+        /* Testimonials Section */
+        .testimonials-section {
+            padding: 80px 0;
+            background-color: #fff;
+        }
+        
+        .testimonial-container {
+            display: flex;
+            flex-wrap: nowrap;
+            justify-content: space-between;
+            margin-top: 50px;
+            gap: 25px;
+            overflow-x: auto;
+            padding-bottom: 20px;
+        }
+        
+        .testimonial {
+            flex: 1;
+            min-width: 300px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-bottom: 30px;
+            position: relative;
+            border-bottom: 4px solid #f44336;
+            transition: all 0.3s ease;
+        }
+        
+        .testimonial:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+        
+        .testimonial:before {
+            content: '\201C';
+            font-family: Georgia, serif;
+            position: absolute;
+            top: 10px;
+            left: 20px;
+            font-size: 60px;
+            color: rgba(244, 67, 54, 0.2);
+            line-height: 1;
+        }
+        
+        .testimonial-text {
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .testimonial-text p {
+            color: #666;
+            font-size: 17px;
+            line-height: 1.7;
+            font-style: italic;
+        }
+        
+        .testimonial-info {
+            display: flex;
+            align-items: center;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+        
+        .testimonial-info img {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            margin-right: 15px;
+            object-fit: cover;
+            border: 3px solid #f44336;
+        }
+        
+        .testimonial-info h4 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .testimonial-info p {
+            color: #777;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        @media(max-width: 992px) {
+            .testimonial-container {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                padding-bottom: 20px;
+                scroll-snap-type: x mandatory;
+            }
+            
+            .testimonial {
+                flex: 0 0 80%;
+                scroll-snap-align: center;
+                margin-right: 20px;
+            }
+            
+            .testimonial:last-child {
+                margin-right: 0;
+            }
+            
+            .sports-offerings {
+                flex-wrap: wrap;
+            }
+            
+            .sport-card {
+                flex-basis: 48%;
+            }
+        }
+        
+        @media(max-width: 768px) {
+            .row {
+                flex-direction: column;
+            }
+            
+            .about-left, .about-right {
+                flex-basis: 100%;
+            }
+            
+            .about-right {
+                padding: 20px 0;
+            }
+            
+            .mission-col, .values-col {
+                flex-basis: 100%;
+                margin-bottom: 30px;
+            }
+            
+            .sports-offerings {
+                flex-direction: column;
+            }
+            
+            .sport-card {
+                flex-basis: 100%;
+            }
+            
+            .team-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    
+    <!-- JavaScript Files -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        // Initialize AOS animation library
+        AOS.init({
+            duration: 800,
+            easing: 'ease-in-out',
+            once: true
+        });
+        
+        // Mobile menu functionality
+        var navLinks = document.getElementById("navLinks");
+        function showMenu() {
+            navLinks.style.right = "0";
+        }
+        function hideMenu() {
+            navLinks.style.right = "-200px";
+        }
+    </script>
+</body>
+</html>

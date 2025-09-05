@@ -1,0 +1,268 @@
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="mb-0">Create New Event</h3>
+                        <a href="/organizer/manage-events" class="btn btn-light">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Events
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <% if (locals.error) { %>
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <%= error %>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    <% } %>
+                    
+                    <% if (locals.successMessage) { %>
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <%= successMessage %>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    <% } %>
+                    
+                    <form action="/organizer/create-event" method="POST" class="needs-validation" novalidate>
+                        <div class="row">
+                            <!-- Event Basic Information -->
+                            <div class="col-md-6">
+                                <div class="card mb-4 border-0 shadow-sm">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">Basic Information</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- Event Name -->
+                                        <div class="mb-3">
+                                            <label for="name" class="form-label">Event Name<span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control <%= validationErrors.name ? 'is-invalid' : '' %>" 
+                                                id="name" name="name" value="<%= formData.name || '' %>" required>
+                                            <% if (validationErrors.name) { %>
+                                                <div class="invalid-feedback"><%= validationErrors.name %></div>
+                                            <% } %>
+                                        </div>
+                                        
+                                        <!-- Sport Type -->
+                                        <div class="mb-3">
+                                            <label for="sport" class="form-label">Sport<span class="text-danger">*</span></label>
+                                            <select class="form-select <%= validationErrors.sport ? 'is-invalid' : '' %>" 
+                                                id="sport" name="sport" required>
+                                                <option value="" <%= !formData.sport ? 'selected' : '' %>>Select a sport</option>
+                                                <option value="Basketball" <%= formData.sport === 'Basketball' ? 'selected' : '' %>>Basketball</option>
+                                                <option value="Football" <%= formData.sport === 'Football' ? 'selected' : '' %>>Football</option>
+                                                <option value="Cricket" <%= formData.sport === 'Cricket' ? 'selected' : '' %>>Cricket</option>
+                                                <option value="Tennis" <%= formData.sport === 'Tennis' ? 'selected' : '' %>>Tennis</option>
+                                                <option value="Volleyball" <%= formData.sport === 'Volleyball' ? 'selected' : '' %>>Volleyball</option>
+                                                <option value="Baseball" <%= formData.sport === 'Baseball' ? 'selected' : '' %>>Baseball</option>
+                                                <option value="Hockey" <%= formData.sport === 'Hockey' ? 'selected' : '' %>>Hockey</option>
+                                                <option value="Swimming" <%= formData.sport === 'Swimming' ? 'selected' : '' %>>Swimming</option>
+                                                <option value="Athletics" <%= formData.sport === 'Athletics' ? 'selected' : '' %>>Athletics</option>
+                                                <option value="Other" <%= formData.sport === 'Other' ? 'selected' : '' %>>Other</option>
+                                            </select>
+                                            <% if (validationErrors.sport) { %>
+                                                <div class="invalid-feedback"><%= validationErrors.sport %></div>
+                                            <% } %>
+                                        </div>
+                                        
+                                        <!-- Location -->
+                                        <div class="mb-3">
+                                            <label for="location" class="form-label">Location<span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control <%= validationErrors.location ? 'is-invalid' : '' %>" 
+                                                id="location" name="location" value="<%= formData.location || '' %>" required>
+                                            <% if (validationErrors.location) { %>
+                                                <div class="invalid-feedback"><%= validationErrors.location %></div>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Event Description -->
+                                <div class="card mb-4 border-0 shadow-sm">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">Event Description</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label for="description" class="form-label">Description</label>
+                                            <textarea class="form-control <%= validationErrors.description ? 'is-invalid' : '' %>" 
+                                                id="description" name="description" rows="4"><%= formData.description || '' %></textarea>
+                                            <% if (validationErrors.description) { %>
+                                                <div class="invalid-feedback"><%= validationErrors.description %></div>
+                                            <% } %>
+                                            <div class="form-text">Provide details about your event, rules, requirements, etc.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Event Timing and Capacity -->
+                            <div class="col-md-6">
+                                <div class="card mb-4 border-0 shadow-sm">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">Timing & Capacity</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- Dates -->
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label for="start_date" class="form-label">Start Date<span class="text-danger">*</span></label>
+                                                <input type="date" class="form-control <%= validationErrors.start_date ? 'is-invalid' : '' %>" 
+                                                    id="start_date" name="start_date" value="<%= formData.start_date || '' %>" required>
+                                                <% if (validationErrors.start_date) { %>
+                                                    <div class="invalid-feedback"><%= validationErrors.start_date %></div>
+                                                <% } %>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="end_date" class="form-label">End Date</label>
+                                                <input type="date" class="form-control <%= validationErrors.end_date ? 'is-invalid' : '' %>" 
+                                                    id="end_date" name="end_date" value="<%= formData.end_date || '' %>">
+                                                <% if (validationErrors.end_date) { %>
+                                                    <div class="invalid-feedback"><%= validationErrors.end_date %></div>
+                                                <% } %>
+                                                <div class="form-text">Leave blank for one-day events</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Registration Deadline -->
+                                        <div class="mb-3">
+                                            <label for="registration_deadline" class="form-label">Registration Deadline</label>
+                                            <input type="date" class="form-control <%= validationErrors.registration_deadline ? 'is-invalid' : '' %>" 
+                                                id="registration_deadline" name="registration_deadline" value="<%= formData.registration_deadline || '' %>">
+                                            <% if (validationErrors.registration_deadline) { %>
+                                                <div class="invalid-feedback"><%= validationErrors.registration_deadline %></div>
+                                            <% } %>
+                                        </div>
+                                        
+                                        <!-- Max Teams -->
+                                        <div class="mb-3">
+                                            <label for="max_teams" class="form-label">Maximum Number of Teams</label>
+                                            <input type="number" class="form-control <%= validationErrors.max_teams ? 'is-invalid' : '' %>" 
+                                                id="max_teams" name="max_teams" value="<%= formData.max_teams || '16' %>" min="1" max="100">
+                                            <% if (validationErrors.max_teams) { %>
+                                                <div class="invalid-feedback"><%= validationErrors.max_teams %></div>
+                                            <% } %>
+                                        </div>
+                                        
+                                        <!-- Min/Max Players per Team -->
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label for="min_players" class="form-label">Min Players per Team</label>
+                                                <input type="number" class="form-control <%= validationErrors.min_players ? 'is-invalid' : '' %>" 
+                                                    id="min_players" name="min_players" value="<%= formData.min_players || '5' %>" min="1" max="50">
+                                                <% if (validationErrors.min_players) { %>
+                                                    <div class="invalid-feedback"><%= validationErrors.min_players %></div>
+                                                <% } %>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="max_players" class="form-label">Max Players per Team</label>
+                                                <input type="number" class="form-control <%= validationErrors.max_players ? 'is-invalid' : '' %>" 
+                                                    id="max_players" name="max_players" value="<%= formData.max_players || '12' %>" min="1" max="50">
+                                                <% if (validationErrors.max_players) { %>
+                                                    <div class="invalid-feedback"><%= validationErrors.max_players %></div>
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Event Settings -->
+                                <div class="card mb-4 border-0 shadow-sm">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">Event Settings</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- Status -->
+                                        <div class="mb-3">
+                                            <label class="form-label">Initial Status</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="status" id="status_draft" 
+                                                    value="Draft" <%= (!formData.status || formData.status === 'Draft') ? 'checked' : '' %>>
+                                                <label class="form-check-label" for="status_draft">
+                                                    Draft (not visible to managers)
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="status" id="status_open" 
+                                                    value="Open" <%= formData.status === 'Open' ? 'checked' : '' %>>
+                                                <label class="form-check-label" for="status_open">
+                                                    Open (registrations accepted)
+                                                </label>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Visibility -->
+                                        <div class="mb-3">
+                                            <label class="form-label">Event Visibility</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="visibility" id="visibility_public" 
+                                                    value="Public" <%= (!formData.visibility || formData.visibility === 'Public') ? 'checked' : '' %>>
+                                                <label class="form-check-label" for="visibility_public">
+                                                    Public (visible to all)
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="visibility" id="visibility_private" 
+                                                    value="Private" <%= formData.visibility === 'Private' ? 'checked' : '' %>>
+                                                <label class="form-check-label" for="visibility_private">
+                                                    Private (requires invitation code)
+                                                </label>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Invitation Code (only show when Private is selected) -->
+                                        <div class="mb-3" id="invitation_code_container" style="display: none;">
+                                            <label for="invitation_code" class="form-label">Invitation Code</label>
+                                            <input type="text" class="form-control" id="invitation_code" name="invitation_code" 
+                                                value="<%= formData.invitation_code || '' %>" placeholder="e.g., SUMMER2025">
+                                            <div class="form-text">Managers will need this code to register</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg px-5">
+                                <i class="fas fa-plus-circle me-2"></i>Create Event
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Form validation
+        const forms = document.querySelectorAll('.needs-validation');
+        Array.from(forms).forEach(form => {
+            form.addEventListener('submit', event => {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+        
+        // Toggle invitation code field based on visibility selection
+        const visibilityPublic = document.getElementById('visibility_public');
+        const visibilityPrivate = document.getElementById('visibility_private');
+        const invitationCodeContainer = document.getElementById('invitation_code_container');
+        
+        function toggleInvitationCode() {
+            invitationCodeContainer.style.display = visibilityPrivate.checked ? 'block' : 'none';
+        }
+        
+        visibilityPublic.addEventListener('change', toggleInvitationCode);
+        visibilityPrivate.addEventListener('change', toggleInvitationCode);
+        
+        // Initial toggle
+        toggleInvitationCode();
+    });
+</script> 

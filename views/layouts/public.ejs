@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= typeof title !== 'undefined' ? title : 'SportsAmigo | Your Ultimate Sports Companion' %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <% if (typeof extraStyles !== 'undefined') { %>
+        <%- extraStyles %>
+    <% } %>
+</head>
+<body>
+    <% if (typeof headerType !== 'undefined' && headerType === 'full') { %>
+        <section class="header">
+    <% } else { %>
+        <section class="sub-header">
+    <% } %>
+        <nav>
+            <a href="/" class="logo-container">
+                <div class="energy-pulse"></div>
+                <img src="/images/logooo-removebg-preview.png" class="logo-spin">
+                <i class="fa fa-circle sports-icon icon-basketball"></i>
+                <i class="fa fa-futbol-o sports-icon icon-football"></i>
+                <i class="fa fa-trophy sports-icon icon-cricket"></i>
+            </a>
+            <div class="nav-links" id="navLinks">
+                <i class="fa fa-times" onclick="hideMenu()"></i>
+                <ul>
+                    <li><a href="/">HOME</a></li>
+                    <li class="dropdown">
+                        <a href="/events">EVENTS</a>
+                        <div class="dropdown-content">
+                            <a href="/events/basketball">BASKETBALL</a>
+                            <a href="/events/cricket">CRICKET</a>
+                            <a href="/events/football">FOOTBALL</a>
+                        </div>
+                    </li>
+                    <li><a href="/about">ABOUT</a></li>
+                    <li><a href="/contact">CONTACT</a></li>
+                    <li><a href="/login">LOGIN</a></li>
+                </ul>
+            </div>
+            <i class="fa fa-bars" onclick="showMenu()"></i>
+        </nav>
+        <% if (typeof pageTitle !== 'undefined' || typeof pageDescription !== 'undefined') { %>
+            <div class="text-box" style="<%= typeof headerTextPosition !== 'undefined' ? headerTextPosition : 'top: 38%; left: 50%; transform: translate(-50%,-50%);' %> text-align: center;">
+                <% if (typeof pageTitle !== 'undefined') { %>
+                    <h1><%= pageTitle %></h1>
+                <% } %>
+                <% if (typeof pageDescription !== 'undefined') { %>
+                    <p><%= pageDescription %></p>
+                <% } %>
+            </div>
+        <% } %>
+    </section>
+
+    <%- body %>
+
+    <section class="footer">
+        <h4 style="position: relative; display: inline-block; font-size: 32px; font-weight: 700; margin-bottom: 30px; background: linear-gradient(to right, #f44336, #ff9800); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 2px; text-transform: uppercase;">About SportsAmigo</h4>
+        <p class="mission-statement" style="border-left: 4px solid #f44336; padding-left: 20px; text-align: left; max-width: 700px; margin: 10px auto 30px; position: relative; background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 0 10px 10px 0; font-size: 16px; line-height: 1.8; font-weight: 400; letter-spacing: 0.5px; color: rgba(255, 255, 255, 0.9);">SportsAmigo is the ultimate sports management platform connecting players, teams, and communities. Our mission is to make sports more accessible, organized, and enjoyable for everyone.</p>
+        <div class="icons">
+            <a href="https://facebook.com/sportsamigo" target="_blank"><i class="fa fa-facebook"></i></a>
+            <a href="https://twitter.com/sportsamigo" target="_blank"><i class="fa fa-twitter"></i></a>
+            <a href="https://instagram.com/sportsamigo" target="_blank"><i class="fa fa-instagram"></i></a>
+            <a href="https://linkedin.com/company/sportsamigo" target="_blank"><i class="fa fa-linkedin"></i></a>
+        </div>
+        <p>Made with <i class="fa fa-heart-o"></i> by SportsAmigo Team</p>
+    </section>
+
+    <script>
+        // Mobile menu functionality
+        var navLinks = document.getElementById("navLinks");
+        function showMenu() {
+            navLinks.style.right = "0";
+        }
+        function hideMenu() {
+            navLinks.style.right = "-200px";
+        }
+    </script>
+    <% if (typeof extraScripts !== 'undefined') { %>
+        <%- extraScripts %>
+    <% } %>
+</body>
+</html> 

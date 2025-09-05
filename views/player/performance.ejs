@@ -1,0 +1,183 @@
+<div class="row mb-4">
+    <div class="col">
+        <div class="card">
+            <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">Performance Metrics</h3>
+            </div>
+            <div class="card-body">
+                <p class="lead mb-4">Track your performance across different sports and activities.</p>
+                
+                <!-- Overall Performance Card -->
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-3 text-center">
+                                        <div class="display-4 fw-bold text-warning"><%= performance.summary.rating %>%</div>
+                                        <p class="text-muted">Overall Rating</p>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <h5 class="mb-3">Performance Summary</h5>
+                                        <div class="progress mb-3" style="height: 25px;">
+                                            <div class="progress-bar bg-success" role="progressbar" 
+                                                 aria-valuenow="<%= performance.summary.rating %>" 
+                                                 aria-valuemin="0" aria-valuemax="100"
+                                                 style="width: <%= performance.summary.rating %>%">
+                                                <%= performance.summary.rating %>%
+                                            </div>
+                                        </div>
+                                        <div class="row text-center mt-3">
+                                            <div class="col">
+                                                <h5><%= performance.recent_events.length || 0 %></h5>
+                                                <small class="text-muted">Recent Events</small>
+                                            </div>
+                                            <div class="col">
+                                                <h5><%= performance.summary.achievements || 0 %></h5>
+                                                <small class="text-muted">Achievements</small>
+                                            </div>
+                                            <div class="col">
+                                                <h5><%= performance.stats.length || 0 %></h5>
+                                                <small class="text-muted">Sports</small>
+                                            </div>
+                                            <div class="col">
+                                                <h5><%= performance.teams.length || 0 %></h5>
+                                                <small class="text-muted">Teams</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Team Performance -->
+                <h4 class="mb-3">Team Performance</h4>
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <h5 class="card-title">Blazing Hawks</h5>
+                                    <span class="badge bg-success">Basketball</span>
+                                </div>
+                                <p class="text-muted">Team Rating: 89%</p>
+                                <p class="text-muted">Team Members: 12</p>
+                                <p class="text-muted">Win Rate: 78%</p>
+                                <p class="text-muted">Recent Season: 10-3</p>
+                                <p class="text-muted">Tournaments Won: 3</p>
+                                
+                                <div class="progress mt-3">
+                                    <div class="progress-bar bg-success" role="progressbar" 
+                                         aria-valuenow="89"
+                                         aria-valuemin="0"
+                                         aria-valuemax="100"
+                                         style="width: 89%;">89%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <h5 class="card-title">Thunder Strikers</h5>
+                                    <span class="badge bg-primary">Football</span>
+                                </div>
+                                <p class="text-muted">Team Rating: 93%</p>
+                                <p class="text-muted">Team Members: 18</p>
+                                <p class="text-muted">Win Rate: 82%</p>
+                                <p class="text-muted">Recent Season: 9-2</p>
+                                <p class="text-muted">Tournaments Won: 2</p>
+                                
+                                <div class="progress mt-3">
+                                    <div class="progress-bar bg-primary" role="progressbar" 
+                                         aria-valuenow="93"
+                                         aria-valuemin="0"
+                                         aria-valuemax="100"
+                                         style="width: 93%;">93%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sport-specific Performance -->
+                <h4 class="mb-3">Sport-specific Performance</h4>
+                <div class="row">
+                    <% if (performance.stats && performance.stats.length > 0) { %>
+                        <% performance.stats.forEach(stat => { %>
+                        <div class="col-md-6 mb-4">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <h5 class="card-title"><%= stat.sport %></h5>
+                                        <span class="badge bg-primary"><%= stat.rating %> Rating</span>
+                                    </div>
+                                    <p class="text-muted">Games played: <%= stat.games %></p>
+                                    <p class="text-muted">Achievements: <%= stat.achievements %></p>
+                                    
+                                    <div class="progress mt-3">
+                                        <div class="progress-bar bg-success" role="progressbar" 
+                                             aria-valuenow="<%= stat.rating %>" 
+                                             aria-valuemin="0" aria-valuemax="100"
+                                             style="width: <%= stat.rating %>%">
+                                             <%= stat.rating %>%
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <% }); %>
+                    <% } else { %>
+                        <div class="col-12 text-center">
+                            <p class="text-muted">No sport-specific performance data available yet.</p>
+                        </div>
+                    <% } %>
+                </div>
+                
+                <!-- Recent Events -->
+                <h4 class="mb-3">Recent Events</h4>
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body">
+                                <% if (performance.recent_events && performance.recent_events.length > 0) { %>
+                                    <div class="table-responsive">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Event</th>
+                                                    <th>Date</th>
+                                                    <th>Sport</th>
+                                                    <th>Status</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% performance.recent_events.forEach(event => { %>
+                                                    <tr>
+                                                        <td><%= event.name %></td>
+                                                        <td><%= event.date %></td>
+                                                        <td><%= event.sport %></td>
+                                                        <td><span class="badge bg-<%= event.status === 'Completed' ? 'secondary' : 'primary' %>"><%= event.status %></span></td>
+                                                        <td>
+                                                            <a href="/player/event/<%= event.id %>" class="btn btn-sm btn-outline-primary">View</a>
+                                                        </td>
+                                                    </tr>
+                                                <% }); %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                <% } else { %>
+                                    <p class="text-muted text-center">No recent events found.</p>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

@@ -1,0 +1,108 @@
+<!-- Create Team Page -->
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h2 class="mb-0"><i class="fas fa-plus-circle me-2"></i> Create New Team</h2>
+                    <p class="lead mt-2 mb-0">
+                        Create a new sports team and invite players to join
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error/Success Messages -->
+    <% if (messages.error) { %>
+    <div class="alert alert-danger" role="alert">
+        <%= messages.error %>
+    </div>
+    <% } %>
+    
+    <% if (messages.success) { %>
+    <div class="alert alert-success" role="alert">
+        <%= messages.success %>
+    </div>
+    <% } %>
+
+    <!-- Create Team Form -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form action="/manager/create-team" method="POST">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Team Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="sport_type" class="form-label">Sport <span class="text-danger">*</span></label>
+                            <select class="form-select" id="sport_type" name="sport_type" required>
+                                <option value="">Select a sport</option>
+                                <option value="Basketball">Basketball</option>
+                                <option value="Football">Football</option>
+                                <option value="Cricket">Cricket</option>
+                                <option value="Tennis">Tennis</option>
+                                <option value="Swimming">Swimming</option>
+                                <option value="Volleyball">Volleyball</option>
+                                <option value="Hockey">Hockey</option>
+                                <option value="Baseball">Baseball</option>
+                                <option value="Rugby">Rugby</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Team Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="4" placeholder="Describe your team, its objectives, and what you're looking for in players..."></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="max_members" class="form-label">Maximum Team Size</label>
+                            <input type="number" class="form-control" id="max_members" name="max_members" min="2" max="50" value="10">
+                            <div class="form-text">The maximum number of players that can join your team.</div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save me-2"></i> Create Team
+                            </button>
+                            <a href="/manager/my-teams" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-info-circle me-2"></i> Team Creation Tips</h5>
+                    <ul class="mb-0">
+                        <li class="mb-2">Choose a unique and memorable team name</li>
+                        <li class="mb-2">Write a detailed description to attract the right players</li>
+                        <li class="mb-2">Consider the optimal team size for your sport</li>
+                        <li class="mb-2">After creating your team, you can invite players to join</li>
+                        <li>You can always edit team details later</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-question-circle me-2"></i> What's Next?</h5>
+                    <p>After creating your team, you'll be able to:</p>
+                    <ul class="mb-0">
+                        <li class="mb-2">Invite players to join your team</li>
+                        <li class="mb-2">Review join requests from interested players</li>
+                        <li class="mb-2">Register your team for sporting events</li>
+                        <li>Manage your team roster and performance</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register - SPORTSAMIGO</title>
+<link rel="stylesheet" href="style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<body>
+    <section class="sub-header">
+        <nav>
+            <a href="index.html"><img src="images/logooo-removebg-preview.png"></a>
+            <div class="nav-links" id="navLinks">
+                <i class="fa fa-times" onclick="hideMenu()"></i>
+                <ul>
+                    <li><a href="index.html">HOME</a></li>
+                    <li class="dropdown">
+                        <a href="events.html">EVENTS</a>
+                        <div class="dropdown-content">
+                            <a href="eventbasketball.html">BASKETBALL</a>
+                            <a href="eventcricket.html">CRICKET</a>
+                            <a href="eventfootball.html">FOOTBALL</a>
+                        </div>
+                    </li>
+                    <li><a href="about.html">ABOUT</a></li>
+                    <li><a href="contact.html">CONTACT</a></li>
+                    <li><a href="/login">LOGIN</a></li>
+                </ul>
+            </div>
+            <i class="fa fa-bars" onclick="showMenu()"></i>
+        </nav>
+        <div class="text-box" style="top: 30%; left: 50%; transform: translate(-50%, -60%); text-align: center;">
+            <h1>Register for SportsAmigo</h1>
+            <p>Create your account and join our growing sports community</p>
+        </div>
+    </section>
+
+    <!-- Registration Form Section -->
+    <section class="register-section">
+        <div class="container">
+            <div class="register-container">
+                <div class="role-selection">
+                    <h2>Choose Your Role</h2>
+                    <div class="role-options">
+                        <div class="role-card" data-role="organizer">
+                            <div class="role-icon">
+                                <i class="fa fa-calendar"></i>
+                            </div>
+                            <h3>Organizer</h3>
+                            <p>Create and manage sports events</p>
+                        </div>
+                        <div class="role-card" data-role="manager">
+                            <div class="role-icon">
+                                <i class="fa fa-users"></i>
+                            </div>
+                            <h3>Manager</h3>
+                            <p>Manage teams and their activities</p>
+                        </div>
+                        <div class="role-card active" data-role="player">
+                            <div class="role-icon">
+                                <i class="fa fa-user"></i>
+                            </div>
+                            <h3>Player</h3>
+                            <p>Join teams and participate in events</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="registration-form">
+                    <h2>Register as <span id="selected-role">Player</span></h2>
+                    <form action="/signup" method="post" id="register-form">
+                        <input type="hidden" name="role" id="role-input" value="player">
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="firstname">First Name</label>
+                                <input type="text" id="firstname" name="firstname" placeholder="Enter your first name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="lastname">Last Name</label>
+                                <input type="text" id="lastname" name="lastname" placeholder="Enter your last name" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="phone">Phone Number</label>
+                            <input type="tel" id="phone" name="phone" placeholder="Enter your 10-digit phone number" pattern="[0-9]{10}" title="Please enter a valid 10-digit phone number" required>
+                            <small>Must be 10 digits (e.g., 9876543210)</small>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="password">Password</label>
+                                <input type="password" id="password" name="password" placeholder="Create a password" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="confirm-password">Confirm Password</label>
+                                <input type="password" id="confirm-password" name="confirm_password" placeholder="Confirm your password" required>
+                            </div>
+                        </div>
+                        
+                        <!-- Role-specific fields -->
+                        <div class="player-fields role-specific-fields">
+                            <div class="form-group">
+                                <label for="player-sports">Preferred Sports</label>
+                                <select id="player-sports" name="sports" multiple>
+                                    <option value="basketball">Basketball</option>
+                                    <option value="cricket">Cricket</option>
+                                    <option value="football">Football</option>
+                                </select>
+                                <small>Hold Ctrl (Windows) or Command (Mac) to select multiple options</small>
+                                <div id="sports-error" class="error-message" style="color: red; display: none;">Please select at least one sport</div>
+                            </div>
+                        </div>
+                        
+                        <div class="organizer-fields role-specific-fields" style="display: none;">
+                            <div class="form-group">
+                                <label for="organization-name">Organization Name</label>
+                                <input type="text" id="organization-name" name="organization_name" placeholder="Enter your organization name" required>
+                            </div>
+                        </div>
+                        
+                        <div class="manager-fields role-specific-fields" style="display: none;">
+                            <div class="form-group">
+                                <label for="manager-team">Team Name</label>
+                                <input type="text" id="manager-team" name="team_name" placeholder="Enter your team name" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group terms-group">
+                            <input type="checkbox" id="terms" name="terms" required>
+                            <label for="terms">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></label>
+                        </div>
+                        
+                        <div class="form-group">
+                            <button type="submit" class="hero-btn register-btn">Create Account</button>
+                        </div>
+                        
+                        <div class="login-link">
+                            <p>Already have an account? <a href="/login">Login Here</a></p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="footer">
+        <h4>About SportsAmigo</h4>
+        <p>SportsAmigo is the ultimate sports management platform connecting players, teams, and communities. Our mission is to make sports more accessible, organized, and enjoyable for everyone.</p>
+        <div class="icons">
+            <i class="fa fa-facebook"></i>
+            <i class="fa fa-twitter"></i>
+            <i class="fa fa-instagram"></i>
+            <i class="fa fa-linkedin"></i>
+        </div>
+        <p>Made with <i class="fa fa-heart-o"></i> by SportsAmigo Team</p>
+    </section>
+
+    <!-- JavaScript for role selection and form validation -->
+    <script>
+        // Mobile menu functionality (from original file)
+        var navLinks = document.getElementById("navLinks");
+        function showMenu() {
+            navLinks.style.right = "0";
+        }
+        function hideMenu() {
+            navLinks.style.right = "-200px";
+        }
+        
+        // Role selection and form validation
+        document.addEventListener('DOMContentLoaded', function() {
+            const roleCards = document.querySelectorAll('.role-card');
+            const selectedRoleDisplay = document.getElementById('selected-role');
+            const roleInput = document.getElementById('role-input');
+            const registerForm = document.getElementById('register-form');
+            const roleSpecificFields = document.querySelectorAll('.role-specific-fields');
+            
+            // Set initial role selection
+            let selectedRole = 'player';
+            
+            // Add click event to role cards
+            roleCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    // Remove active class from all cards
+                    roleCards.forEach(c => c.classList.remove('active'));
+                    
+                    // Add active class to selected card
+                    this.classList.add('active');
+                    
+                    // Update selected role
+                    selectedRole = this.getAttribute('data-role');
+                    selectedRoleDisplay.textContent = selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1);
+                    roleInput.value = selectedRole;
+                    
+                    // Show/hide role-specific fields
+                    roleSpecificFields.forEach(field => {
+                        field.style.display = 'none';
+                    });
+                    
+                    // Show the relevant role fields
+                    document.querySelector(`.${selectedRole}-fields`).style.display = 'block';
+                    
+                    // Update form attributes based on role
+                    switch(selectedRole) {
+                        case 'player':
+                            document.getElementById('player-sports').setAttribute('required', 'required');
+                            if (document.getElementById('organization-name'))
+                                document.getElementById('organization-name').removeAttribute('required');
+                            if (document.getElementById('manager-team'))
+                                document.getElementById('manager-team').removeAttribute('required');
+                            break;
+                        case 'organizer':
+                            document.getElementById('organization-name').setAttribute('required', 'required');
+                            if (document.getElementById('player-sports'))
+                                document.getElementById('player-sports').removeAttribute('required');
+                            if (document.getElementById('manager-team'))
+                                document.getElementById('manager-team').removeAttribute('required');
+                            break;
+                        case 'manager':
+                            document.getElementById('manager-team').setAttribute('required', 'required');
+                            if (document.getElementById('player-sports'))
+                                document.getElementById('player-sports').removeAttribute('required');
+                            if (document.getElementById('organization-name'))
+                                document.getElementById('organization-name').removeAttribute('required');
+                            break;
+                    }
+                });
+            });
+            
+            // Password confirmation validation
+            const password = document.getElementById('password');
+            const confirmPassword = document.getElementById('confirm-password');
+            
+            function validatePassword() {
+                if (password.value !== confirmPassword.value) {
+                    confirmPassword.setCustomValidity("Passwords don't match");
+                } else {
+                    confirmPassword.setCustomValidity('');
+                }
+            }
+            
+            password.onchange = validatePassword;
+            confirmPassword.onkeyup = validatePassword;
+            
+            // Add phone number validation
+            const phone = document.getElementById('phone');
+            
+            function validatePhoneNumber() {
+                const phoneValue = phone.value.trim();
+                const phoneRegex = /^[0-9]{10}$/;
+                
+                if (!phoneRegex.test(phoneValue)) {
+                    phone.setCustomValidity("Phone number must be exactly 10 digits");
+                } else {
+                    phone.setCustomValidity('');
+                }
+            }
+            
+            phone.addEventListener('input', validatePhoneNumber);
+            phone.addEventListener('blur', validatePhoneNumber);
+            
+            // Form submission
+            registerForm.addEventListener('submit', function(e) {
+                // Validate phone number before submission
+                validatePhoneNumber();
+                
+                // Continue with existing validation
+                validatePassword();
+                
+                // Sports validation for player role
+                if (selectedRole === 'player') {
+                    const sportsSelect = document.getElementById('player-sports');
+                    if (sportsSelect.value === '') {
+                        e.preventDefault();
+                        document.getElementById('sports-error').style.display = 'block';
+                    } else {
+                        document.getElementById('sports-error').style.display = 'none';
+                    }
+                }
+                
+                // If validation passes, submit the form
+                console.log('Form is valid, submitting...');
+                this.submit();
+            });
+        });
+    </script>
+
+    <style>
+        /* Additional CSS for registration page */
+        .register-section {
+            padding: 50px 0;
+        }
+        
+        .container {
+            width: 80%;
+            margin: auto;
+        }
+        
+        .register-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            padding: 30px;
+        }
+        
+        .role-selection h2, .registration-form h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        
+        .role-options {
+            display: flex;
+            justify-content: space-around;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .role-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+            border: 2px solid transparent;
+        }
+        
+        .role-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .role-card.active {
+            border-color: #f44336;
+            background: #fff;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .role-icon {
+            font-size: 36px;
+            margin-bottom: 15px;
+            color: #f44336;
+        }
+        
+        .role-card h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .role-card p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .registration-form {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 0;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .form-group input[type="text"],
+        .form-group input[type="email"],
+        .form-group input[type="password"],
+        .form-group input[type="tel"],
+        .form-group input[type="date"],
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #f44336;
+            outline: none;
+        }
+        
+        .form-group small {
+            display: block;
+            margin-top: 5px;
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .terms-group {
+            display: flex;
+            align-items: flex-start;
+        }
+        
+        .terms-group input {
+            margin-right: 10px;
+            margin-top: 5px;
+        }
+        
+        .terms-group a {
+            color: #f44336;
+            text-decoration: none;
+        }
+        
+        .register-btn {
+            width: 100%;
+            padding: 12px 20px;
+            font-size: 16px;
+            background-color: #f44336;
+        }
+        
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .login-link a {
+            color: #f44336;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        /* Responsive design */
+        @media(max-width: 768px) {
+            .role-options {
+                flex-direction: column;
+            }
+            
+            .role-card {
+                margin-bottom: 15px;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            
+            .register-container {
+                padding: 20px;
+            }
+        }
+    </style>
+</body>
+</html> 

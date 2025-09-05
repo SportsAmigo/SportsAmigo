@@ -1,0 +1,297 @@
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Event Templates</h5>
+                    <div>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTemplateModal">
+                            <i class="fas fa-plus"></i> Create Template
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Filter Section -->
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <form id="templateSearchForm" class="d-flex gap-2">
+                                <div class="flex-grow-1">
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                        <input type="text" id="templateSearch" class="form-control" placeholder="Search templates...">
+                                    </div>
+                                </div>
+                                <div>
+                                    <select id="sportFilter" class="form-select">
+                                        <option value="">All Sports</option>
+                                        <option value="Basketball">Basketball</option>
+                                        <option value="Football">Football</option>
+                                        <option value="Cricket">Cricket</option>
+                                        <option value="Tennis">Tennis</option>
+                                        <option value="Swimming">Swimming</option>
+                                        <option value="Athletics">Athletics</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <button type="reset" class="btn btn-outline-secondary">Reset</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Templates List -->
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Template Name</th>
+                                    <th>Sport</th>
+                                    <th>Description</th>
+                                    <th>Created</th>
+                                    <th>Last Used</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (templates && templates.length > 0) { %>
+                                    <% templates.forEach(template => { %>
+                                        <tr>
+                                            <td><%= template.name %></td>
+                                            <td><%= template.sport %></td>
+                                            <td><%= template.description %></td>
+                                            <td><%= template.created_at %></td>
+                                            <td><%= template.last_used || 'Never used' %></td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#useTemplateModal" 
+                                                        data-template-id="<%= template.id %>" 
+                                                        data-template-name="<%= template.name %>">
+                                                        <i class="fas fa-play"></i> Use
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editTemplateModal"
+                                                        data-template-id="<%= template.id %>">
+                                                        <i class="fas fa-edit"></i> Edit
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteTemplateModal"
+                                                        data-template-id="<%= template.id %>"
+                                                        data-template-name="<%= template.name %>">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4">
+                                            <div class="empty-state">
+                                                <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                                                <h5>No Templates Found</h5>
+                                                <p class="text-muted">Create your first event template to quickly set up future events</p>
+                                                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTemplateModal">
+                                                    <i class="fas fa-plus"></i> Create Template
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Template Modal -->
+<div class="modal fade" id="createTemplateModal" tabindex="-1" aria-labelledby="createTemplateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createTemplateModalLabel">Create Event Template</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createTemplateForm" action="/organizer/event-templates/create" method="POST">
+                    <div class="mb-3">
+                        <label for="templateName" class="form-label">Template Name</label>
+                        <input type="text" class="form-control" id="templateName" name="templateName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="templateSport" class="form-label">Sport</label>
+                        <select class="form-select" id="templateSport" name="templateSport" required>
+                            <option value="">Select Sport</option>
+                            <option value="Basketball">Basketball</option>
+                            <option value="Football">Football</option>
+                            <option value="Cricket">Cricket</option>
+                            <option value="Tennis">Tennis</option>
+                            <option value="Swimming">Swimming</option>
+                            <option value="Athletics">Athletics</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="templateDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="templateDescription" name="templateDescription" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Event Format</label>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="eventFormat" id="formatLeague" value="league" checked>
+                            <label class="form-check-label" for="formatLeague">
+                                League Format (Round Robin)
+                            </label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="eventFormat" id="formatKnockout" value="knockout">
+                            <label class="form-check-label" for="formatKnockout">
+                                Knockout Tournament
+                            </label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="eventFormat" id="formatGroupKnockout" value="group_knockout">
+                            <label class="form-check-label" for="formatGroupKnockout">
+                                Group Stage + Knockout
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Additional Settings</label>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="includeRegistration" name="includeRegistration" checked>
+                            <label class="form-check-label" for="includeRegistration">
+                                Include Registration Phase
+                            </label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="includeScheduling" name="includeScheduling" checked>
+                            <label class="form-check-label" for="includeScheduling">
+                                Include Automated Scheduling
+                            </label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="includeScoring" name="includeScoring" checked>
+                            <label class="form-check-label" for="includeScoring">
+                                Include Scoring System
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="createTemplateForm" class="btn btn-primary">Create Template</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Use Template Modal -->
+<div class="modal fade" id="useTemplateModal" tabindex="-1" aria-labelledby="useTemplateModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="useTemplateModalLabel">Use Template</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>You're about to create a new event using the template "<span id="selectedTemplateName"></span>".</p>
+                <p>You'll be redirected to the event creation page with settings pre-filled from this template.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="#" id="useTemplateLink" class="btn btn-primary">Continue to Event Creation</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Template Modal -->
+<div class="modal fade" id="deleteTemplateModal" tabindex="-1" aria-labelledby="deleteTemplateModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteTemplateModalLabel">Delete Template</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the template "<span id="templateToDelete"></span>"?</p>
+                <p class="text-danger">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteTemplateForm" action="/organizer/event-templates/delete" method="POST">
+                    <input type="hidden" id="templateIdToDelete" name="templateId">
+                    <button type="submit" class="btn btn-danger">Delete Template</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize modals for template actions
+        const useTemplateModal = document.getElementById('useTemplateModal');
+        if (useTemplateModal) {
+            useTemplateModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const templateId = button.getAttribute('data-template-id');
+                const templateName = button.getAttribute('data-template-name');
+                
+                document.getElementById('selectedTemplateName').textContent = templateName;
+                document.getElementById('useTemplateLink').href = `/organizer/create-event?template=${templateId}`;
+            });
+        }
+        
+        const deleteTemplateModal = document.getElementById('deleteTemplateModal');
+        if (deleteTemplateModal) {
+            deleteTemplateModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const templateId = button.getAttribute('data-template-id');
+                const templateName = button.getAttribute('data-template-name');
+                
+                document.getElementById('templateToDelete').textContent = templateName;
+                document.getElementById('templateIdToDelete').value = templateId;
+            });
+        }
+        
+        // Template search filter functionality
+        const templateSearch = document.getElementById('templateSearch');
+        const sportFilter = document.getElementById('sportFilter');
+        const templateSearchForm = document.getElementById('templateSearchForm');
+        
+        function filterTemplates() {
+            const searchTerm = templateSearch.value.toLowerCase();
+            const selectedSport = sportFilter.value;
+            
+            const rows = document.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                if (row.cells.length <= 1) return; // Skip empty state row
+                
+                const name = row.cells[0].textContent.toLowerCase();
+                const sport = row.cells[1].textContent;
+                const description = row.cells[2].textContent.toLowerCase();
+                
+                const matchesSearch = name.includes(searchTerm) || description.includes(searchTerm);
+                const matchesSport = !selectedSport || sport === selectedSport;
+                
+                row.style.display = matchesSearch && matchesSport ? '' : 'none';
+            });
+        }
+        
+        if (templateSearch) {
+            templateSearch.addEventListener('input', filterTemplates);
+        }
+        
+        if (sportFilter) {
+            sportFilter.addEventListener('change', filterTemplates);
+        }
+        
+        if (templateSearchForm) {
+            templateSearchForm.addEventListener('reset', function() {
+                setTimeout(filterTemplates, 10);
+            });
+        }
+    });
+</script> 

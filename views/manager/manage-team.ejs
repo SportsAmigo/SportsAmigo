@@ -1,0 +1,278 @@
+<!-- Manage Team Template -->
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="mb-0"><i class="fas fa-users-cog me-2"></i> Manage Team: <%= team.name %></h2>
+                            <p class="lead mt-2 mb-0">Review join requests and manage team members</p>
+                        </div>
+                        <a href="/manager/my-teams" class="btn btn-light">
+                            <i class="fas fa-arrow-left me-2"></i> Back to My Teams
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Messages -->
+    <% if (messages.error) { %>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <%= messages.error %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <% } %>
+    
+    <% if (messages.success) { %>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <%= messages.success %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <% } %>
+
+    <!-- Pending Join Requests Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-user-clock me-2"></i> Pending Join Requests</h5>
+                </div>
+                <div class="card-body">
+                    <% if (joinRequests && joinRequests.length > 0) { %>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Player</th>
+                                        <th>Email</th>
+                                        <th>Request Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% joinRequests.forEach(request => { %>
+                                        <tr>
+                                            <td>
+                                                <%= request.player_name || 'Unknown Player' %>
+                                            </td>
+                                            <td><%= request.player_email || 'Email not available' %></td>
+                                            <td><%= new Date(request.request_date).toLocaleDateString() %></td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <form action="/manager/team/<%= team.id %>/handle-request" method="POST" class="me-2">
+                                                        <input type="hidden" name="playerId" value="<%= request.player_id %>">
+                                                        <input type="hidden" name="action" value="approve">
+                                                        <button type="submit" class="btn btn-success btn-sm">
+                                                            <i class="fas fa-check me-1"></i> Approve
+                                                        </button>
+                                                    </form>
+                                                    <form action="/manager/team/<%= team.id %>/handle-request" method="POST">
+                                                        <input type="hidden" name="playerId" value="<%= request.player_id %>">
+                                                        <input type="hidden" name="action" value="reject">
+                                                        <button type="submit" class="btn btn-danger btn-sm">
+                                                            <i class="fas fa-times me-1"></i> Reject
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                </tbody>
+                            </table>
+                        </div>
+                    <% } else { %>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> No pending join requests at this time.
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Members Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-users me-2"></i> Team Members</h5>
+                </div>
+                <div class="card-body">
+                    <% if (members && members.length > 0) { %>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Joined</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% members.forEach(member => { %>
+                                        <tr>
+                                            <td>
+                                                <%= member.first_name %> <%= member.last_name %>
+                                            </td>
+                                            <td><%= member.email %></td>
+                                            <td>
+                                                <% 
+                                                try {
+                                                    const joinDate = new Date(member.joined_date);
+                                                    if (joinDate && !isNaN(joinDate)) {
+                                                        %><%= joinDate.toLocaleDateString() %><%
+                                                    } else {
+                                                        %>N/A<%
+                                                    }
+                                                } catch(e) { 
+                                                    %>N/A<% 
+                                                } 
+                                                %>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-<%= member.status === 'active' ? 'success' : 'secondary' %>">
+                                                    <%= member.status.charAt(0).toUpperCase() + member.status.slice(1) %>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex">
+                                                    <button class="btn btn-info btn-sm me-2" 
+                                                            onclick="showPlayerProfile('<%= member.player_id %>','<%= member.first_name %>','<%= member.last_name %>','<%= member.email %>','<%= member.phone %>','<%= member.age %>','<%= member.address %>','<%= member.bio ? member.bio.replace(/'/g, "\\'") : "" %>','<%= member.photo_url %>')">
+                                                        <i class="fas fa-user me-1"></i> Profile
+                                                    </button>
+                                                    <form action="/manager/team/<%= team._id %>/remove-member" method="POST">
+                                                        <input type="hidden" name="playerId" value="<%= member.player_id %>">
+                                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to remove this member from the team?')">
+                                                            <i class="fas fa-user-minus me-1"></i> Remove
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                </tbody>
+                            </table>
+                        </div>
+                    <% } else { %>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> Your team doesn't have any members yet. Approve join requests to add members.
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Details Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Team Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Team Name:</strong> <%= team.name %></p>
+                            <p><strong>Sport:</strong> <%= team.sport_type %></p>
+                            <p><strong>Created On:</strong> <%= new Date(team.created_at).toLocaleDateString() %></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Members:</strong> <%= members ? members.length : 0 %> / <%= team.max_members || 'Unlimited' %></p>
+                            <p><strong>Pending Requests:</strong> <%= joinRequests ? joinRequests.length : 0 %></p>
+                            <p><strong>Description:</strong> <%= team.description || 'No description available' %></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="/manager/my-teams" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i> Back to My Teams
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Auto-dismiss alerts after 5 seconds
+    window.addEventListener('DOMContentLoaded', (event) => {
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+    });
+    
+    // Function to show player profile in modal
+    function showPlayerProfile(playerId, firstName, lastName, email, phone, age, address, bio, photoUrl) {
+        document.getElementById('playerProfileName').innerText = firstName + ' ' + lastName;
+        document.getElementById('playerProfileImg').src = photoUrl || '/images/default-avatar.png';
+        document.getElementById('playerProfileEmail').innerText = email || 'N/A';
+        document.getElementById('playerProfilePhone').innerText = phone || 'Not provided';
+        document.getElementById('playerProfileAge').innerText = age || 'Not provided';
+        document.getElementById('playerProfileAddress').innerText = address || 'Not provided';
+        document.getElementById('playerProfileBio').innerText = bio || 'No bio available';
+        
+        // Show the modal
+        const profileModal = new bootstrap.Modal(document.getElementById('playerProfileModal'));
+        profileModal.show();
+    }
+</script>
+
+<!-- Player Profile Modal -->
+<div class="modal fade" id="playerProfileModal" tabindex="-1" aria-labelledby="playerProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="playerProfileModalLabel">Player Profile</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-4 text-center mb-3 mb-md-0">
+                        <img id="playerProfileImg" src="/images/default-avatar.png" class="img-fluid rounded" style="max-height: 200px; width: auto;" alt="Player Profile">
+                    </div>
+                    <div class="col-md-8">
+                        <h3 class="mb-3" id="playerProfileName"></h3>
+                        
+                        <div class="mb-2">
+                            <strong><i class="fas fa-envelope me-2"></i> Email:</strong>
+                            <span id="playerProfileEmail"></span>
+                        </div>
+                        
+                        <div class="mb-2">
+                            <strong><i class="fas fa-phone me-2"></i> Phone:</strong>
+                            <span id="playerProfilePhone"></span>
+                        </div>
+                        
+                        <div class="mb-2">
+                            <strong><i class="fas fa-birthday-cake me-2"></i> Age:</strong>
+                            <span id="playerProfileAge"></span>
+                        </div>
+                        
+                        <div class="mb-2">
+                            <strong><i class="fas fa-map-marker-alt me-2"></i> Address:</strong>
+                            <span id="playerProfileAddress"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <h5 class="mb-3 border-bottom pb-2"><i class="fas fa-info-circle me-2"></i> Bio</h5>
+                    <p id="playerProfileBio"></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div> 

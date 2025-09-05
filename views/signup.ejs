@@ -1,0 +1,233 @@
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h3 class="text-center"><%= role.charAt(0).toUpperCase() + role.slice(1) %> Registration</h3>
+            </div>
+            <div class="card-body">
+                <% if (error) { %>
+                    <div class="alert alert-danger" role="alert">
+                        <%= error %>
+                    </div>
+                <% } %>
+                
+                <form action="/signup/<%= role %>" method="POST">
+                    <input type="hidden" name="role" value="<%= role %>">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="first_name" class="form-label">First Name</label>
+                            <input type="text" class="form-control <%= typeof validationErrors !== 'undefined' && validationErrors.first_name ? 'is-invalid' : '' %>" 
+                                id="first_name" name="first_name" value="<%= typeof formData !== 'undefined' && formData.first_name ? formData.first_name : '' %>" required>
+                            <% if (typeof validationErrors !== 'undefined' && validationErrors.first_name) { %>
+                                <div class="invalid-feedback">
+                                    <%= validationErrors.first_name %>
+                                </div>
+                            <% } %>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="last_name" class="form-label">Last Name</label>
+                            <input type="text" class="form-control <%= typeof validationErrors !== 'undefined' && validationErrors.last_name ? 'is-invalid' : '' %>" 
+                                id="last_name" name="last_name" value="<%= typeof formData !== 'undefined' && formData.last_name ? formData.last_name : '' %>" required>
+                            <% if (typeof validationErrors !== 'undefined' && validationErrors.last_name) { %>
+                                <div class="invalid-feedback">
+                                    <%= validationErrors.last_name %>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control <%= typeof validationErrors !== 'undefined' && validationErrors.email ? 'is-invalid' : '' %>" 
+                            id="email" name="email" value="<%= typeof formData !== 'undefined' && formData.email ? formData.email : '' %>" 
+                            pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" 
+                            title="Please enter a valid email address (e.g., name@example.com)" required>
+                        <% if (typeof validationErrors !== 'undefined' && validationErrors.email) { %>
+                            <div class="invalid-feedback">
+                                <%= validationErrors.email %>
+                            </div>
+                        <% } else { %>
+                            <div class="form-text">We'll never share your email with anyone else.</div>
+                        <% } %>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control <%= typeof validationErrors !== 'undefined' && validationErrors.phone ? 'is-invalid' : '' %>" 
+                            id="phone" name="phone" value="<%= typeof formData !== 'undefined' && formData.phone ? formData.phone : '' %>" 
+                            pattern="[0-9]{10}" 
+                            title="Please enter a valid 10-digit phone number" required>
+                        <% if (typeof validationErrors !== 'undefined' && validationErrors.phone) { %>
+                            <div class="invalid-feedback">
+                                <%= validationErrors.phone %>
+                            </div>
+                        <% } else { %>
+                            <div class="form-text">Format: 10-digit number without spaces or dashes</div>
+                        <% } %>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control <%= typeof validationErrors !== 'undefined' && validationErrors.password ? 'is-invalid' : '' %>" 
+                                id="password" name="password" required>
+                            <% if (typeof validationErrors !== 'undefined' && validationErrors.password) { %>
+                                <div class="invalid-feedback">
+                                    <%= validationErrors.password %>
+                                </div>
+                            <% } else { %>
+                                <div class="form-text">Password must be at least 6 characters.</div>
+                            <% } %>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="confirm_password" class="form-label">Confirm Password</label>
+                            <input type="password" class="form-control <%= typeof validationErrors !== 'undefined' && validationErrors.confirm_password ? 'is-invalid' : '' %>" 
+                                id="confirm_password" name="confirm_password" required>
+                            <% if (typeof validationErrors !== 'undefined' && validationErrors.confirm_password) { %>
+                                <div class="invalid-feedback">
+                                    <%= validationErrors.confirm_password %>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                    
+                    <!-- Role-specific fields -->
+                    <% if (role === 'player') { %>
+                        <div class="mb-3">
+                            <label for="preferred_sports" class="form-label">Preferred Sports</label>
+                            <select class="form-select <%= typeof validationErrors !== 'undefined' && validationErrors.preferred_sports ? 'is-invalid' : '' %>" 
+                                id="preferred_sports" name="preferred_sports" multiple required>
+                                <option value="basketball" <%= typeof formData !== 'undefined' && formData.preferred_sports && formData.preferred_sports.includes('basketball') ? 'selected' : '' %>>Basketball</option>
+                                <option value="cricket" <%= typeof formData !== 'undefined' && formData.preferred_sports && formData.preferred_sports.includes('cricket') ? 'selected' : '' %>>Cricket</option>
+                                <option value="football" <%= typeof formData !== 'undefined' && formData.preferred_sports && formData.preferred_sports.includes('football') ? 'selected' : '' %>>Football</option>
+                            </select>
+                            <% if (typeof validationErrors !== 'undefined' && validationErrors.preferred_sports) { %>
+                                <div class="invalid-feedback">
+                                    <%= validationErrors.preferred_sports %>
+                                </div>
+                            <% } else { %>
+                                <div class="form-text">Hold Ctrl (Windows) or Command (Mac) to select multiple options</div>
+                            <% } %>
+                        </div>
+                    <% } else if (role === 'organizer') { %>
+                        <div class="mb-3">
+                            <label for="organization_name" class="form-label">Organization Name</label>
+                            <input type="text" class="form-control <%= typeof validationErrors !== 'undefined' && validationErrors.organization_name ? 'is-invalid' : '' %>" 
+                                id="organization_name" name="organization_name" value="<%= typeof formData !== 'undefined' && formData.organization_name ? formData.organization_name : '' %>" required>
+                            <% if (typeof validationErrors !== 'undefined' && validationErrors.organization_name) { %>
+                                <div class="invalid-feedback">
+                                    <%= validationErrors.organization_name %>
+                                </div>
+                            <% } %>
+                        </div>
+                    <% } else if (role === 'manager') { %>
+                        <div class="mb-3">
+                            <label for="team_name" class="form-label">Team Name</label>
+                            <input type="text" class="form-control <%= typeof validationErrors !== 'undefined' && validationErrors.team_name ? 'is-invalid' : '' %>" 
+                                id="team_name" name="team_name" value="<%= typeof formData !== 'undefined' && formData.team_name ? formData.team_name : '' %>" required>
+                            <% if (typeof validationErrors !== 'undefined' && validationErrors.team_name) { %>
+                                <div class="invalid-feedback">
+                                    <%= validationErrors.team_name %>
+                                </div>
+                            <% } %>
+                        </div>
+                    <% } %>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input <%= typeof validationErrors !== 'undefined' && validationErrors.terms ? 'is-invalid' : '' %>" 
+                            id="terms" name="terms" required>
+                        <label class="form-check-label" for="terms">I agree to the Terms of Service and Privacy Policy</label>
+                        <% if (typeof validationErrors !== 'undefined' && validationErrors.terms) { %>
+                            <div class="invalid-feedback">
+                                <%= validationErrors.terms %>
+                            </div>
+                        <% } %>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success">Register</button>
+                    </div>
+                </form>
+                
+                <div class="mt-3 text-center">
+                    <p>Already have an account? <a href="/login">Login here</a></p>
+                    <p><a href="/">Back to Home</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const emailInput = document.getElementById('email');
+        const phoneInput = document.getElementById('phone');
+        
+        // Email validation
+        emailInput.addEventListener('input', function() {
+            const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            
+            if (this.value === '') {
+                this.classList.remove('is-valid', 'is-invalid');
+                return;
+            }
+            
+            if (emailPattern.test(this.value)) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            } else {
+                this.classList.remove('is-valid');
+                this.classList.add('is-invalid');
+                
+                // Create or update feedback message
+                let feedback = this.nextElementSibling;
+                if (!feedback || !feedback.classList.contains('invalid-feedback')) {
+                    feedback = document.createElement('div');
+                    feedback.classList.add('invalid-feedback');
+                    this.parentNode.insertBefore(feedback, this.nextSibling);
+                }
+                feedback.textContent = 'Please enter a valid email address (e.g., name@example.com)';
+            }
+        });
+        
+        // Phone validation
+        phoneInput.addEventListener('input', function() {
+            const phonePattern = /^[0-9]{10}$/;
+            
+            if (this.value === '') {
+                this.classList.remove('is-valid', 'is-invalid');
+                return;
+            }
+            
+            if (phonePattern.test(this.value)) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            } else {
+                this.classList.remove('is-valid');
+                this.classList.add('is-invalid');
+                
+                // Create or update feedback message
+                let feedback = this.nextElementSibling;
+                if (!feedback || !feedback.classList.contains('invalid-feedback')) {
+                    feedback = document.createElement('div');
+                    feedback.classList.add('invalid-feedback');
+                    this.parentNode.insertBefore(feedback, this.nextSibling);
+                }
+                feedback.textContent = 'Please enter a valid 10-digit phone number';
+            }
+        });
+        
+        // Allow only numbers in phone field
+        phoneInput.addEventListener('keypress', function(e) {
+            const key = e.which || e.keyCode;
+            const keyChar = String.fromCharCode(key);
+            
+            // If not a number, prevent the input
+            if (!/[0-9]/.test(keyChar)) {
+                e.preventDefault();
+            }
+        });
+    });
+</script> 

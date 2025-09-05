@@ -1,0 +1,429 @@
+<!-- Player Assignments -->
+<div class="container-fluid">
+    <div class="row page-titles">
+        <div class="col-md-12 align-self-center">
+            <h4 class="text-themecolor">Player Assignments</h4>
+        </div>
+    </div>
+    
+    <!-- Filters and Search -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <input type="text" id="player-search" class="form-control search-input" placeholder="Search players...">
+                                <div class="input-group-append">
+                                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <select id="status-filter" class="form-select form-control">
+                                <option value="">All Statuses</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select id="team-filter" class="form-select form-control">
+                                <option value="">All Teams</option>
+                                <option value="Kolkata Warriors">Kolkata Warriors</option>
+                                <option value="Mumbai Lions">Mumbai Lions</option>
+                                <option value="Delhi Panthers">Delhi Panthers</option>
+                                <option value="Chennai Eagles">Chennai Eagles</option>
+                                <option value="Bengaluru Sharks">Bengaluru Sharks</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Player Assignments Listing -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Player Team Assignments</h4>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Player</th>
+                                    <th>Team</th>
+                                    <th>Join Date</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="player-name">Rajesh Kumar</td>
+                                    <td class="team-name">Kolkata Warriors</td>
+                                    <td>15 January 2025</td>
+                                    <td><span class="player-status badge bg-success text-white p-2">Active</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-danger delete-btn" data-id="1"><i class="bi bi-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="player-name">Sunil Patel</td>
+                                    <td class="team-name">Mumbai Lions</td>
+                                    <td>5 February 2025</td>
+                                    <td><span class="player-status badge bg-success text-white p-2">Active</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-danger delete-btn" data-id="2"><i class="bi bi-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="player-name">Amit Singh</td>
+                                    <td class="team-name">Delhi Panthers</td>
+                                    <td>20 March 2025</td>
+                                    <td><span class="player-status badge bg-warning text-white p-2">Pending</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-danger delete-btn" data-id="3"><i class="bi bi-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="player-name">Priya Sharma</td>
+                                    <td class="team-name">Chennai Eagles</td>
+                                    <td>10 January 2025</td>
+                                    <td><span class="player-status badge bg-success text-white p-2">Active</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-danger delete-btn" data-id="4"><i class="bi bi-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="player-name">Ananya Reddy</td>
+                                    <td class="team-name">Kolkata Warriors</td>
+                                    <td>5 March 2025</td>
+                                    <td><span class="player-status badge bg-success text-white p-2">Active</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-danger delete-btn" data-id="5"><i class="bi bi-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="player-name">Vikram Mehta</td>
+                                    <td class="team-name">Bengaluru Sharks</td>
+                                    <td>15 February 2025</td>
+                                    <td><span class="player-status badge bg-secondary text-white p-2">Inactive</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-danger delete-btn" data-id="6"><i class="bi bi-trash"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <!-- No Content Message -->
+                        <div id="no-content-message" style="display: none; text-align: center; padding: 20px;" class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i> No player assignments match your filters.
+                        </div>
+                        
+                        <!-- Pagination -->
+                        <nav aria-label="Page navigation" class="mt-4">
+                            <ul class="pagination justify-content-center" id="players-pagination">
+                                <li class="page-item disabled" id="prev-page">
+                                    <a class="page-link" href="#" tabindex="-1" id="prev-link">Previous</a>
+                                </li>
+                                <li class="page-item active" id="page-1"><a class="page-link" href="#">1</a></li>
+                                <li class="page-item" id="page-2"><a class="page-link" href="#">2</a></li>
+                                <li class="page-item" id="page-3"><a class="page-link" href="#">3</a></li>
+                                <li class="page-item" id="next-page">
+                                    <a class="page-link" href="#" id="next-link">Next</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Simple direct implementation that doesn't rely on admin.js
+        console.log("Simple direct implementation loaded for player assignments");
+        
+        // Track current page
+        let currentPage = 1;
+        const itemsPerPage = 4;
+        
+        // Elements
+        const searchInput = document.getElementById('player-search');
+        const statusFilter = document.getElementById('status-filter');
+        const teamFilter = document.getElementById('team-filter');
+        const table = document.querySelector('table');
+        const allRows = Array.from(table.querySelectorAll('tbody tr'));
+        const noContentMessage = document.getElementById('no-content-message');
+        
+        // Pagination elements
+        const pageLinks = document.querySelectorAll('.pagination .page-item:not(:first-child):not(:last-child)');
+        const prevButton = document.getElementById('prev-page');
+        const nextButton = document.getElementById('next-page');
+        
+        // Initialize filters and pagination
+        function initPage() {
+            // Add event listeners
+            searchInput.addEventListener('input', applyFilters);
+            statusFilter.addEventListener('change', applyFilters);
+            teamFilter.addEventListener('change', applyFilters);
+            
+            // Add pagination click handlers
+            pageLinks.forEach(pageItem => {
+                const link = pageItem.querySelector('a');
+                const pageNum = parseInt(link.textContent);
+                
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    goToPage(pageNum);
+                });
+            });
+            
+            // Prev/Next buttons
+            prevButton.querySelector('a').addEventListener('click', function(e) {
+                e.preventDefault();
+                if (!prevButton.classList.contains('disabled')) {
+                    goToPage(currentPage - 1);
+                }
+            });
+            
+            nextButton.querySelector('a').addEventListener('click', function(e) {
+                e.preventDefault();
+                if (!nextButton.classList.contains('disabled')) {
+                    goToPage(currentPage + 1);
+                }
+            });
+            
+            // Add delete button event listeners
+            initDeleteButtons();
+            
+            // Initial filter application
+            applyFilters();
+        }
+        
+        // Initialize delete button functionality
+        function initDeleteButtons() {
+            const deleteButtons = document.querySelectorAll('.delete-btn');
+            
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const playerId = this.getAttribute('data-id');
+                    const row = this.closest('tr');
+                    const playerName = row.querySelector('.player-name').textContent;
+                    const teamName = row.querySelector('.team-name').textContent;
+                    
+                    // Show confirmation dialog
+                    if (confirm(`Are you sure you want to delete the assignment for ${playerName} from ${teamName}?`)) {
+                        // Simulate deletion (in a real app, this would be an API call)
+                        setTimeout(() => {
+                            // Remove the row from DOM
+                            row.remove();
+                            
+                            // Remove from our tracking array
+                            const index = allRows.indexOf(row);
+                            if (index > -1) {
+                                allRows.splice(index, 1);
+                            }
+                            
+                            // Show success message
+                            showNotification(`Assignment for "${playerName}" from "${teamName}" has been deleted successfully.`, 'success');
+                            
+                            // Reapply filters and pagination
+                            applyFilters();
+                        }, 500);
+                    }
+                });
+            });
+        }
+        
+        // Show notification
+        function showNotification(message, type = 'info') {
+            // Check if notification container exists, if not create it
+            let notificationContainer = document.getElementById('notification-container');
+            if (!notificationContainer) {
+                notificationContainer = document.createElement('div');
+                notificationContainer.id = 'notification-container';
+                notificationContainer.style.position = 'fixed';
+                notificationContainer.style.top = '20px';
+                notificationContainer.style.right = '20px';
+                notificationContainer.style.zIndex = '9999';
+                document.body.appendChild(notificationContainer);
+            }
+            
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type} alert-dismissible fade show`;
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            
+            // Add to container
+            notificationContainer.appendChild(notification);
+            
+            // Auto dismiss after 5 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    notification.remove();
+                }, 150);
+            }, 5000);
+        }
+        
+        // Go to specific page
+        function goToPage(pageNum) {
+            currentPage = pageNum;
+            console.log(`Going to page ${currentPage}`);
+            
+            // Update active page
+            pageLinks.forEach(pageItem => {
+                const link = pageItem.querySelector('a');
+                const thisPageNum = parseInt(link.textContent);
+                
+                if (thisPageNum === currentPage) {
+                    pageItem.classList.add('active');
+                } else {
+                    pageItem.classList.remove('active');
+                }
+            });
+            
+            // Update prev/next buttons
+            if (currentPage === 1) {
+                prevButton.classList.add('disabled');
+            } else {
+                prevButton.classList.remove('disabled');
+            }
+            
+            const maxPage = pageLinks.length;
+            if (currentPage === maxPage) {
+                nextButton.classList.add('disabled');
+            } else {
+                nextButton.classList.remove('disabled');
+            }
+            
+            // Show/hide rows based on current page
+            displayCurrentPage();
+        }
+        
+        // Apply all filters and then show current page
+        function applyFilters() {
+            console.log("Applying filters");
+            
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            const statusValue = statusFilter.value;
+            const teamValue = teamFilter.value;
+            
+            // Filter rows
+            const visibleRows = allRows.filter(row => {
+                // Skip rows that have been removed (deleted)
+                if (!row.isConnected) return false;
+                
+                // Start with visible
+                let visible = true;
+                
+                // Search filter
+                if (searchTerm) {
+                    const rowText = row.textContent.toLowerCase();
+                    visible = rowText.includes(searchTerm);
+                }
+                
+                // Status filter - match based on badges and text
+                if (visible && statusValue) {
+                    const statusBadge = row.querySelector('.player-status');
+                    const statusText = statusBadge.textContent.trim();
+                    visible = statusText === statusValue;
+                }
+                
+                // Team filter
+                if (visible && teamValue) {
+                    const teamText = row.querySelector('.team-name').textContent.trim();
+                    visible = teamText === teamValue;
+                }
+                
+                // Mark row visibility
+                row.dataset.visible = visible ? 'true' : 'false';
+                return visible;
+            });
+            
+            console.log(`Filtered rows: ${visibleRows.length} of ${allRows.length}`);
+            
+            // Reset to page 1 when filters change
+            currentPage = 1;
+            updatePagination(visibleRows.length);
+            displayCurrentPage();
+        }
+        
+        // Update pagination controls based on number of visible items
+        function updatePagination(totalVisibleItems) {
+            const totalPages = Math.max(1, Math.ceil(totalVisibleItems / itemsPerPage));
+            console.log(`Total pages: ${totalPages}`);
+            
+            // Show/hide page numbers
+            pageLinks.forEach((pageItem, index) => {
+                const pageNum = index + 1;
+                pageItem.style.display = pageNum <= totalPages ? '' : 'none';
+                
+                if (pageNum === 1) {
+                    pageItem.classList.add('active');
+                } else {
+                    pageItem.classList.remove('active');
+                }
+            });
+            
+            // Update prev/next buttons
+            prevButton.classList.add('disabled');
+            
+            if (totalPages <= 1) {
+                nextButton.classList.add('disabled');
+            } else {
+                nextButton.classList.remove('disabled');
+            }
+        }
+        
+        // Display only the rows for current page
+        function displayCurrentPage() {
+            // Get visible rows (only those still in the DOM)
+            const visibleRows = allRows.filter(row => 
+                row.isConnected && row.dataset.visible === 'true'
+            );
+            
+            // Calculate range for current page
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, visibleRows.length);
+            
+            console.log(`Displaying rows ${startIndex} to ${endIndex-1} of ${visibleRows.length} visible rows`);
+            
+            // Hide all rows first
+            allRows.forEach(row => {
+                if (row.isConnected) {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Show rows for current page
+            for (let i = startIndex; i < endIndex; i++) {
+                visibleRows[i].style.display = '';
+            }
+            
+            // Show "no content" message if needed
+            if (visibleRows.length === 0) {
+                noContentMessage.style.display = 'block';
+            } else if (startIndex >= visibleRows.length) {
+                // This can happen if we delete items on the last page
+                currentPage = Math.max(1, Math.ceil(visibleRows.length / itemsPerPage));
+                displayCurrentPage(); // Recursively call to show the new current page
+            } else {
+                noContentMessage.style.display = 'none';
+            }
+        }
+        
+        // Initialize the page
+        initPage();
+    });
+</script> 
