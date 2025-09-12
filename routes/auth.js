@@ -12,7 +12,7 @@ const isLoggedIn = (req, res, next) => {
 
 // Home page with role selection
 router.get('/', (req, res) => {
-    res.render('home');
+    res.render('index');
 });
 
 // Login page for each role

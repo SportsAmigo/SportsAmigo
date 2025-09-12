@@ -5,7 +5,6 @@ const { eventController, userController } = require('../controllers');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const db = require('../config/db');
 
 // Middleware to check if user is logged in as organizer
 function isOrganizer(req, res, next) {

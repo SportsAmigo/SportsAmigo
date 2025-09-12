@@ -3,7 +3,6 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const bodyParser = require('body-parser');
 const path = require('path');
-const expressLayouts = require('express-ejs-layouts');
 const fs = require('fs');
 const User = require('./models/user');
 const app = express();
@@ -25,10 +24,8 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 // Set view engine
-app.use(expressLayouts);
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
-app.set('layout', 'layouts/main');
 
 // Session configuration
 app.use(session({
@@ -184,46 +181,161 @@ if (adminRoutes && typeof adminRoutes === 'function') {
   });
 }
 
-// Serve static HTML files from the root
+// Home page - use EJS template
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.render('index', { 
+    title: 'Sports Amigo - Home',
+    description: 'Join the largest sports community in South Africa and experience the thrill of competition, the joy of teamwork, and the pride of victory.'
+  });
 });
 
-// Routes for static HTML pages
+// Test route to check EJS rendering
+app.get('/test', (req, res) => {
+  res.render('about', { 
+    title: 'Test Page',
+    description: 'Test page to verify EJS rendering works correctly'
+  });
+});
+
+// Events page - use EJS template
 app.get('/events', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'events.html'));
+  res.render('player/browse-events', { 
+    title: 'Events',
+    description: 'Discover our exciting lineup of sporting events and competitions across South Africa',
+    events: [
+      {
+        id: 1,
+        name: 'Football Championship',
+        date: '2024-02-15',
+        location: 'Sports Arena',
+        organizer: 'Sports Club',
+        status: 'upcoming',
+        participants: 16
+      },
+      {
+        id: 2,
+        name: 'Basketball Tournament',
+        date: '2024-02-20',
+        location: 'Basketball Court',
+        organizer: 'City Sports',
+        status: 'upcoming',
+        participants: 8
+      },
+      {
+        id: 3,
+        name: 'Cricket League',
+        date: '2024-02-25',
+        location: 'Cricket Ground',
+        organizer: 'Local Cricket Club',
+        status: 'upcoming',
+        participants: 12
+      }
+    ]
+  });
 });
 
+// Event details pages - use EJS template with sport parameter
 app.get('/events/football', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'eventfootball.html'));
+  res.render('player/event-details', { 
+    title: 'Football Events',
+    description: 'Join our exciting football championship! Compete with the best teams in the city.',
+    headerType: 'football',
+    event: {
+      name: 'Football Championship',
+      title: 'Football Championship',
+      description: 'Join our exciting football championship! Compete with the best teams in the city.',
+      location: 'Sports Arena',
+      date: '2024-02-15',
+      event_date: '2024-02-15',
+      sport: 'football',
+      sport_type: 'football',
+      status: 'upcoming',
+      max_teams: 16,
+      organizer: 'Sports Club',
+      registration_deadline: '2024-02-10'
+    },
+    teams: [],
+    messages: {}
+  });
 });
 
 app.get('/events/cricket', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'eventcricket.html'));
+  res.render('player/event-details', { 
+    title: 'Cricket Events',
+    description: 'Join our exciting cricket league! Show your skills on the cricket field.',
+    headerType: 'cricket',
+    event: {
+      name: 'Cricket League',
+      title: 'Cricket League',
+      description: 'Join our exciting cricket league! Show your skills on the cricket field.',
+      location: 'Cricket Ground',
+      date: '2024-02-25',
+      event_date: '2024-02-25',
+      sport: 'cricket',
+      sport_type: 'cricket',
+      status: 'upcoming',
+      max_teams: 12,
+      organizer: 'Local Cricket Club',
+      registration_deadline: '2024-02-20'
+    },
+    teams: [],
+    messages: {}
+  });
 });
 
 app.get('/events/basketball', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'eventbasketball.html'));
+  res.render('player/event-details', { 
+    title: 'Basketball Events',
+    description: 'Join our exciting basketball tournament! Fast-paced action awaits.',
+    headerType: 'basketball',
+    event: {
+      name: 'Basketball Tournament',
+      title: 'Basketball Tournament',
+      description: 'Join our exciting basketball tournament! Fast-paced action awaits.',
+      location: 'Basketball Court',
+      date: '2024-02-20',
+      event_date: '2024-02-20',
+      sport: 'basketball',
+      sport_type: 'basketball',
+      status: 'upcoming',
+      max_teams: 8,
+      organizer: 'City Sports',
+      registration_deadline: '2024-02-15'
+    },
+    teams: [],
+    messages: {}
+  });
 });
 
+// About page - use EJS template
 app.get('/about', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'about.html'));
+  res.render('about', { 
+    title: 'About Us',
+    description: 'Learn more about the South African Sports Association and our mission to promote sports excellence across the country.'
+  });
 });
 
+// Contact page - use EJS template
 app.get('/contact', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'contact.html'));
+  res.render('contact', { 
+    title: 'Contact Us',
+    description: 'Get in touch with the South African Sports Association. We are here to help and support your sporting journey.'
+  });
 });
 
+// Support page - redirect to contact for now
 app.get('/support', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'support.html'));
+  res.redirect('/contact');
 });
 
+// Blog page - redirect to home for now
 app.get('/blog', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'blog.html'));
+  res.redirect('/');
 });
 
+// Register page - redirect to signup
 app.get('/register', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'register.html'));
+  res.redirect('/signup');
 });
 
 // Main login and register routes
@@ -566,7 +678,6 @@ app.use((req, res, next) => {
   res.status(404).render('error', { 
     title: '404 - Page Not Found',
     message: 'The page you are looking for does not exist.',
-    layout: 'layouts/main'
   });
 });
 

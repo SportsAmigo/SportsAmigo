@@ -5,9 +5,7 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "dev": "nodemon app.js",
-    "migrate": "node scripts/migrate-to-mongodb.js"
-  },
+    "dev": "nodemon app.js"  },
   "keywords": [
     "sports",
     "event",
@@ -28,8 +26,7 @@
     "express-session": "^1.17.3",
     "mongodb": "^6.3.0",
     "mongoose": "^8.0.0",
-    "multer": "^1.4.5-lts.1",
-    "sqlite3": "^5.1.6"
+    "multer": "^1.4.5-lts.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
