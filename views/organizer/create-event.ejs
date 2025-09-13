@@ -1,3 +1,7 @@
+<%- include('../partials/header', { title: 'Create Event - Sports Amigo' }) %>
+
+<%- include('../partials/navbar', { user: user }) %>
+
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-12">
@@ -10,6 +14,7 @@
                         </a>
                     </div>
                 </div>
+                <!-- hello check -->
                 <div class="card-body">
                     <% if (locals.error) { %>
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -96,6 +101,7 @@
                                     </div>
                                 </div>
                             </div>
+
                             
                             <!-- Event Timing and Capacity -->
                             <div class="col-md-6">
@@ -265,4 +271,6 @@
         // Initial toggle
         toggleInvitationCode();
     });
-</script> 
+</script>
+
+<%- include('../partials/footer') %> 
