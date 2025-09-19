@@ -1,11 +1,11 @@
 <%- include('../partials/header', {title: 'Manager Dashboard - Sports Amigo', headerType: 'manager'}) %>
 
 <div class="row">
-    <% 
+    <%
     // Check if the profile is incomplete (missing essential fields)
     const isNewUser = !user.name || !user.phone || !user.age || !user.address || !user.bio;
     %>
-    
+
     <% if (isNewUser) { %>
     <div class="col-md-12 mb-4">
         <div class="alert alert-warning d-flex align-items-center" role="alert">
@@ -18,14 +18,13 @@
         </div>
     </div>
     <% } %>
-    
+
     <div class="col-md-12">
         <div class="card">
             <div class="card-header bg-info text-white">
                 <h3 class="mb-0">Manager Dashboard</h3>
             </div>
             <div class="card-body">
-                <!-- Statistics Overview Row -->
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <div class="card bg-primary text-white dashboard-stat-card">
@@ -40,7 +39,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="col-md-6">
                         <div class="card bg-success text-white dashboard-stat-card">
                             <div class="card-body d-flex justify-content-between align-items-center">
@@ -56,16 +55,17 @@
                     </div>
                 </div>
 
-                <!-- Welcome Message -->
                 <div class="card mb-4">
                     <div class="card-body">
                         <h4 class="card-title">Welcome<%= !isNewUser ? ' back' : '' %>, <%= user.name || user.email %>!</h4>
                         <% if (isNewUser) { %>
-                            <p class="card-text">Welcome to Sports Amigo! Complete your profile to get started with managing teams, organizing matches, and tracking player performance.</p>
+                            <p class="card-text">Welcome to Sports Amigo!
+                                Complete your profile to get started with managing teams, organizing matches, and tracking player performance.</p>
                             <a href="/manager/profile" class="btn btn-primary">Complete Your Profile</a>
                         <% } else { %>
                             <% if (upcomingEvent) { %>
-                            <p class="card-text">Your next match is <strong><%= upcomingEvent.name %></strong> on <strong><%= new Date(upcomingEvent.date).toLocaleDateString() %></strong>. Make sure your team is prepared!</p>
+                            <p class="card-text">Your next match is <strong><%= upcomingEvent.name %></strong> on <strong><%= new Date(upcomingEvent.date).toLocaleDateString() %></strong>.
+                                Make sure your team is prepared!</p>
                             <% } else { %>
                             <p class="card-text">You don't have any upcoming matches scheduled.</p>
                             <% } %>
@@ -73,8 +73,34 @@
                         <% } %>
                     </div>
                 </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0">Last Match Stats</h5>
+                    </div>
+                    <div class="card-body">
+                         <div class="row text-center">
+                            <div class="col">
+                                <h6>Goals</h6>
+                                <p class="fs-4">2</p>
+                            </div>
+                            <div class="col">
+                                <h6>Assists</h6>
+                                <p class="fs-4">1</p>
+                            </div>
+                            <div class="col">
+                                <h6>Shots on Target</h6>
+                                <p class="fs-4">5</p>
+                            </div>
+                             <div class="col">
+                                <h6>Passing Accuracy</h6>
+                                <p class="fs-4">85%</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                <!-- Quick Access Cards -->
+
                 <div class="row">
                     <div class="col-md-6">
                         <div class="card mb-4">
@@ -107,7 +133,8 @@
                             </div>
                         </div>
                     </div>
-                    
+
+
                     <div class="col-md-6">
                         <div class="card mb-4">
                             <div class="card-header bg-success text-white">
@@ -142,7 +169,6 @@
                     </div>
                 </div>
 
-                <!-- Join Requests Section for accessibility -->
                 <% if (!isNewUser && typeof pendingRequestCount !== 'undefined' && pendingRequestCount > 0) { %>
                 <div class="card mb-4">
                     <div class="card-header bg-warning text-dark">
@@ -155,7 +181,7 @@
                 </div>
                 <% } %>
 
-                <!-- Recent Activity -->
+
                 <div class="row">
                     <div class="col-md-12">
                         <div class="card mb-4">
@@ -186,5 +212,5 @@
             </div>
         </div>
     </div>
-</div> 
+</div>
 <%- include('../partials/footer') %>
