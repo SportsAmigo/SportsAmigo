@@ -147,6 +147,10 @@ router.get('/', async (req, res) => {
     }
 });
 
+router.get('/dashboard', (req, res) => {
+                res.redirect('/manager/');
+            });
+
 // Matches page (renamed to Events)
 router.get('/matches', async (req, res) => {
     try {
@@ -166,6 +170,8 @@ router.get('/matches', async (req, res) => {
         // Get manager's teams
         const teams = await Team.getTeamsByManager(req.session.user._id);
         
+
+
         // Fetch real events from the database
         const allEvents = await Event.getAllEvents();
         

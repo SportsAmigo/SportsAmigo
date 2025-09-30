@@ -1,3 +1,7 @@
+<%- include('../partials/header', {title: 'Manager Dashboard - Sports Amigo', headerType: 'manager'}) %>
+<%- include('../partials/navbar', { user: user }) %>
+
+
 <div class="row">
     <div class="col-md-12">
         <div class="card">
@@ -391,3 +395,5 @@
         console.log('All button handlers in My Team page initialized');
     });
 </script> 
+
+<%- include('../partials/footer') %>
