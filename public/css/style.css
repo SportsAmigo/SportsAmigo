@@ -268,11 +268,12 @@ h3{
     flex-basis: 31%;
     border-radius: 10px;
     margin-bottom: 5%;
-    text-align: left;
+    text-align: center;
+    color: #f44336;
 }
 
 .facilities-col img{
-    width: 100%;
+    width: 90%;
     border-radius: 10px;
 }
 
@@ -283,7 +284,8 @@ h3{
 .facilities-col h3{
     margin-top: 16px;
     margin-bottom: 15px;
-    text-align: left;
+    text-align: center;
+    color: #555;
 }
 
 /* testimonials */
@@ -291,8 +293,11 @@ h3{
 .testimonials{
     width: 80%;
     margin: auto;
-    padding-top: 100px;
     text-align: center;
+}
+
+.testimonials h1{
+    color: black;
 }
 
 .testimonials-col{
@@ -417,7 +422,6 @@ h3{
     width: 80%;
     margin: auto;
     padding-top: 80px;
-    padding-bottom: 50px;
 }
 
 .about-col{
@@ -427,6 +431,7 @@ h3{
 
 .about-col img{
     width: 100%;
+    vertical-align: middle;
 }
 
 .about-col h1{
@@ -434,7 +439,7 @@ h3{
 }
 
 .about-col p{
-    padding: 15px 0 25px;
+    padding: 10px 0 10px;
 }
 
 .red-btn{
@@ -532,7 +537,7 @@ h3{
 .location{
     width: 80%;
     margin: auto;
-    padding: 80px 0;
+    padding: 200px 0;
 }
 
 .location iframe{
@@ -873,7 +878,6 @@ h3{
 .sport-facilities {
     width: 80%;
     margin: auto;
-    padding-top: 100px;
     text-align: center;
 }
 
