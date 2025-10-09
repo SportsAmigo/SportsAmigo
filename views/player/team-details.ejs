@@ -67,9 +67,9 @@
                             %>
                             <strong>Team Capacity:</strong>
                             <div class="progress mt-2" style="height: 20px;">
-                                <div class="progress-bar bg-primary" role="progressbar" 
-                                    style="width: <%= percentage %>%;" 
-                                    aria-valuenow="<%= team.current_members || 0 %>" 
+                    <div class="progress-bar bg-primary" role="progressbar" 
+                        data-width="<%= percentage %>"
+                        aria-valuenow="<%= team.current_members || 0 %>" 
                                     aria-valuemin="0" 
                                     aria-valuemax="<%= team.max_members || 0 %>">
                                     <%= Math.round(percentage) %>%
@@ -86,7 +86,7 @@
                     </div>
                 <% } else if (!requestStatus) { %>
                     <div class="card-footer">
-                        <form action="/player/teams/join/<%= team.id %>" method="POST">
+                        <form action="/player/teams/join/<%= team.id %>" method="POST" data-validate>
                             <button type="submit" class="btn btn-primary w-100">
                                 <i class="fas fa-user-plus me-2"></i> Request to Join
                             </button>

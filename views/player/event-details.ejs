@@ -104,7 +104,7 @@
                             <i class="fas fa-check-circle me-2"></i> You are registered for this event with team: <strong><%= event.registeredTeam %></strong>
                         </div>
                     <% } else if (teams && teams.length > 0) { %>
-                        <form action="/player/event/<%= event._id %>/register" method="POST">
+                        <form action="/player/event/<%= event._id %>/register" method="POST" data-validate>
                             <div class="mb-3">
                                 <label for="team_id" class="form-label">Select a team to register:</label>
                                 <select class="form-select" id="team_id" name="team_id" required>

@@ -142,7 +142,7 @@ module.exports = {
                 profile: profileData || {},
                 performance: performance || {},
                 messages: req.session.flashMessage || {},
-                layout: 'layouts/dashboard',
+                layout: 'layouts/sidebar-dashboard',
                 path: '/player/profile'
             });
             
@@ -178,7 +178,7 @@ module.exports = {
                 user: req.session.user,
                 profile: profile || {},
                 messages: req.session.flashMessage || {},
-                layout: 'layouts/dashboard',
+                layout: 'layouts/sidebar-dashboard',
                 path: '/player/profile'
             });
             

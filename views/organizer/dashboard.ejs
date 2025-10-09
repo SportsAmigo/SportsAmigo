@@ -1,153 +1,73 @@
 <%- include('../partials/header', { title: 'Organizer Dashboard - Sports Amigo' }) %>
 
-<%- include('../partials/navbar', { user: user }) %>
-
-<div class="row">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header bg-success text-white">
-                <h3 class="mb-0">Organizer Dashboard</h3>
+<!-- Dashboard Content -->
+<div class="container-fluid">
+    <!-- Dashboard Stats Row -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card dashboard-stat-card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Total Events</h6>
+                            <h2 class="mb-0"><%= typeof totalEventsCount !== 'undefined' ? totalEventsCount : 0 %></h2>
+                        </div>
+                        <div class="card-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <!-- Dashboard content for new organizers vs. existing organizers -->
-                <% if (typeof isNewOrganizer !== 'undefined' && isNewOrganizer) { %>
-                    <!-- New organizer welcome message -->
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <div class="card border-primary">
-                                <div class="card-body">
-                                    <h3 class="card-title"><i class="bi bi-hand-thumbs-up me-2"></i>Welcome to Sports Amigo!</h3>
-                                    <p class="card-text">Thank you for registering as an event organizer. Here are some tips to get started:</p>
-                                    
-                                    <div class="row mt-4">
-                                        <div class="col-md-4">
-                                            <div class="d-flex align-items-center mb-3">
-                                                <div class="bg-primary rounded-circle p-3 me-3 text-white">
-                                                    <i class="bi bi-person-fill"></i>
-                                                </div>
-                                                <div>
-                                                    <h5 class="mb-1">Complete Your Profile</h5>
-                                                    <p class="mb-0 small text-muted">Add your personal details to build trust with participants.</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="d-flex align-items-center mb-3">
-                                                <div class="bg-primary rounded-circle p-3 me-3 text-white">
-                                                    <i class="bi bi-calendar-plus"></i>
-                                                </div>
-                                                <div>
-                                                    <h5 class="mb-1">Create Your First Event</h5>
-                                                    <p class="mb-0 small text-muted">Set up a sports event with all the necessary details.</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="d-flex align-items-center mb-3">
-                                                <div class="bg-primary rounded-circle p-3 me-3 text-white">
-                                                    <i class="bi bi-share"></i>
-                                                </div>
-                                                <div>
-                                                    <h5 class="mb-1">Promote Your Event</h5>
-                                                    <p class="mb-0 small text-muted">Share your event with your network to boost attendance.</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="mt-4">
-                                        <a href="/organizer/profile" class="btn btn-outline-primary me-2">
-                                            <i class="bi bi-person-circle me-1"></i> Complete Profile
-                                        </a>
-                                        <a href="/organizer/create-event" class="btn btn-primary">
-                                            <i class="bi bi-plus-circle me-1"></i> Create First Event
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card dashboard-stat-card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Upcoming Events</h6>
+                            <h2 class="mb-0"><%= typeof upcomingEventsCount !== 'undefined' ? upcomingEventsCount : 0 %></h2>
+                        </div>
+                        <div class="card-icon">
+                            <i class="fas fa-calendar-plus"></i>
                         </div>
                     </div>
-                <% } else { %>
-                    <!-- Regular dashboard content for existing organizers -->
-                    <div class="row mb-4">
-                        <div class="col-md-12">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h3 class="card-title mb-4">Organizer Dashboard</h3>
-                                    
-                                    <div class="row">
-                                        <!-- Statistics cards -->
-                                        <div class="col-md-3">
-                                            <div class="card dashboard-stat-card bg-primary text-white">
-                                                <div class="card-body">
-                                                    <div class="d-flex justify-content-between align-items-center">
-                                                        <div>
-                                                            <h6 class="card-title">Total Events</h6>
-                                                            <h2 class="mb-0"><%= typeof totalEventsCount !== 'undefined' ? totalEventsCount : 15 %></h2>
-                                                        </div>
-                                                        <div class="card-icon">
-                                                            <i class="fas fa-calendar-alt fa-2x"></i>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="card dashboard-stat-card bg-success text-white">
-                                                <div class="card-body">
-                                                    <div class="d-flex justify-content-between align-items-center">
-                                                        <div>
-                                                            <h6 class="card-title">Upcoming Events</h6>
-                                                            <h2 class="mb-0"><%= typeof upcomingEventsCount !== 'undefined' ? upcomingEventsCount : 4 %></h2>
-                                                        </div>
-                                                        <div class="card-icon">
-                                                            <i class="fas fa-calendar-plus fa-2x"></i>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="card dashboard-stat-card bg-info text-white">
-                                                <div class="card-body">
-                                                    <div class="d-flex justify-content-between align-items-center">
-                                                        <div>
-                                                            <h6 class="card-title">Registered Teams</h6>
-                                                            <h2 class="mb-0"><%= typeof registeredTeamsCount !== 'undefined' ? registeredTeamsCount : 32 %></h2>
-                                                        </div>
-                                                        <div class="card-icon">
-                                                            <i class="fas fa-users fa-2x"></i>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="card dashboard-stat-card bg-danger text-white">
-                                                <div class="card-body">
-                                                    <div class="d-flex justify-content-between align-items-center">
-                                                        <div>
-                                                            <h6 class="card-title">Cancelled Events</h6>
-                                                            <h2 class="mb-0"><%= typeof cancelledEventsCount !== 'undefined' ? cancelledEventsCount : 1 %></h2>
-                                                        </div>
-                                                        <div class="card-icon">
-                                                            <i class="fas fa-calendar-times fa-2x"></i>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card dashboard-stat-card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Registered Teams</h6>
+                            <h2 class="mb-0"><%= typeof registeredTeamsCount !== 'undefined' ? registeredTeamsCount : 0 %></h2>
+                        </div>
+                        <div class="card-icon">
+                            <i class="fas fa-users"></i>
                         </div>
                     </div>
-                    
-                    <!-- Welcome Message for existing organizers -->
-                    <div class="card mb-4">
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card dashboard-stat-card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Completed Events</h6>
+                            <h2 class="mb-0"><%= typeof completedEventsCount !== 'undefined' ? completedEventsCount : 0 %></h2>
+                        </div>
+                        <div class="card-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
                         <div class="card-body">
                             <h4 class="card-title">Welcome back, <%= user.first_name || user.name?.split(' ')[0] || user.email %>!</h4>
-                            <% if (nextEvent) { %>
+                            <% if (typeof nextEvent !== 'undefined' && nextEvent) { %>
                                 <p class="card-text">Your next event <strong><%= nextEvent.name %></strong> is scheduled for <strong><%= nextEvent.date %></strong>. You have <strong><%= nextEvent.teams_registered %></strong> registered teams so far.</p>
                                 <a href="/organizer/event/<%= nextEvent.id %>" class="btn btn-primary">Manage Event</a>
                             <% } else { %>

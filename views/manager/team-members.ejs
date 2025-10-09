@@ -33,7 +33,7 @@
                             <div class="progress mb-3" style="height: 25px;">
                                 <% var percentage = Math.min(100, ((team.members && team.members.length) / team.max_members) * 100); %>
                                 <div class="progress-bar" role="progressbar" 
-                                    style="width: <%= percentage %>%;" 
+                                    data-width="<%= percentage %>"
                                     aria-valuenow="<%= team.members && team.members.length %>" 
                                     aria-valuemin="0" 
                                     aria-valuemax="<%= team.max_members %>">

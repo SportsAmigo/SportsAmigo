@@ -1,7 +1,4 @@
-<%- include('../partials/header', { title: 'Manage Events - Sports Amigo' }) %>
-
-<%- include('../partials/navbar', { user: user }) %>
-
+<div class="container-fluid">
 <div class="row">
     <div class="col-md-12">
         <div class="card">
@@ -50,7 +47,7 @@
                     <div class="col-md-12">
                         <div class="card border-0 shadow-sm">
                             <div class="card-body">
-                                <form id="eventSearchForm">
+                                <form id="eventSearchForm" data-validate>
                                     <div class="row">
                                         <div class="col-md-4 mb-3 mb-md-0">
                                             <div class="input-group">
@@ -115,7 +112,7 @@
                                                 <td>
                                                     <div class="progress" style="height: 8px;">
                                                         <% const progressPercentage = Math.round((event.teams_registered / event.max_teams) * 100); %>
-                                                        <div class="progress-bar bg-primary" role="progressbar" style="width: <%= progressPercentage %>%" aria-valuenow="<%= progressPercentage %>" aria-valuemin="0" aria-valuemax="100"></div>
+                                                        <div class="progress-bar bg-primary" role="progressbar" data-width="<%= progressPercentage %>" aria-valuenow="<%= progressPercentage %>" aria-valuemin="0" aria-valuemax="100"></div>
                                                     </div>
                                                     <small><%= event.teams_registered %>/<%= event.max_teams %> teams</small>
                                                 </td>
@@ -267,7 +264,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form id="deleteEventForm" action="/organizer/event/delete" method="POST">
+                <form id="deleteEventForm" action="/organizer/event/delete" method="POST" data-validate>
                     <input type="hidden" id="eventIdToDelete" name="eventId">
                     <button type="submit" class="btn btn-danger">Delete Event</button>
                         </form>
@@ -345,4 +342,5 @@
     });
 </script>
 
-<%- include('../partials/footer') %> 
+</div>
+</div> 

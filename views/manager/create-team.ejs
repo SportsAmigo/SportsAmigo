@@ -1,7 +1,3 @@
-<%- include('../partials/header', {title: 'Manager Dashboard - Sports Amigo', headerType: 'manager'}) %>
-<%- include('../partials/navbar', { user: user }) %>
-
-
 <!-- Create Team Page -->
 <div class="container-fluid">
     <div class="row mb-4">
@@ -35,7 +31,7 @@
         <div class="col-md-8">
             <div class="card">
                 <div class="card-body">
-                    <form action="/manager/create-team" method="POST">
+                    <form id="create-team-form" data-validate action="/manager/create-team" method="POST">
                         <div class="mb-3">
                             <label for="name" class="form-label">Team Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="name" name="name" required>
@@ -110,4 +106,4 @@
         </div>
     </div>
 </div> 
-<%- include('../partials/footer') %>
+</div>

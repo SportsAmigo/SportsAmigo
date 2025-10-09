@@ -1,7 +1,4 @@
-<%- include('../partials/header', {title: 'Manager Dashboard - Sports Amigo', headerType: 'manager'}) %>
-<%- include('../partials/navbar', { user: user }) %>
-
-
+<div class="container-fluid">
 <div class="row">
     <div class="col-md-12">
         <div class="card">
@@ -175,8 +172,8 @@
                 <% if (locals.teams && teams.length > 0) { %>
                     <form id="registrationForm" action="/manager/event/<%= event.id %>/register" method="POST">
                         <div class="mb-3">
-                            <label for="team_id" class="form-label">Select Team</label>
-                            <select class="form-select" id="team_id" name="team_id" required>
+                            <label for="teamSelect" class="form-label">Select Team</label>
+                            <select class="form-select" id="teamSelect" name="team_id" required>
                                 <option value="">-- Select a team --</option>
                                 <% teams.forEach(team => { %>
                                     <option value="<%= team._id %>"><%= team.name %> (<%= team.sport_type %>)</option>
@@ -189,7 +186,7 @@
                             <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Any special requests or information for the organizer"></textarea>
                         </div>
                         <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">Register Team</button>
+                            <button type="submit" id="submitRegistration" class="btn btn-primary">Register Team</button>
                         </div>
                     </form>
                 <% } else { %>
@@ -264,4 +261,5 @@
     });
 </script> 
 
-<%- include('../partials/footer') %>
+</div>
+</div>

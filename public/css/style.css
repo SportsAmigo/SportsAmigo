@@ -402,6 +402,13 @@ h3{
     margin-bottom: 20px;
 }
 
+/* Form validation inline error style added for DOM validator */
+.fv-error {
+    font-size: 0.9rem; /* intentionally use relative small size */
+    color: #dc3545;
+    margin-top: 0.25rem;
+}
+
 /* about us page */
 
 .sub-header{

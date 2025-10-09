@@ -69,15 +69,138 @@
 
 /* Dashboard Card Styles */
 .dashboard-stat-card {
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
     margin-bottom: 20px;
     overflow: hidden;
+    border: none;
 }
 
 .dashboard-stat-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-8px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+}
+
+.dashboard-stat-card .card-body {
+    padding: 2rem;
+    position: relative;
+}
+
+.dashboard-stat-card .card-icon {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 2.5rem;
+    opacity: 0.3;
+}
+
+/* Improved stat card content */
+.dashboard-stat-card .card-body h6 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    opacity: 0.9;
+}
+.dashboard-stat-card .card-body h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+/* Enhanced card styles */
+.card {
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    border-radius: 12px 12px 0 0 !important;
+    font-weight: 600;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Button enhancements */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Quick actions and lists */
+.card .list-group-item {
+    border: none;
+    padding: 0.75rem 1rem;
+}
+.card .card-header h5 {
+    font-weight: 700;
+}
+
+/* Make dashboard buttons more prominent */
+.btn-primary, .btn-success, .btn-info, .btn-warning {
+    border-radius: 8px;
+}
+
+/* Sidebar-specific styles */
+.sidebar-dashboard body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+}
+
+/* Enhanced list styles */
+.list-group-item {
+    border: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    transition: background-color 0.3s ease;
+}
+
+.list-group-item:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* Badge styles */
+.badge {
+    border-radius: 20px;
+    padding: 0.5rem 0.8rem;
+    font-weight: 600;
+}
+
+/* Activity icons */
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(0, 123, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .dashboard-stat-card .card-body {
+        padding: 1.5rem;
+    }
+    
+    .dashboard-stat-card .card-body h2 {
+        font-size: 2rem;
+    }
+    
+    .dashboard-stat-card .card-icon {
+        font-size: 2rem;
+    }
 }
 
 .card-icon {

@@ -23,7 +23,7 @@
                                             <div class="progress-bar bg-success" role="progressbar" 
                                                  aria-valuenow="<%= performance.summary.rating %>" 
                                                  aria-valuemin="0" aria-valuemax="100"
-                                                 style="width: <%= performance.summary.rating %>%">
+                                                 data-width="<%= performance.summary.rating %>">
                                                 <%= performance.summary.rating %>%
                                             </div>
                                         </div>
@@ -122,7 +122,7 @@
                                         <div class="progress-bar bg-success" role="progressbar" 
                                              aria-valuenow="<%= stat.rating %>" 
                                              aria-valuemin="0" aria-valuemax="100"
-                                             style="width: <%= stat.rating %>%">
+                                             data-width="<%= stat.rating %>">
                                              <%= stat.rating %>%
                                         </div>
                                     </div>

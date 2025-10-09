@@ -179,9 +179,9 @@ router.get('/', async (req, res) => {
         // Check if the user is a new organizer
         const isNewOrganizer = !req.session.user.first_name && !req.session.user.phone;
         
-        res.render('organizer/dashboard', { 
+        res.render('organizer/dashboard-new', { 
             user: req.session.user,
-            layout: 'layouts/dashboard',
+            layout: 'layouts/sidebar-dashboard',
             path: '/organizer',
             upcomingEventsCount,
             registeredTeamsCount,
@@ -210,11 +210,12 @@ router.get('/dashboard', (req, res) => {
     // Check if this is a new organizer (no profile data yet)
     const isNewOrganizer = !req.session.user.first_name && !req.session.user.phone;
     
-    res.render('organizer/dashboard', { 
+    res.render('organizer/dashboard-new', { 
         user: req.session.user,
-        layout: 'layouts/dashboard',
-        path: '/organizer',
-        isNewOrganizer: isNewOrganizer
+        layout: 'layouts/sidebar-dashboard',
+        path: '/organizer/dashboard',
+        isNewOrganizer: isNewOrganizer,
+        title: 'Organizer Dashboard'
     });
 });
 
@@ -300,7 +301,7 @@ router.get('/manage-events', async (req, res) => {
             completedEvents,
             sportTypes,
             message: req.session.message || null,
-            layout: 'layouts/dashboard',
+            layout: 'layouts/sidebar-dashboard',
             path: '/organizer/manage-events'
         });
         
@@ -321,7 +322,7 @@ router.get('/reports', async (req, res) => {
         res.render('organizer/reports', { 
             title: 'Reports & Analytics',
             user: req.session.user,
-            layout: 'layouts/dashboard',
+            layout: 'layouts/sidebar-dashboard',
             path: '/organizer/reports'
         });
     } catch (err) {
@@ -342,7 +343,7 @@ router.get('/profile', async (req, res) => {
             title: 'My Profile',
             user: user,
             messages: req.session.flashMessage || {},
-            layout: 'layouts/dashboard',
+            layout: 'layouts/sidebar-dashboard',
             path: '/organizer/profile'
         });
         
@@ -362,13 +363,19 @@ router.get('/my-events', (req, res) => {
     res.redirect('/organizer/manage-events');
 });
 
+// Ensure /organizer/events also works (some templates link to this path)
+router.get('/events', (req, res) => {
+    return res.redirect('/organizer/manage-events');
+});
+
 // Create Event Form
 router.get('/create-event', (req, res) => {
     try {
         console.log('Loading create event page');
         res.render('organizer/create-event', { 
+            title: 'Create Event - Sports Amigo',
             user: req.session.user,
-            layout: 'layouts/dashboard',
+            layout: 'layouts/sidebar-dashboard',
             path: '/organizer/create-event',
             validationErrors: {},
             formData: {},

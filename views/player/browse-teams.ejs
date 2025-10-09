@@ -80,9 +80,9 @@
                                 var percentage = Math.min(100, (team.current_members / team.max_members) * 100);
                             %>
                             <div class="progress mb-3" style="height: 25px;">
-                                <div class="progress-bar" role="progressbar" 
-                                    style="width: <%= percentage %>%;" 
-                                    aria-valuenow="<%= team.current_members %>" 
+                                    <div class="progress-bar" role="progressbar" 
+                                        data-width="<%= percentage %>"
+                                        aria-valuenow="<%= team.current_members %>" 
                                     aria-valuemin="0" 
                                     aria-valuemax="<%= team.max_members %>">
                                     <%= team.current_members %> / <%= team.max_members %> Members
@@ -109,7 +109,7 @@
                                     </button>
                                 <% } %>
                             <% } else { %>
-                                <form action="/player/request-join-team" method="POST">
+                                <form action="/player/request-join-team" method="POST" data-validate>
                                     <input type="hidden" name="teamId" value="<%= team.id %>">
                                     <button type="submit" class="btn btn-primary">
                                         <i class="fas fa-user-plus me-2"></i> Request to Join

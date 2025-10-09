@@ -1,7 +1,4 @@
-<%- include('../partials/header', { title: 'Reports & Analytics - Sports Amigo' }) %>
-
-<%- include('../partials/navbar', { user: user }) %>
-
+<div class="container-fluid">
 <div class="row">
     <div class="col-md-12">
         <div class="card">
@@ -14,7 +11,7 @@
                     <div class="col-md-12">
                         <div class="card border-0 shadow-sm">
                             <div class="card-body">
-                                <form id="reportFilterForm" class="row align-items-center">
+                                <form id="reportFilterForm" class="row align-items-center" data-validate>
                                     <div class="col-md-3 mb-3 mb-md-0">
                                         <label for="timeRange" class="form-label">Time Range</label>
                                         <select class="form-select" id="timeRange">
@@ -450,4 +447,4 @@
     });
 </script>
 
-<%- include('../partials/footer') %> 
+</div> 

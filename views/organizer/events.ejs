@@ -39,7 +39,7 @@
                             <div class="d-flex justify-content-between mt-3">
                                 <a href="/organizer/event/<%= event.id %>" class="btn btn-primary">Manage Event</a>
                                 <% if (event.status === 'draft') { %>
-                                    <form action="/organizer/publish-event" method="POST" class="d-inline">
+                                    <form action="/organizer/publish-event" method="POST" class="d-inline" data-validate>
                                         <input type="hidden" name="eventId" value="<%= event.id %>">
                                         <button type="submit" class="btn btn-success">Publish</button>
                                     </form>

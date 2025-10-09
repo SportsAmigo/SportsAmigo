@@ -152,18 +152,7 @@
         const contactPhone = document.querySelector('.card:nth-child(2) .mb-3:nth-child(3) h6');
         const contactAddress = document.querySelector('.card:nth-child(2) div:nth-child(4) h6');
         
-        // Validate Email
-        function validateEmail(email) {
-            // Just check if email contains @ and .com
-            return email.includes('@') && email.includes('.com');
-        }
-        
-        // Validate Phone Number
-        function validateIndianPhone(phone) {
-            // Just check if there are 10 digits in the phone number
-            const digitCount = phone.replace(/\D/g, '').length;
-            return digitCount === 10;
-        }
+        // Input validation delegated to the central DOM validator (form-validation.js)
         
         // Handle profile image change
         if (profileImageInput) {
@@ -193,31 +182,8 @@
             profileForm.addEventListener('submit', function(e) {
                 e.preventDefault();
                 
-                // Reset validation
-                emailInput.classList.remove('is-invalid');
-                phoneInput.classList.remove('is-invalid');
-                
-                // Validate email
-                if (!validateEmail(emailInput.value)) {
-                    emailInput.classList.add('is-invalid');
-                    document.getElementById('emailError').style.display = 'block';
-                    return;
-                }
-                
-                // Validate phone
-                if (!validateIndianPhone(phoneInput.value)) {
-                    phoneInput.classList.add('is-invalid');
-                    document.getElementById('phoneError').style.display = 'block';
-                    return;
-                }
-                
-                // Update contact info display
-                contactEmail.textContent = emailInput.value;
-                contactPhone.textContent = phoneInput.value;
-                contactAddress.textContent = addressInput.value;
-                
-                // Update the name in the profile section
-                const fullName = firstNameInput.value + ' ' + lastNameInput.value;
+                // Delegate validation to central validator; request a standard submit which will be intercepted if invalid
+                this.requestSubmit();
                 const profileName = document.querySelector('.text-center.mb-4 h4');
                 if (profileName) {
                     profileName.textContent = fullName;

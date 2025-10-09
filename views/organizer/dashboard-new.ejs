@@ -1,0 +1,236 @@
+<!-- Dashboard Content -->
+<div class="container-fluid">
+    <!-- Dashboard Stats Row -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card dashboard-stat-card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Total Events</h6>
+                            <h2 class="mb-0"><%= typeof totalEventsCount !== 'undefined' ? totalEventsCount : 0 %></h2>
+                        </div>
+                        <div class="card-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card dashboard-stat-card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Upcoming Events</h6>
+                            <h2 class="mb-0"><%= typeof upcomingEventsCount !== 'undefined' ? upcomingEventsCount : 0 %></h2>
+                        </div>
+                        <div class="card-icon">
+                            <i class="fas fa-calendar-plus"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card dashboard-stat-card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Registered Teams</h6>
+                            <h2 class="mb-0"><%= typeof registeredTeamsCount !== 'undefined' ? registeredTeamsCount : 0 %></h2>
+                        </div>
+                        <div class="card-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card dashboard-stat-card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Completed Events</h6>
+                            <h2 class="mb-0"><%= typeof completedEventsCount !== 'undefined' ? completedEventsCount : 0 %></h2>
+                        </div>
+                        <div class="card-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Welcome Message -->
+    <% if (typeof isNewOrganizer !== 'undefined' && isNewOrganizer) { %>
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-primary">
+                    <div class="card-body">
+                        <h3 class="card-title"><i class="fas fa-hand-paper me-2"></i>Welcome to Sports Amigo!</h3>
+                        <p class="card-text">Thank you for registering as an event organizer. Here are some tips to get started:</p>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="bg-primary rounded-circle p-3 me-3 text-white">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="mb-1">Complete Your Profile</h5>
+                                        <p class="mb-0 small text-muted">Add your personal details to build trust with participants.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="bg-primary rounded-circle p-3 me-3 text-white">
+                                        <i class="fas fa-calendar-plus"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="mb-1">Create Your First Event</h5>
+                                        <p class="mb-0 small text-muted">Set up a sports event with all the necessary details.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="bg-primary rounded-circle p-3 me-3 text-white">
+                                        <i class="fas fa-share"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="mb-1">Promote Your Event</h5>
+                                        <p class="mb-0 small text-muted">Share your event with your network to boost attendance.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <a href="/organizer/profile" class="btn btn-outline-primary me-2">
+                                <i class="fas fa-user-circle me-1"></i> Complete Profile
+                            </a>
+                            <a href="/organizer/create-event" class="btn btn-primary">
+                                <i class="fas fa-plus-circle me-1"></i> Create First Event
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <% } else { %>
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Welcome back, <%= user.first_name || user.name?.split(' ')[0] || user.email %>!</h4>
+                        <% if (typeof nextEvent !== 'undefined' && nextEvent) { %>
+                            <p class="card-text">Your next event <strong><%= nextEvent.name %></strong> is scheduled for <strong><%= nextEvent.date %></strong>. You have <strong><%= nextEvent.teams_registered %></strong> registered teams so far.</p>
+                            <a href="/organizer/event/<%= nextEvent.id %>" class="btn btn-primary">Manage Event</a>
+                        <% } else { %>
+                            <p class="card-text">You don't have any upcoming events scheduled. Would you like to create one?</p>
+                            <a href="/organizer/create-event" class="btn btn-primary">Create Event</a>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <% } %>
+    
+    <!-- Dashboard Cards Row -->
+    <div class="row">
+        <!-- Upcoming Events Card -->
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Upcoming Events</h5>
+                </div>
+                <div class="card-body">
+                    <% if (typeof isNewOrganizer !== 'undefined' && isNewOrganizer) { %>
+                        <div class="text-center py-4">
+                            <i class="fas fa-calendar-plus fa-3x text-muted mb-3"></i>
+                            <p class="mb-2">No events created yet.</p>
+                            <a href="/organizer/create-event" class="btn btn-primary">Create Your First Event</a>
+                        </div>
+                    <% } else { %>
+                        <% if (typeof upcomingEvents !== 'undefined' && upcomingEvents && upcomingEvents.length > 0) { %>
+                            <% upcomingEvents.slice(0, 3).forEach(event => { %>
+                                <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                                    <div>
+                                        <h6 class="mb-1"><%= event.name %></h6>
+                                        <small class="text-muted"><%= event.date %> • <%= event.location || 'TBD' %></small>
+                                    </div>
+                                    <span class="badge bg-primary"><%= event.teams_registered || 0 %> teams</span>
+                                </div>
+                            <% }); %>
+                            <div class="mt-3">
+                                <a href="/organizer/manage-events" class="btn btn-outline-primary btn-sm">View All Events</a>
+                            </div>
+                        <% } else { %>
+                            <div class="text-center py-3">
+                                <p class="text-muted">No upcoming events found</p>
+                                <a href="/organizer/create-event" class="btn btn-primary btn-sm">Create Event</a>
+                            </div>
+                        <% } %>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions Card -->
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="/organizer/create-event" class="btn btn-success">
+                            <i class="fas fa-plus-circle me-2"></i>Create New Event
+                        </a>
+                        <a href="/organizer/reports" class="btn btn-info">
+                            <i class="fas fa-chart-bar me-2"></i>View Reports
+                        </a>
+                        <a href="/organizer/profile" class="btn btn-warning">
+                            <i class="fas fa-user-edit me-2"></i>Edit Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Recent Activity</h5>
+                </div>
+                <div class="card-body">
+                    <% if (typeof recentActivities !== 'undefined' && recentActivities && recentActivities.length > 0) { %>
+                        <% recentActivities.slice(0, 5).forEach(activity => { %>
+                            <div class="d-flex align-items-center border-bottom py-2">
+                                <div class="activity-icon me-3">
+                                    <i class="fas fa-calendar-alt text-primary"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p class="mb-1"><%= activity.message %></p>
+                                    <small class="text-muted"><%= activity.formatted_date %></small>
+                                </div>
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <div class="text-center py-4">
+                            <i class="fas fa-history fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">No recent activity found</p>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

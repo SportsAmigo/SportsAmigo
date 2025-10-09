@@ -1,7 +1,4 @@
-<%- include('../partials/header', {title: 'Manager Dashboard - Sports Amigo', headerType: 'manager'}) %>
-<%- include('../partials/navbar', { user: user }) %>
-
-
+<div class="container-fluid">
 <div class="row mb-4">
     <div class="col">
         <div class="card">
@@ -230,15 +227,7 @@
         const passwordForm = document.getElementById('passwordForm');
         
         function validatePasswords() {
-            if (newPassword.value !== confirmPassword.value) {
-                confirmPassword.setCustomValidity('Passwords do not match');
-                passwordMismatch.style.display = 'block';
-                return false;
-            } else {
-                confirmPassword.setCustomValidity('');
-                passwordMismatch.style.display = 'none';
-                return true;
-            }
+                // Let the central DOM validator handle confirm-password matching (data-validate)
         }
         
         newPassword.addEventListener('input', validatePasswords);
@@ -262,4 +251,4 @@
 </script> 
 
 
-<%- include('../partials/footer') %>
+</div>
