@@ -14,7 +14,7 @@
                     </div>
                 <% } %>
                 
-                <form action="/signup/<%= role %>" method="POST">
+                <form id="signup-form" data-validate action="/signup/<%= role %>" method="POST">
                     <input type="hidden" name="role" value="<%= role %>">
                     
                     <div class="row mb-3">
@@ -163,76 +163,6 @@
     </div>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const emailInput = document.getElementById('email');
-        const phoneInput = document.getElementById('phone');
-        
-        // Email validation
-        emailInput.addEventListener('input', function() {
-            const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-            
-            if (this.value === '') {
-                this.classList.remove('is-valid', 'is-invalid');
-                return;
-            }
-            
-            if (emailPattern.test(this.value)) {
-                this.classList.remove('is-invalid');
-                this.classList.add('is-valid');
-            } else {
-                this.classList.remove('is-valid');
-                this.classList.add('is-invalid');
-                
-                // Create or update feedback message
-                let feedback = this.nextElementSibling;
-                if (!feedback || !feedback.classList.contains('invalid-feedback')) {
-                    feedback = document.createElement('div');
-                    feedback.classList.add('invalid-feedback');
-                    this.parentNode.insertBefore(feedback, this.nextSibling);
-                }
-                feedback.textContent = 'Please enter a valid email address (e.g., name@example.com)';
-            }
-        });
-        
-        // Phone validation
-        phoneInput.addEventListener('input', function() {
-            const phonePattern = /^[0-9]{10}$/;
-            
-            if (this.value === '') {
-                this.classList.remove('is-valid', 'is-invalid');
-                return;
-            }
-            
-            if (phonePattern.test(this.value)) {
-                this.classList.remove('is-invalid');
-                this.classList.add('is-valid');
-            } else {
-                this.classList.remove('is-valid');
-                this.classList.add('is-invalid');
-                
-                // Create or update feedback message
-                let feedback = this.nextElementSibling;
-                if (!feedback || !feedback.classList.contains('invalid-feedback')) {
-                    feedback = document.createElement('div');
-                    feedback.classList.add('invalid-feedback');
-                    this.parentNode.insertBefore(feedback, this.nextSibling);
-                }
-                feedback.textContent = 'Please enter a valid 10-digit phone number';
-            }
-        });
-        
-        // Allow only numbers in phone field
-        phoneInput.addEventListener('keypress', function(e) {
-            const key = e.which || e.keyCode;
-            const keyChar = String.fromCharCode(key);
-            
-            // If not a number, prevent the input
-            if (!/[0-9]/.test(keyChar)) {
-                e.preventDefault();
-            }
-        });
-    });
-</script> 
+                <!-- Inline field-level helpers kept for backwards compatibility; main validator auto-attaches -->
 
 <%- include('partials/footer') %> 

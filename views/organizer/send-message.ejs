@@ -23,7 +23,7 @@
                                 <h5 class="mb-0">Compose Message</h5>
                             </div>
                             <div class="card-body">
-                                <form action="/organizer/event/<%= event.id %>/send-message" method="POST">
+                                <form action="/organizer/event/<%= event.id %>/send-message" method="POST" data-validate>
                                     <div class="mb-3">
                                         <label for="recipients" class="form-label">Send To</label>
                                         <select class="form-select" id="recipients" name="recipients">

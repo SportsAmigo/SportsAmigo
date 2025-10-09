@@ -4,6 +4,7 @@ const MongoStore = require('connect-mongo');
 const bodyParser = require('body-parser');
 const path = require('path');
 const fs = require('fs');
+const expressLayouts = require('express-ejs-layouts');
 const User = require('./models/user');
 const app = express();
 const port = process.env.PORT || 3000;
@@ -26,6 +27,10 @@ if (!fs.existsSync(uploadsDir)) {
 // Set view engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+
+// Set up express-ejs-layouts
+app.use(expressLayouts);
+app.set('layout', false); // Don't use layout by default
 
 // Session configuration
 app.use(session({

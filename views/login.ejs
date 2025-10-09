@@ -65,7 +65,7 @@
             
             <div class="login-form">
                 <h2>Login as <span id="selected-role"><%= typeof role !== 'undefined' ? role.charAt(0).toUpperCase() + role.slice(1) : 'Player' %></span></h2>
-                <form action="/login/<%= typeof role !== 'undefined' ? role : 'player' %>" method="post" id="login-form">
+                <form action="/login/<%= typeof role !== 'undefined' ? role : 'player' %>" method="post" id="login-form" data-validate>
                     <input type="hidden" name="role" id="role-input" value="<%= typeof role !== 'undefined' ? role : 'player' %>">
                     <div class="form-group">
                         <label for="email">Email Address</label>
@@ -210,10 +210,7 @@
         resetStep2.style.display = 'block';
     }
     
-    function validateEmail(email) {
-        const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-        return re.test(String(email).toLowerCase());
-    }
+    // Delegated to central DOM validator (form-validation.js)
     
     // Close modal when clicking outside the content
     window.onclick = function(event) {

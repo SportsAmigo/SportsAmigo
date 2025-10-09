@@ -77,7 +77,7 @@ router.get('/', async (req, res) => {
         // Get upcoming events that the manager's teams are registered for
         let registeredEvents = [];
         try {
-            const Event = require('./models/event');
+            const Event = require('../models/event');
             registeredEvents = await Event.getManagerEvents(req.session.user._id);
         } catch (error) {
             console.error('Error fetching registered events:', error);
@@ -126,7 +126,7 @@ router.get('/', async (req, res) => {
         // Keep only the 5 most recent activities
         recentActivities = recentActivities.slice(0, 5);
         
-        res.render('manager/dashboard', { 
+        res.render('manager/dashboard-new', { 
             user: req.session.user,
             teams: teams,
             teamCount: teams.length,
@@ -135,8 +135,11 @@ router.get('/', async (req, res) => {
             registeredEvents: registeredEvents || [],
             upcomingEvent: upcomingEvent,
             recentActivities: recentActivities,
-            layout: 'layouts/dashboard',
-            path: '/manager' 
+            events: registeredEvents || [],
+            totalPlayers: playerCount,
+            wins: 0, // You can calculate this from your data
+            layout: 'layouts/sidebar-dashboard',
+            path: '/manager/dashboard' 
         });
     } catch (err) {
         console.error('Error loading manager dashboard:', err);
@@ -253,7 +256,7 @@ router.get('/profile', async (req, res) => {
             title: 'My Profile',
             user: req.session.user,
             profile: profile,
-            layout: 'layouts/dashboard',
+            layout: 'layouts/sidebar-dashboard',
             path: '/manager/profile'
         });
     } catch (err) {
@@ -276,7 +279,7 @@ router.get('/my-teams', async (req, res) => {
             user: req.session.user,
             teams: teams || [],
             messages: req.session.messages || {},
-            layout: 'layouts/dashboard',
+            layout: 'layouts/sidebar-dashboard',
             path: '/manager/my-teams'
         });
         
@@ -297,8 +300,8 @@ router.get('/create-team', (req, res) => {
         title: 'Create Team',
         user: req.session.user,
         messages: req.session.messages || {},
-        layout: 'layouts/dashboard',
-        path: '/manager/my-teams'
+        layout: 'layouts/sidebar-dashboard',
+        path: '/manager/create-team'
     });
     
     // Clear flash messages
@@ -360,8 +363,8 @@ router.get('/team/:id', async (req, res) => {
             user: req.session.user,
             team,
             messages: req.session.messages || {},
-            layout: 'layouts/dashboard',
-            path: '/manager/my-teams'
+            layout: 'layouts/sidebar-dashboard',
+            path: '/manager/team-details'
         });
         
         // Clear flash messages
@@ -836,7 +839,7 @@ router.get('/browse-events', async (req, res) => {
                 events: formattedEvents,
                 pastEvents: registeredEvents || [],
                 teams: teams,
-                layout: 'layouts/dashboard',
+                layout: 'layouts/sidebar-dashboard',
                 path: '/manager/browse-events',
                 message: message
             });
@@ -1065,7 +1068,7 @@ router.get('/my-events', async (req, res) => {
             upcomingEvents,
             pastEvents,
             message: req.session.message || null,
-            layout: 'layouts/dashboard',
+            layout: 'layouts/sidebar-dashboard',
             path: '/manager/my-events'
         });
         
@@ -1148,8 +1151,8 @@ router.get('/event/:id/details', async (req, res) => {
             user: req.session.user,
             event: formattedEvent,
             teams: teams || [],
-            layout: 'layouts/dashboard',
-            path: '/manager/browse-events',
+            layout: 'layouts/sidebar-dashboard',
+            path: '/manager/event-details',
             message: req.session.message
         });
         
@@ -1777,8 +1780,8 @@ router.get('/team/:id/manage', async (req, res) => {
             members: memberProfiles,
             joinRequests: pendingRequests,
             messages: req.session.flashMessage || {},
-            layout: 'layouts/dashboard',
-            path: '/manager/my-teams'
+            layout: 'layouts/sidebar-dashboard',
+            path: '/manager/team-manage'
         });
         
         // Clear flash messages

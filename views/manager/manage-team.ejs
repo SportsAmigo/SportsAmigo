@@ -1,7 +1,3 @@
-<%- include('../partials/header', {title: 'Manager Dashboard - Sports Amigo', headerType: 'manager'}) %>
-<%- include('../partials/navbar', { user: user }) %>
-
-
 <!-- Manage Team Template -->
 <div class="container-fluid">
     <div class="row mb-4">
@@ -66,14 +62,14 @@
                                             <td><%= new Date(request.request_date).toLocaleDateString() %></td>
                                             <td>
                                                 <div class="btn-group" role="group">
-                                                    <form action="/manager/team/<%= team.id %>/handle-request" method="POST" class="me-2">
+                                                    <form action="/manager/team/<%= team._id %>/handle-request" method="POST" class="me-2">
                                                         <input type="hidden" name="playerId" value="<%= request.player_id %>">
                                                         <input type="hidden" name="action" value="approve">
                                                         <button type="submit" class="btn btn-success btn-sm">
                                                             <i class="fas fa-check me-1"></i> Approve
                                                         </button>
                                                     </form>
-                                                    <form action="/manager/team/<%= team.id %>/handle-request" method="POST">
+                                                    <form action="/manager/team/<%= team._id %>/handle-request" method="POST">
                                                         <input type="hidden" name="playerId" value="<%= request.player_id %>">
                                                         <input type="hidden" name="action" value="reject">
                                                         <button type="submit" class="btn btn-danger btn-sm">
@@ -281,4 +277,4 @@
     </div>
 </div> 
 
-<%- include('../partials/footer') %>
+</div>

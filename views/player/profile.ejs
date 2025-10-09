@@ -81,7 +81,7 @@
                                 <button class="btn btn-sm btn-primary" id="editProfileBtn">Edit</button>
                             </div>
                             <div class="card-body">
-                                <form id="profileForm" action="/player/update-profile" method="POST">
+                                <form id="profileForm" data-validate action="/player/update-profile" method="POST">
                                     <div class="row mb-3">
                                         <div class="col-md-6">
                                             <label class="form-label">Full Name</label>
@@ -187,7 +187,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="changePasswordForm" action="/player/change-password" method="POST">
+                <form id="changePasswordForm" data-validate action="/player/change-password" method="POST">
                     <div class="mb-3">
                         <label for="currentPassword" class="form-label">Current Password</label>
                         <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
@@ -222,7 +222,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="changePhotoForm" action="/player/update-photo" method="POST" enctype="multipart/form-data">
+                <form id="changePhotoForm" data-validate action="/player/update-photo" method="POST" enctype="multipart/form-data">
                     <div class="mb-3">
                         <label for="photo" class="form-label">Select a new photo</label>
                         <input type="file" class="form-control" id="photo" name="photo" accept="image/*" required>
@@ -251,7 +251,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="addSportsForm" action="/player/update-sports" method="POST">
+                <form id="addSportsForm" data-validate action="/player/update-sports" method="POST">
                     <div class="mb-3">
                         <!-- Directly list all available sports without re-parsing preferredSports -->
                         <% const allSports = ['Basketball', 'Football', 'Cricket', 'Tennis', 'Swimming', 'Volleyball', 'Badminton', 'Table Tennis', 'Hockey']; %>
@@ -313,18 +313,9 @@
             document.getElementById('editProfileBtn').classList.remove('d-none');
         });
         
-        // Handle password validation
+        // Password validation for change-password form delegated to central validator (data-validate)
         document.getElementById('savePasswordBtn').addEventListener('click', function() {
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            
-            if (newPassword !== confirmPassword) {
-                document.getElementById('passwordMismatch').classList.remove('d-none');
-                return false;
-            } else {
-                document.getElementById('passwordMismatch').classList.add('d-none');
-                document.getElementById('changePasswordForm').submit();
-            }
+            document.getElementById('changePasswordForm').requestSubmit();
         });
         
         // Handle photo upload

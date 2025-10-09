@@ -77,13 +77,13 @@ router.get('/dashboard', async (req, res) => {
         // Get player's teams
         const teams = await Team.getPlayerTeams(playerId);
         
-        res.render('player/dashboard', {
+        res.render('player/dashboard-new', {
             title: 'Player Dashboard',
             user: req.session.user,
             events: playerEvents,
             teams: teams,
-            layout: 'layouts/dashboard',
-            path: '/player'
+            layout: 'layouts/sidebar-dashboard',
+            path: '/player/dashboard'
         });
     } catch (err) {
         console.error('Error rendering player dashboard:', err);
@@ -106,7 +106,7 @@ router.get('/my-events', async (req, res) => {
             user: req.session.user,
             events: playerEvents,
             messages: req.session.flashMessage || {},
-            layout: 'layouts/dashboard',
+            layout: 'layouts/sidebar-dashboard',
             path: '/player/my-events'
         });
         
@@ -153,7 +153,7 @@ router.get('/browse-events', async (req, res) => {
             user: req.session.user,
             events: formattedEvents,
             messages: req.session.flashMessage || {},
-            layout: 'layouts/dashboard',
+            layout: 'layouts/sidebar-dashboard',
             path: '/player/browse-events'
         });
         
@@ -193,8 +193,8 @@ router.get('/teams', async (req, res) => {
             user: req.session.user,
             teams: formattedTeams,
             messages: req.session.flashMessage || {},
-            layout: 'layouts/dashboard',
-            path: '/player/teams'
+            layout: 'layouts/sidebar-dashboard',
+            path: '/player/my-teams'
         });
         
         // Clear flash messages
@@ -235,7 +235,7 @@ router.get('/my-teams', async (req, res) => {
             user: req.session.user,
             teams: formattedTeams,
             messages: req.session.flashMessage || {},
-            layout: 'layouts/dashboard',
+            layout: 'layouts/sidebar-dashboard',
             path: '/player/my-teams'
         });
         
@@ -288,7 +288,7 @@ router.get('/browse-teams', async (req, res) => {
             availableTeams: formattedTeams,
             requestStatusMap: requestStatusMap,
             messages: req.session.flashMessage || {},
-            layout: 'layouts/dashboard',
+            layout: 'layouts/sidebar-dashboard',
             path: '/player/browse-teams'
         });
         
@@ -346,8 +346,8 @@ router.get('/team/:id', async (req, res) => {
             user: req.session.user,
             team: formattedTeam,
             messages: req.session.flashMessage || {},
-            layout: 'layouts/dashboard',
-            path: '/player/browse-teams'
+            layout: 'layouts/sidebar-dashboard',
+            path: '/player/team-details'
         });
         
         // Clear flash messages

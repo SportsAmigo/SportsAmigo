@@ -1,7 +1,3 @@
-<%- include('../partials/header', { title: 'Create Event - Sports Amigo' }) %>
-
-<%- include('../partials/navbar', { user: user }) %>
-
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-12">
@@ -30,7 +26,7 @@
                         </div>
                     <% } %>
                     
-                    <form action="/organizer/create-event" method="POST" class="needs-validation" novalidate>
+                    <form id="create-event-form" data-validate action="/organizer/create-event" method="POST" class="needs-validation" novalidate>
                         <div class="row">
                             <!-- Event Basic Information -->
                             <div class="col-md-6">
@@ -271,6 +267,4 @@
         // Initial toggle
         toggleInvitationCode();
     });
-</script>
-
-<%- include('../partials/footer') %> 
+</script> 

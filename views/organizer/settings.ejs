@@ -40,7 +40,7 @@
                                 <!-- General Settings -->
                                 <div class="tab-pane fade show active" id="general">
                                     <h5 class="mb-3">General Settings</h5>
-                                    <form action="/organizer/settings/general" method="POST">
+                                    <form action="/organizer/settings/general" method="POST" data-validate>
                                         <div class="mb-3">
                                             <label for="language" class="form-label">Language</label>
                                             <select class="form-select" id="language" name="language">
@@ -86,7 +86,7 @@
                                 <!-- Notifications -->
                                 <div class="tab-pane fade" id="notifications">
                                     <h5 class="mb-3">Notification Settings</h5>
-                                    <form action="/organizer/settings/notifications" method="POST">
+                                    <form action="/organizer/settings/notifications" method="POST" data-validate>
                                         <div class="mb-4">
                                             <h6>Email Notifications</h6>
                                             <div class="form-check mb-2">
@@ -153,7 +153,7 @@
                                 <!-- Appearance -->
                                 <div class="tab-pane fade" id="appearance">
                                     <h5 class="mb-3">Appearance Settings</h5>
-                                    <form action="/organizer/settings/appearance" method="POST">
+                                    <form action="/organizer/settings/appearance" method="POST" data-validate>
                                         <div class="mb-3">
                                             <label for="theme" class="form-label">Theme</label>
                                             <select class="form-select" id="theme" name="theme">
@@ -211,7 +211,7 @@
                                 <!-- Privacy -->
                                 <div class="tab-pane fade" id="privacy">
                                     <h5 class="mb-3">Privacy Settings</h5>
-                                    <form action="/organizer/settings/privacy" method="POST">
+                                    <form action="/organizer/settings/privacy" method="POST" data-validate>
                                         <div class="mb-4">
                                             <h6>Event Visibility</h6>
                                             <div class="form-check mb-2">
