@@ -1,18 +1,19 @@
 <div class="row">
     <div class="col-md-12">
-        <div class="card">
-            <div class="card-header bg-success text-white">
-                <h3 class="mb-0">Player Dashboard</h3>
+        <div class="enhanced-card">
+            <div class="enhanced-card-header">
+                <h3 class="mb-0">⚽ Player Dashboard</h3>
             </div>
             <div class="card-body">
                 <!-- Statistics Overview Row -->
                 <div class="row mb-4">
                     <div class="col-md-4">
-                        <div class="card bg-primary text-white dashboard-stat-card">
+                        <div class="dashboard-stat-card bg-primary text-white">
                             <div class="card-body d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h5 class="card-title">My Events</h5>
-                                    <h2 class="mb-0"><%= events ? events.length : 0 %></h2>
+                                    <h5 class="card-title">Total Events</h5>
+                                    <h2 class="mb-0" data-live-stat="totalEvents"><%= events ? events.length : 0 %></h2>
+                                    <small class="d-block mt-1">Live updating</small>
                                 </div>
                                 <div class="card-icon">
                                     <i class="bi bi-calendar-event"></i>
@@ -22,11 +23,12 @@
                     </div>
                     
                     <div class="col-md-4">
-                        <div class="card bg-success text-white dashboard-stat-card">
+                        <div class="dashboard-stat-card bg-success text-white">
                             <div class="card-body d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h5 class="card-title">My Teams</h5>
-                                    <h2 class="mb-0"><%= teams ? teams.length : 0 %></h2>
+                                    <h5 class="card-title">Active Teams</h5>
+                                    <h2 class="mb-0" data-live-stat="activeTeams"><%= teams ? teams.length : 0 %></h2>
+                                    <small class="d-block mt-1">Live updating</small>
                                 </div>
                                 <div class="card-icon">
                                     <i class="bi bi-people"></i>
@@ -36,11 +38,12 @@
                     </div>
                     
                     <div class="col-md-4">
-                        <div class="card bg-info text-white dashboard-stat-card">
+                        <div class="dashboard-stat-card bg-info text-white">
                             <div class="card-body d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h5 class="card-title">Achievements</h5>
-                                    <h2 class="mb-0">0</h2>
+                                    <h5 class="card-title">Total Players</h5>
+                                    <h2 class="mb-0" data-live-stat="totalPlayers">0</h2>
+                                    <small class="d-block mt-1">Live updating</small>
                                 </div>
                                 <div class="card-icon">
                                     <i class="bi bi-trophy"></i>
@@ -50,20 +53,65 @@
                     </div>
                 </div>
 
+                <!-- AJAX Event Search Section -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="enhanced-card">
+                            <div class="enhanced-card-header">
+                                <h5 class="mb-0">🔍 Search Events</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-8">
+                                        <input type="text" id="event-search-input" class="form-control" 
+                                               placeholder="Search events (e.g., football, cricket, tournament...)">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <select id="event-category-filter" class="form-control">
+                                            <option value="">All Sports</option>
+                                            <option value="football">Football</option>
+                                            <option value="cricket">Cricket</option>
+                                            <option value="basketball">Basketball</option>
+                                            <option value="tennis">Tennis</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div id="search-results">
+                                    <p class="text-muted">Type to search for events...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Welcome Message -->
-                <div class="card mb-4">
+                <div class="enhanced-card mb-4">
                     <div class="card-body">
-                        <h4 class="card-title">Welcome back, <%= user.first_name || user.email %>!</h4>
+                        <h4 class="card-title">🎉 Welcome back, <%= user.first_name || user.email %>!</h4>
                         <% if (events && events.length > 0) { 
                             const nextEvent = events[0]; // First event (should be sorted by date)
                         %>
                             <p class="card-text">Your next event is <strong><%= nextEvent.name %></strong> on <strong><%= new Date(nextEvent.event_date).toLocaleDateString() %></strong>. Make sure to check your team's schedule and be prepared!</p>
-                            <a href="/player/event/<%= nextEvent.id %>" class="btn btn-primary">View Event Details</a>
+                            <a href="/player/event/<%= nextEvent.id %>" class="btn btn-enhanced">View Event Details</a>
                         <% } else { %>
                             <p class="card-text">You don't have any upcoming events. Browse available events or join a team to participate!</p>
-                            <a href="/player/browse-events" class="btn btn-primary">Browse Events</a>
-                            <a href="/player/browse-teams" class="btn btn-outline-success ms-2">Join a Team</a>
+                            <a href="/player/browse-events" class="btn btn-enhanced">Browse Events</a>
+                            <a href="/player/browse-teams" class="btn btn-enhanced-success ms-2">Join a Team</a>
                         <% } %>
+                    </div>
+                </div>
+
+                <!-- DHTML Feature: Live Match Countdown Timers -->
+                <div class="enhanced-card mb-4">
+                    <div class="enhanced-card-header">
+                        <h5 class="mb-0">⏰ Live Match Countdowns</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="dashboard-countdown-timers">
+                            <div class="loading-shimmer" style="height: 60px; border-radius: 15px;">
+                                <p class="text-muted text-center pt-3">Loading countdown timers...</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

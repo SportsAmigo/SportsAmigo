@@ -47,5 +47,14 @@
             navLinks.style.right = "-200px";
         }
     </script>
+    
+    <!-- DHTML integration: Enhanced JavaScript Files -->
+    <script src="/js/form-validation.js"></script>
+    <script src="/js/main-website-features.js"></script>
+    
+    <!-- Page-specific scripts -->
+    <% if (typeof pageScript !== 'undefined') { %>
+        <script src="/js/<%= pageScript %>"></script>
+    <% } %>
 </body>
 </html> 

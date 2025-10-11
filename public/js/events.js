@@ -1,4 +1,10 @@
 // Event Page JavaScript Functionality
+// Enhanced with DHTML integration for dynamic user experience
+
+// DHTML integration: Global variables for dynamic features
+let registrationModalOpen = false;
+let currentEventData = null;
+const animationDuration = 300;
 
 // Wait for the DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function() {
@@ -23,6 +29,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize animated stats
     initAnimatedStats();
     
+    // DHTML integration: Initialize dynamic features
+    initDynamicEventFeatures();
+    
     // Mobile navigation menu (already in the original files)
     var navLinks = document.getElementById("navLinks");
     if (navLinks) {
@@ -41,8 +50,25 @@ function initEventRegistration() {
     
     registerButtons.forEach(button => {
         if (button.textContent.includes('Register')) {
+            // DHTML integration: Enhanced button interaction
+            button.addEventListener('mouseenter', function() {
+                this.style.transition = 'all 0.3s ease';
+                this.style.transform = 'scale(1.05)';
+                this.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
+            });
+            
+            button.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+                this.style.boxShadow = '';
+            });
+            
             button.addEventListener('click', function(e) {
                 e.preventDefault();
+                
+                // DHTML integration: Add loading state
+                const originalText = this.textContent;
+                this.textContent = 'Loading...';
+                this.disabled = true;
                 
                 // Get event details from the parent card
                 const eventCard = this.closest('.event-card');
@@ -51,8 +77,17 @@ function initEventRegistration() {
                                  eventCard.querySelector('.event-date .month').textContent;
                 const eventLocation = eventCard.querySelector('.event-location').textContent;
                 
-                // Show registration modal with event details
-                showRegistrationModal(eventName, eventDate, eventLocation);
+                // Store current event data
+                currentEventData = { eventName, eventDate, eventLocation };
+                
+                // Simulate loading delay for better UX
+                setTimeout(() => {
+                    this.textContent = originalText;
+                    this.disabled = false;
+                    
+                    // Show registration modal with event details
+                    showRegistrationModal(eventName, eventDate, eventLocation);
+                }, 500);
             });
         }
     });
@@ -60,12 +95,42 @@ function initEventRegistration() {
 
 // Show registration modal with event details
 function showRegistrationModal(eventName, eventDate, eventLocation) {
+    // DHTML integration: Prevent multiple modals
+    if (registrationModalOpen) return;
+    registrationModalOpen = true;
+    
     // Create modal elements
     const modalOverlay = document.createElement('div');
     modalOverlay.className = 'modal-overlay';
+    modalOverlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        opacity: 0;
+        transition: opacity ${animationDuration}ms ease;
+    `;
     
     const modalContent = document.createElement('div');
     modalContent.className = 'modal-content';
+    modalContent.style.cssText = `
+        background: white;
+        border-radius: 8px;
+        padding: 0;
+        max-width: 500px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        transform: scale(0.7);
+        transition: transform ${animationDuration}ms ease;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    `;
     
     // Modal header
     const modalHeader = document.createElement('div');
@@ -714,4 +779,219 @@ function animateValue(element) {
     }
     
     requestAnimationFrame(updateValue);
-} 
+}
+
+/**
+ * DHTML integration: Initialize dynamic event features
+ */
+function initDynamicEventFeatures() {
+    console.log('Initializing DHTML dynamic event features');
+    
+    // Enhanced event card interactions
+    initEventCardAnimations();
+    
+    // Dynamic filter animations
+    initFilterAnimations();
+    
+    // Interactive countdown enhancements
+    initCountdownEnhancements();
+    
+    // Scroll-triggered animations
+    initScrollAnimations();
+    
+    // Dynamic loading states
+    initLoadingStates();
+}
+
+/**
+ * DHTML integration: Enhanced event card animations
+ */
+function initEventCardAnimations() {
+    const eventCards = document.querySelectorAll('.event-card, .sport-card, .facility-card');
+    
+    eventCards.forEach(card => {
+        // Add staggered entrance animation
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        card.style.transition = 'all 0.6s ease';
+        
+        // Trigger animation when card comes into view
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    setTimeout(() => {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }, Math.random() * 200); // Staggered timing
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1 });
+        
+        observer.observe(card);
+        
+        // Enhanced hover effects
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-10px) scale(1.03)';
+            this.style.boxShadow = '0 15px 35px rgba(0,0,0,0.1)';
+            this.style.zIndex = '10';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+            this.style.boxShadow = '';
+            this.style.zIndex = '';
+        });
+    });
+}
+
+/**
+ * DHTML integration: Dynamic filter animations
+ */
+function initFilterAnimations() {
+    const filterButtons = document.querySelectorAll('.filter-btn, .sport-filter');
+    
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Remove active class from all buttons
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            
+            // Add active class to clicked button
+            this.classList.add('active');
+            
+            // Add pulse animation
+            this.style.animation = 'pulse 0.4s ease';
+            setTimeout(() => {
+                this.style.animation = '';
+            }, 400);
+        });
+    });
+}
+
+/**
+ * DHTML integration: Interactive countdown enhancements
+ */
+function initCountdownEnhancements() {
+    const countdowns = document.querySelectorAll('.countdown-timer');
+    
+    countdowns.forEach(countdown => {
+        // Add periodic pulse animation
+        setInterval(() => {
+            if (countdown.offsetParent !== null) { // Check if element is visible
+                countdown.style.animation = 'countdownPulse 1s ease';
+                setTimeout(() => {
+                    countdown.style.animation = '';
+                }, 1000);
+            }
+        }, 10000); // Every 10 seconds
+    });
+}
+
+/**
+ * DHTML integration: Scroll-triggered animations
+ */
+function initScrollAnimations() {
+    const sections = document.querySelectorAll('section, .content-block');
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+    
+    sections.forEach(section => {
+        section.style.opacity = '0';
+        section.style.transform = 'translateY(20px)';
+        section.style.transition = 'all 0.8s ease';
+        observer.observe(section);
+    });
+}
+
+/**
+ * DHTML integration: Dynamic loading states
+ */
+function initLoadingStates() {
+    // Add loading spinners to buttons when needed
+    window.showButtonLoading = function(button, text = 'Loading...') {
+        if (button.dataset.loading === 'true') return;
+        
+        button.dataset.loading = 'true';
+        button.dataset.originalText = button.textContent;
+        button.disabled = true;
+        
+        button.innerHTML = `
+            <span class="spinner" style="
+                display: inline-block;
+                width: 12px;
+                height: 12px;
+                border: 2px solid transparent;
+                border-top: 2px solid currentColor;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin-right: 5px;
+            "></span>
+            ${text}
+        `;
+    };
+    
+    window.hideButtonLoading = function(button) {
+        if (button.dataset.loading !== 'true') return;
+        
+        button.dataset.loading = 'false';
+        button.disabled = false;
+        button.textContent = button.dataset.originalText || 'Submit';
+    };
+}
+
+// DHTML integration: Add CSS animations dynamically
+const eventStyle = document.createElement('style');
+eventStyle.textContent = `
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    
+    @keyframes countdownPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .event-card, .sport-card, .facility-card {
+        transition: all 0.3s ease;
+    }
+    
+    .modal-overlay {
+        backdrop-filter: blur(5px);
+    }
+    
+    .selected-row {
+        background-color: #e3f2fd !important;
+    }
+    
+    .ripple-effect {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.6);
+        transform: scale(0);
+        animation: ripple 0.6s linear;
+        pointer-events: none;
+    }
+    
+    @keyframes ripple {
+        to {
+            transform: scale(4);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(eventStyle); 
