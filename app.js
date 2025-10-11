@@ -88,6 +88,7 @@ const authRoutes = require('./routes/auth');
 const organizerRoutes = require('./routes/organizer');
 const playerRoutes = require('./routes/player');
 const managerRoutes = require('./routes/manager');
+const apiRoutes = require('./routes/api');
 
 // Try to import admin routes with error handling
 let adminRoutes;
@@ -168,6 +169,14 @@ if (typeof managerRoutes === 'function') {
   app.use('/manager', managerRoutes);
 } else {
   console.error('Manager routes is not a function, it is:', typeof managerRoutes);
+}
+
+// API Routes for AJAX functionality
+if (apiRoutes && typeof apiRoutes === 'function') {
+  app.use('/api', apiRoutes);
+  console.log('API routes configured successfully');
+} else {
+  console.error('API routes is not a function, it is:', typeof apiRoutes);
 }
 
 // Only use admin routes if properly loaded

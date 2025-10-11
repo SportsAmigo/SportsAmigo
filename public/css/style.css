@@ -1271,11 +1271,11 @@ h3{
     text-decoration: underline;
 }
 
-/* Modal styles */
+/* Modal styles - Updated z-index to work with Bootstrap modals */
 .modal {
     display: none;
     position: fixed;
-    z-index: 1000;
+    z-index: 1055;
     left: 0;
     top: 0;
     width: 100%;
@@ -1394,5 +1394,236 @@ h3{
     
     .role-card {
         margin-bottom: 10px;
+    }
+}
+
+/* ===============================
+   AJAX & DHTML FEATURES - INTEGRATED STYLES
+   =============================== */
+
+/* Live Scoreboard Section */
+.live-scoreboard {
+    padding: 80px 0;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    text-align: center;
+}
+
+.live-scoreboard h1 {
+    font-size: 36px;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.live-scoreboard p {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 40px;
+}
+
+.scoreboard-grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    padding: 0 20px;
+}
+
+.scoreboard-item {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.scoreboard-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.match-info h4 {
+    margin: 0 0 5px 0;
+    color: #333;
+    font-size: 18px;
+}
+
+.match-info .teams {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.match-info .time {
+    color: #999;
+    font-size: 12px;
+}
+
+.match-score {
+    text-align: right;
+}
+
+.score {
+    font-size: 24px;
+    font-weight: bold;
+    color: #28a745;
+    margin-bottom: 5px;
+}
+
+.live-indicator {
+    background: #dc3545;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: bold;
+    animation: livePulse 2s infinite;
+}
+
+.loading-message {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: #666;
+    font-style: italic;
+    padding: 40px;
+}
+
+/* Announcement Bar */
+.announcement-bar {
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    color: white;
+    padding: 12px 0;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    z-index: 999;
+}
+
+.announcement-content {
+    animation: slideIn 0.5s ease;
+    font-weight: 500;
+}
+
+.announcement-content span {
+    display: inline-block;
+}
+
+/* Match Countdown Styles */
+.countdown-display {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 10px 0;
+    text-align: center;
+}
+
+.countdown-time {
+    font-size: 18px;
+    font-weight: bold;
+    color: #007bff;
+    margin-bottom: 5px;
+}
+
+.countdown-match {
+    color: #666;
+    font-size: 14px;
+}
+
+.match-started-text {
+    color: #28a745;
+    font-weight: bold;
+    animation: matchStarted 0.5s ease;
+}
+
+/* Quick Registration Buttons */
+.quick-register-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.quick-register-btn:hover {
+    background: #218838;
+    transform: translateY(-1px);
+}
+
+.quick-register-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.quick-register-btn.registered {
+    background: #17a2b8;
+}
+
+/* AJAX Animations */
+@keyframes livePulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+@keyframes slideIn {
+    from { transform: translateX(-100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes matchStarted {
+    0% { transform: scale(0.8); opacity: 0; }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes scoreFlash {
+    0%, 100% { background-color: transparent; }
+    50% { background-color: #28a745; color: white; }
+}
+
+@keyframes successPulse {
+    0% { transform: scale(1); background-color: transparent; }
+    50% { transform: scale(1.05); background-color: #28a745; color: white; }
+    100% { transform: scale(1); background-color: transparent; }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
+}
+
+/* Responsive Design */
+@media(max-width: 768px) {
+    .scoreboard-grid {
+        grid-template-columns: 1fr;
+        padding: 0 15px;
+    }
+    
+    .scoreboard-item {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .match-score {
+        margin-top: 10px;
+        text-align: center;
+    }
+    
+    .live-scoreboard h1 {
+        font-size: 28px;
+    }
+    
+    .announcement-bar {
+        padding: 8px 0;
+        font-size: 14px;
     }
 } 

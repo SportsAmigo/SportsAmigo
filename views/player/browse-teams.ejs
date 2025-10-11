@@ -109,12 +109,12 @@
                                     </button>
                                 <% } %>
                             <% } else { %>
-                                <form action="/player/request-join-team" method="POST" data-validate>
-                                    <input type="hidden" name="teamId" value="<%= team.id %>">
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-user-plus me-2"></i> Request to Join
-                                    </button>
-                                </form>
+                                <button type="button" class="btn btn-primary" 
+                                    data-team-action="join" 
+                                    data-team-id="<%= team.id %>"
+                                    data-team-name="<%= team.name %>">
+                                    <i class="fas fa-user-plus me-2"></i> Request to Join
+                                </button>
                             <% } %>
                         </div>
                     </div>

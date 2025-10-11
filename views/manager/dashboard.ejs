@@ -9,27 +9,27 @@
     
     <% if (isNewUser) { %>
     <div class="col-md-12 mb-4">
-        <div class="alert alert-warning d-flex align-items-center" role="alert">
+        <div class="alert alert-warning d-flex align-items-center enhanced-card" role="alert" style="border-radius: 20px; border: none; box-shadow: 0 10px 30px rgba(237, 137, 54, 0.2);">
             <i class="bi bi-exclamation-triangle-fill me-2 fs-4"></i>
             <div>
                 <h4 class="alert-heading">Complete Your Profile</h4>
                 <p class="mb-0">Your profile is incomplete. Please complete your profile details to get the most out of Sports Amigo.</p>
             </div>
-            <a href="/manager/profile" class="btn btn-primary ms-auto">Complete Profile</a>
+            <a href="/manager/profile" class="btn btn-enhanced ms-auto">Complete Profile</a>
         </div>
     </div>
     <% } %>
     
     <div class="col-md-12">
-        <div class="card">
-            <div class="card-header bg-info text-white">
-                <h3 class="mb-0">Manager Dashboard</h3>
+        <div class="enhanced-card">
+            <div class="enhanced-card-header">
+                <h3 class="mb-0">🏅 Manager Dashboard</h3>
             </div>
             <div class="card-body">
                 <!-- Statistics Overview Row -->
                 <div class="row mb-4">
                     <div class="col-md-6">
-                        <div class="card bg-primary text-white dashboard-stat-card">
+                        <div class="dashboard-stat-card bg-primary text-white">
                             <div class="card-body d-flex justify-content-between align-items-center">
                                 <div>
                                     <h5 class="card-title">My Teams</h5>
@@ -43,7 +43,7 @@
                     </div>
                     
                     <div class="col-md-6">
-                        <div class="card bg-success text-white dashboard-stat-card">
+                        <div class="dashboard-stat-card bg-success text-white">
                             <div class="card-body d-flex justify-content-between align-items-center">
                                 <div>
                                     <h5 class="card-title">Total Players</h5>

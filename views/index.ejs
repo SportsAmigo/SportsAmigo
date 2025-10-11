@@ -23,10 +23,28 @@
         <i class="fa fa-bars" onclick="showMenu()"></i>
     </nav>
 
+    <!-- Live Announcement Bar - Only on Homepage -->
+    <div id="announcement-bar" class="announcement-bar" style="display: none;">
+        <div class="announcement-content">
+            <span id="announcement-text">🏆 Welcome to SportsAmigo - Join the action today!</span>
+        </div>
+    </div>
+
     <div class="text-box">
         <h1>SportsAmigo</h1>
         <p>Join the largest football community in India and experience the thrill of competition, the joy of teamwork, and the pride of victory.</p>
         <a href="/about" class="hero-btn">Visit Us To Know More</a>
+    </div>
+</section>
+
+<!-- Live Football Scoreboard - AJAX Feature -->
+<section class="live-scoreboard">
+    <div class="container">
+        <h1>🏆 Live Football Scores</h1>
+        <p>Real-time updates from ongoing matches</p>
+        <div id="scoreboard-container" class="scoreboard-grid">
+            <div class="loading-message">Loading live scores...</div>
+        </div>
     </div>
 </section>
 

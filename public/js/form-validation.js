@@ -1,21 +1,45 @@
 // Reusable DOM-based form validation for SportsAmigo
 // Attaches to forms with: data-validate attribute, class 'needs-validation', or specific ids like 'login-form' or 'signup-form'
+// Enhanced with DHTML integration for dynamic user experience
 document.addEventListener('DOMContentLoaded', function () {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   const phoneRegex = /^[0-9]{10}$/;
+
+  // DHTML integration: Dynamic form enhancement variables
+  let formSubmissionInProgress = false;
+  const validationDelayTimeout = {};
+  const VALIDATION_DELAY = 300; // milliseconds
 
   function createError(el, msg) {
     // try to reuse existing error element
     let next = el.nextElementSibling;
     if (next && next.classList && next.classList.contains('fv-error')) {
       next.textContent = msg;
+      // DHTML integration: Animate error message appearance
+      next.style.opacity = '0';
+      next.style.transform = 'translateY(-10px)';
+      setTimeout(() => {
+        next.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        next.style.opacity = '1';
+        next.style.transform = 'translateY(0)';
+      }, 10);
       return next;
     }
     const div = document.createElement('div');
     div.className = 'fv-error text-danger';
     div.style.marginTop = '0.25rem';
+    div.style.opacity = '0';
+    div.style.transform = 'translateY(-10px)';
+    div.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
     div.textContent = msg;
     el.parentNode.insertBefore(div, el.nextSibling);
+    
+    // DHTML integration: Animate error appearance
+    setTimeout(() => {
+      div.style.opacity = '1';
+      div.style.transform = 'translateY(0)';
+    }, 10);
+    
     return div;
   }
 
@@ -23,13 +47,48 @@ document.addEventListener('DOMContentLoaded', function () {
     el.classList.remove('is-invalid');
     el.classList.add('is-valid');
     let next = el.nextElementSibling;
-    if (next && next.classList && next.classList.contains('fv-error')) next.remove();
+    if (next && next.classList && next.classList.contains('fv-error')) {
+      // DHTML integration: Animate error removal
+      next.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+      next.style.opacity = '0';
+      next.style.transform = 'translateY(-10px)';
+      setTimeout(() => next.remove(), 300);
+    }
+    
+    // DHTML integration: Add success visual feedback
+    addSuccessVisualFeedback(el);
   }
 
   function invalidate(el, msg) {
     el.classList.remove('is-valid');
     el.classList.add('is-invalid');
+    // DHTML integration: Add shake animation for invalid fields
+    el.style.animation = 'shake 0.3s ease-in-out';
+    setTimeout(() => {
+      el.style.animation = '';
+    }, 300);
     createError(el, msg);
+  }
+
+  // DHTML integration: Add success visual feedback function
+  function addSuccessVisualFeedback(el) {
+    // Add a temporary success glow effect
+    el.style.boxShadow = '0 0 10px rgba(40, 167, 69, 0.5)';
+    el.style.transition = 'box-shadow 0.3s ease';
+    setTimeout(() => {
+      el.style.boxShadow = '';
+    }, 1500);
+  }
+
+  // DHTML integration: Real-time validation with debouncing
+  function debounceValidation(field, form, fieldId) {
+    if (validationDelayTimeout[fieldId]) {
+      clearTimeout(validationDelayTimeout[fieldId]);
+    }
+    
+    validationDelayTimeout[fieldId] = setTimeout(() => {
+      validateField(field, form);
+    }, VALIDATION_DELAY);
   }
 
   function validateField(field, form) {
@@ -176,8 +235,31 @@ document.addEventListener('DOMContentLoaded', function () {
   function attachFieldListeners(form) {
     const fields = form.querySelectorAll('input, textarea, select');
     fields.forEach(field => {
+      const fieldId = field.id || field.name || Math.random().toString(36).substr(2, 9);
       const ev = (field.tagName.toLowerCase() === 'select' || field.type === 'checkbox' || field.type === 'radio') ? 'change' : 'input';
-      field.addEventListener(ev, () => validateField(field, form));
+      
+      // DHTML integration: Enhanced field listeners with debouncing
+      field.addEventListener(ev, () => {
+        if (field.type === 'password' || field.type === 'email') {
+          // Use debouncing for performance-sensitive fields
+          debounceValidation(field, form, fieldId);
+        } else {
+          validateField(field, form);
+        }
+      });
+      
+      // DHTML integration: Add focus and blur effects
+      field.addEventListener('focus', function() {
+        this.style.transition = 'border-color 0.3s ease, box-shadow 0.3s ease';
+        this.style.borderColor = '#007bff';
+        this.style.boxShadow = '0 0 0 0.2rem rgba(0, 123, 255, 0.25)';
+      });
+      
+      field.addEventListener('blur', function() {
+        this.style.borderColor = '';
+        this.style.boxShadow = '';
+      });
+      
       // remove native invalid validity messages
       field.addEventListener('invalid', function (e) { e.preventDefault(); });
     });
@@ -192,7 +274,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function setupForm(form) {
     attachFieldListeners(form);
+    
+    // DHTML integration: Add form submission enhancements
+    const submitButton = form.querySelector('button[type="submit"], input[type="submit"]');
+    
     form.addEventListener('submit', function (e) {
+      // Prevent double submission
+      if (formSubmissionInProgress) {
+        e.preventDefault();
+        return;
+      }
+      
       let valid = true;
       const fields = form.querySelectorAll('input, textarea, select');
       fields.forEach(f => {
@@ -206,9 +298,31 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!valid) {
         e.preventDefault();
         e.stopPropagation();
-        // focus first invalid
+        // focus first invalid with smooth scroll
         const firstInvalid = form.querySelector('.is-invalid');
-        if (firstInvalid) firstInvalid.focus();
+        if (firstInvalid) {
+          firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          firstInvalid.focus();
+        }
+      } else {
+        // DHTML integration: Show loading state on submit button
+        if (submitButton) {
+          formSubmissionInProgress = true;
+          const originalText = submitButton.textContent;
+          submitButton.disabled = true;
+          submitButton.textContent = 'Submitting...';
+          submitButton.style.opacity = '0.6';
+          
+          // Reset after 10 seconds (fallback)
+          setTimeout(() => {
+            if (submitButton) {
+              submitButton.disabled = false;
+              submitButton.textContent = originalText;
+              submitButton.style.opacity = '1';
+              formSubmissionInProgress = false;
+            }
+          }, 10000);
+        }
       }
     });
   }
@@ -237,5 +351,39 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // run once after DOM ready
   applyDataWidths(document);
+
+  // DHTML integration: Add CSS animations dynamically
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+    
+    .fv-error {
+      font-size: 0.875rem;
+      line-height: 1.2;
+    }
+    
+    .form-control.is-valid {
+      border-color: #28a745;
+    }
+    
+    .form-control.is-invalid {
+      border-color: #dc3545;
+    }
+    
+    .form-control:focus {
+      outline: none;
+    }
+    
+    /* Enhanced button states */
+    button[type="submit"]:disabled {
+      cursor: not-allowed;
+      transform: scale(0.98);
+    }
+  `;
+  document.head.appendChild(style);
 
 });

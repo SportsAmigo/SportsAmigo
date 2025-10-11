@@ -9,7 +9,7 @@
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-8">
+                        <div class="col-md-12">
                             <div class="row mb-3">
                                 <div class="col-md-4 font-weight-bold">Date:</div>
                                 <div class="col-md-8"><%= event.date || event.event_date %></div>
@@ -59,11 +59,6 @@
                             </div>
                             <% } %>
                         </div>
-                        <div class="col-md-4">
-                            <div class="text-center">
-                                <img src="https://via.placeholder.com/300?text=<%= event.sport || event.sport_type %>" class="img-fluid rounded" alt="<%= event.sport || event.sport_type %> Image">
-                            </div>
-                        </div>
                     </div>
                     <div class="row mt-4">
                         <div class="col-12">
@@ -71,62 +66,6 @@
                             <p><%= event.description || 'No description available.' %></p>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Registration Info -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Registration Information</h5>
-                </div>
-                <div class="card-body">
-                    <!-- Flash Messages -->
-                    <% if (messages && messages.error) { %>
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <i class="fas fa-exclamation-circle me-2"></i> <%= messages.error %>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                    <% } %>
-                    
-                    <% if (messages && messages.success) { %>
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <i class="fas fa-check-circle me-2"></i> <%= messages.success %>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                    <% } %>
-                
-                    <% if (event.isRegistered) { %>
-                        <div class="alert alert-success">
-                            <i class="fas fa-check-circle me-2"></i> You are registered for this event with team: <strong><%= event.registeredTeam %></strong>
-                        </div>
-                    <% } else if (teams && teams.length > 0) { %>
-                        <form action="/player/event/<%= event._id %>/register" method="POST" data-validate>
-                            <div class="mb-3">
-                                <label for="team_id" class="form-label">Select a team to register:</label>
-                                <select class="form-select" id="team_id" name="team_id" required>
-                                    <option value="">-- Select Team --</option>
-                                    <% teams.forEach(team => { %>
-                                        <option value="<%= team._id %>"><%= team.name %> (<%= team.sport_type %>)</option>
-                                    <% }); %>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="notes" class="form-label">Additional Notes (Optional):</label>
-                                <textarea class="form-control" id="notes" name="notes" rows="2"></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Request to Join Event</button>
-                        </form>
-                    <% } else { %>
-                        <p>To participate in this event, you need to be part of a team.</p>
-                        <div class="alert alert-info">
-                            <strong>Note:</strong> You are not currently a member of any teams. Please join a team first.
-                        </div>
-                        <a href="/player/browse-teams" class="btn btn-primary">Browse Teams</a>
-                    <% } %>
                 </div>
             </div>
         </div>

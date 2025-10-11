@@ -105,12 +105,14 @@ module.exports = {
                 }
             }
             if (userData.phone !== undefined) updateData.phone = userData.phone;
-            if (userData.age !== undefined) updateData.age = userData.age;
-            if (userData.address !== undefined) updateData.address = userData.address;
             if (userData.bio !== undefined) updateData.bio = userData.bio;
-            if (userData.organization_name !== undefined) updateData.organization_name = userData.organization_name;
+            
+            // Handle profile fields - these should go in the profile sub-document
+            if (userData.age !== undefined) updateData['profile.age'] = userData.age;
+            if (userData.address !== undefined) updateData['profile.address'] = userData.address;
+            if (userData.organization_name !== undefined) updateData['profile.organization_name'] = userData.organization_name;
             if (userData.organization !== undefined && !userData.organization_name) {
-                updateData.organization_name = userData.organization;
+                updateData['profile.organization_name'] = userData.organization;
             }
             
             // Ensure profile_image is copied over if it exists
@@ -126,9 +128,9 @@ module.exports = {
             // Process preferred_sports - ensure it's a string even if an array is passed
             if (userData.preferred_sports !== undefined) {
                 if (Array.isArray(userData.preferred_sports)) {
-                    updateData.preferred_sports = userData.preferred_sports.join(', ');
+                    updateData['profile.preferred_sports'] = userData.preferred_sports.join(', ');
                 } else {
-                    updateData.preferred_sports = userData.preferred_sports;
+                    updateData['profile.preferred_sports'] = userData.preferred_sports;
                 }
             }
             

@@ -221,9 +221,26 @@
         document.getElementById('playerProfileAddress').innerText = address || 'Not provided';
         document.getElementById('playerProfileBio').innerText = bio || 'No bio available';
         
-        // Show the modal
-        const profileModal = new bootstrap.Modal(document.getElementById('playerProfileModal'));
+        // Show the modal with proper z-index handling
+        const modalElement = document.getElementById('playerProfileModal');
+        const profileModal = new bootstrap.Modal(modalElement, {
+            backdrop: true,
+            keyboard: true,
+            focus: true
+        });
+        
+        // Ensure proper z-index
+        modalElement.style.zIndex = '1055';
+        
         profileModal.show();
+        
+        // Fix backdrop z-index after modal is shown
+        setTimeout(() => {
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.style.zIndex = '1050';
+            }
+        }, 100);
     }
 </script>
 

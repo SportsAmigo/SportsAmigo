@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { Event, Team, User } = require('../models');
+const EventSchema = require('../models/schemas/eventSchema');
 const { eventController, userController } = require('../controllers');
 const multer = require('multer');
 const path = require('path');
@@ -206,17 +207,155 @@ router.get('/', async (req, res) => {
 });
 
 // Organizer dashboard - handle redirect from login
-router.get('/dashboard', (req, res) => {
-    // Check if this is a new organizer (no profile data yet)
-    const isNewOrganizer = !req.session.user.first_name && !req.session.user.phone;
-    
-    res.render('organizer/dashboard-new', { 
-        user: req.session.user,
-        layout: 'layouts/sidebar-dashboard',
-        path: '/organizer/dashboard',
-        isNewOrganizer: isNewOrganizer,
-        title: 'Organizer Dashboard'
-    });
+router.get('/dashboard', async (req, res) => {
+    try {
+        console.log('Loading organizer dashboard via /dashboard route, user:', req.session.user);
+        const organizerId = req.session.user._id;
+        console.log('Organizer ID:', organizerId);
+        
+        // Get events organized by this user
+        const Event = require('../models/event');
+        const events = await Event.getEventsByOrganizer(organizerId);
+        
+        console.log(`Retrieved ${events.length} events for organizer dashboard`);
+        
+        // Count events by status
+        const upcomingEventsCount = events.filter(e => e.status === 'upcoming' || e.status === 'draft').length;
+        const registeredTeamsCount = events.reduce((sum, event) => 
+            sum + (event.team_registrations ? event.team_registrations.length : 0), 0);
+        const cancelledEventsCount = events.filter(e => e.status === 'cancelled').length;
+        const completedEventsCount = events.filter(e => e.status === 'completed').length;
+        const totalEventsCount = events.length;
+        
+        // Get upcoming events for display on dashboard
+        const upcomingEvents = events
+            .filter(e => e.status === 'upcoming' || e.status === 'draft')
+            .sort((a, b) => new Date(a.event_date) - new Date(b.event_date))
+            .slice(0, 5)
+            .map(event => {
+                // Count team registrations
+                const registrationCount = event.team_registrations ? event.team_registrations.length : 0;
+                
+                return {
+                    id: event._id,
+                    name: event.title,
+                    date: new Date(event.event_date).toLocaleDateString(),
+                    location: event.location,
+                    sport: event.sport_type,
+                    teams_registered: registrationCount,
+                    max_teams: event.max_teams || 'unlimited',
+                    status: event.status === 'draft' ? 'Draft' : 'Open'
+                };
+            });
+        
+        // Get completed events for analytics
+        const completedEvents = events.filter(e => e.status === 'completed');
+        
+        // Generate recent activities based on real data
+        const recentActivities = [];
+        
+        // Sort all events by created_at date, most recent first
+        const sortedEvents = [...events].sort((a, b) => 
+            new Date(b.created_at || Date.now()) - new Date(a.created_at || Date.now()));
+        
+        // Add event creation activities
+        sortedEvents.slice(0, 3).forEach(event => {
+            recentActivities.push({
+                type: 'event_created',
+                event_id: event._id,
+                title: event.title,
+                date: event.created_at || new Date(),
+                message: `You created a new event: ${event.title}`
+            });
+        });
+        
+        // Add team registrations (most recent first)
+        const recentRegistrations = [];
+        events.forEach(event => {
+            if (event.team_registrations && event.team_registrations.length > 0) {
+                event.team_registrations.forEach(reg => {
+                    recentRegistrations.push({
+                        type: 'team_registered',
+                        event_id: event._id,
+                        event_title: event.title,
+                        team_id: reg.team_id,
+                        team_name: reg.team_name || 'A team',
+                        date: reg.registration_date || new Date(),
+                        message: `Team "${reg.team_name || 'A team'}" registered for "${event.title}"`
+                    });
+                });
+            }
+        });
+        
+        // Sort registrations by date and take the most recent ones
+        recentRegistrations.sort((a, b) => new Date(b.date) - new Date(a.date));
+        recentRegistrations.slice(0, 3).forEach(reg => {
+            recentActivities.push(reg);
+        });
+        
+        // Sort all activities by date
+        recentActivities.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        // Format dates for display
+        recentActivities.forEach(activity => {
+            activity.formatted_date = new Date(activity.date).toLocaleDateString();
+        });
+        
+        // Find the next upcoming event for the welcome message
+        const nextEvent = upcomingEvents.length > 0 ? upcomingEvents[0] : null;
+        
+        // Prepare analytics data
+        const sportsDistribution = {};
+        events.forEach(event => {
+            const sport = event.sport_type || 'Other';
+            sportsDistribution[sport] = (sportsDistribution[sport] || 0) + 1;
+        });
+        
+        // Get monthly event counts for the last 6 months
+        const monthlyEventCounts = [];
+        const today = new Date();
+        for (let i = 5; i >= 0; i--) {
+            const month = new Date(today.getFullYear(), today.getMonth() - i, 1);
+            const monthName = month.toLocaleString('default', { month: 'short' });
+            const monthEvents = events.filter(event => {
+                const eventDate = new Date(event.created_at || Date.now());
+                return eventDate.getMonth() === month.getMonth() && 
+                       eventDate.getFullYear() === month.getFullYear();
+            }).length;
+            
+            monthlyEventCounts.push({
+                month: monthName,
+                count: monthEvents
+            });
+        }
+        
+        // Check if the user is a new organizer
+        const isNewOrganizer = !req.session.user.first_name && !req.session.user.phone;
+        
+        res.render('organizer/dashboard-new', { 
+            user: req.session.user,
+            layout: 'layouts/sidebar-dashboard',
+            path: '/organizer/dashboard',
+            upcomingEventsCount,
+            registeredTeamsCount,
+            cancelledEventsCount,
+            completedEventsCount,
+            totalEventsCount,
+            recentActivities,
+            upcomingEvents,
+            nextEvent,
+            sportsDistribution,
+            monthlyEventCounts,
+            isNewOrganizer,
+            title: 'Organizer Dashboard'
+        });
+    } catch (err) {
+        console.error('Error loading organizer dashboard:', err);
+        res.status(500).render('error', {
+            message: 'Failed to load dashboard: ' + err.message,
+            error: err
+        });
+    }
 });
 
 // Manage Events
@@ -316,28 +455,21 @@ router.get('/manage-events', async (req, res) => {
     }
 });
 
-// Reports & Analytics
-router.get('/reports', async (req, res) => {
-    try {
-        res.render('organizer/reports', { 
-            title: 'Reports & Analytics',
-            user: req.session.user,
-            layout: 'layouts/sidebar-dashboard',
-            path: '/organizer/reports'
-        });
-    } catch (err) {
-        console.error('Error loading reports page:', err);
-        res.status(500).render('error', {
-            message: 'Failed to load reports',
-            error: err
-        });
-    }
-});
-
 // Organizer Profile
 router.get('/profile', async (req, res) => {
     try {
         const user = await User.getUserById(req.session.user._id);
+        
+        // Get event statistics for the organizer
+        const totalEvents = await EventSchema.countDocuments({ organizer_id: req.session.user._id });
+        const upcomingEvents = await EventSchema.countDocuments({ 
+            organizer_id: req.session.user._id,
+            event_date: { $gte: new Date() }
+        });
+        
+        // Add event counts to user object
+        user.events_count = totalEvents;
+        user.upcoming_events_count = upcomingEvents;
         
         res.render('organizer/profile', {
             title: 'My Profile',
@@ -548,7 +680,7 @@ router.get('/event/:id', async (req, res) => {
             user: req.session.user,
             event: formattedEvent,
             messages: req.session.flashMessage || {},
-            layout: 'layouts/dashboard',
+            layout: 'layouts/sidebar-dashboard',
             path: '/organizer/manage-events'
         });
         
