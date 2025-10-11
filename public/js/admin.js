@@ -2,11 +2,15 @@
  * Admin Dashboard JavaScript
  * Comprehensive functionality for admin dashboard pages
  * Handles search, filtering, action buttons, and more
+ * Enhanced with DHTML integration for dynamic user experience
  */
 
 // Global variables
 let debugMode = true;
 let initialized = false;
+// DHTML integration: Enhanced interaction tracking
+let lastInteractionTime = Date.now();
+let animationQueue = [];
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Admin JS loaded');
@@ -23,6 +27,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Initialize sidebar dropdowns
             initDropdowns();
+            
+            // DHTML integration: Initialize dynamic features
+            initDynamicFeatures();
             
             // Enable debugging to see events in console
             enableDebugMode();
@@ -169,6 +176,217 @@ function initActionButtons() {
     } catch (error) {
         console.error('Error initializing action buttons:', error);
     }
+}
+
+/**
+ * DHTML integration: Initialize dynamic features for enhanced user experience
+ */
+function initDynamicFeatures() {
+    try {
+        debugLog('Initializing DHTML dynamic features');
+        
+        // Dynamic table row highlighting and interactions
+        initTableInteractions();
+        
+        // Enhanced loading states for buttons
+        initEnhancedButtons();
+        
+        // Dynamic notification system
+        initNotificationSystem();
+        
+        // Smooth scroll enhancements
+        initSmoothScrolling();
+        
+        // Interactive card animations
+        initCardAnimations();
+        
+        debugLog('DHTML dynamic features initialized');
+    } catch (error) {
+        console.error('Error initializing DHTML features:', error);
+    }
+}
+
+/**
+ * DHTML integration: Enhanced table interactions
+ */
+function initTableInteractions() {
+    const tables = document.querySelectorAll('table tbody tr');
+    
+    tables.forEach(row => {
+        // Add hover effects
+        row.addEventListener('mouseenter', function() {
+            this.style.transition = 'background-color 0.2s ease, transform 0.2s ease';
+            this.style.backgroundColor = '#f8f9fa';
+            this.style.transform = 'scale(1.01)';
+            lastInteractionTime = Date.now();
+        });
+        
+        row.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = '';
+            this.style.transform = '';
+        });
+        
+        // Add selection state
+        row.addEventListener('click', function() {
+            // Remove selection from other rows
+            tables.forEach(r => r.classList.remove('selected-row'));
+            this.classList.add('selected-row');
+            
+            // Add pulse animation
+            this.style.animation = 'pulse 0.3s ease';
+            setTimeout(() => {
+                this.style.animation = '';
+            }, 300);
+        });
+    });
+}
+
+/**
+ * DHTML integration: Enhanced button interactions
+ */
+function initEnhancedButtons() {
+    const buttons = document.querySelectorAll('button, .btn');
+    
+    buttons.forEach(button => {
+        // Add ripple effect on click
+        button.addEventListener('click', function(e) {
+            if (this.disabled) return;
+            
+            const ripple = document.createElement('span');
+            const rect = this.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            const x = e.clientX - rect.left - size / 2;
+            const y = e.clientY - rect.top - size / 2;
+            
+            ripple.style.width = ripple.style.height = size + 'px';
+            ripple.style.left = x + 'px';
+            ripple.style.top = y + 'px';
+            ripple.classList.add('ripple-effect');
+            
+            this.style.position = 'relative';
+            this.style.overflow = 'hidden';
+            this.appendChild(ripple);
+            
+            setTimeout(() => {
+                if (ripple.parentNode) {
+                    ripple.parentNode.removeChild(ripple);
+                }
+            }, 600);
+        });
+        
+        // Enhanced hover states
+        button.addEventListener('mouseenter', function() {
+            if (!this.disabled) {
+                this.style.transition = 'all 0.2s ease';
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+            }
+        });
+        
+        button.addEventListener('mouseleave', function() {
+            this.style.transform = '';
+            this.style.boxShadow = '';
+        });
+    });
+}
+
+/**
+ * DHTML integration: Dynamic notification system
+ */
+function initNotificationSystem() {
+    // Create notification container if it doesn't exist
+    if (!document.getElementById('notification-container')) {
+        const container = document.createElement('div');
+        container.id = 'notification-container';
+        container.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            pointer-events: none;
+        `;
+        document.body.appendChild(container);
+    }
+    
+    // Add global notification function
+    window.showNotification = function(message, type = 'info', duration = 3000) {
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.textContent = message;
+        notification.style.cssText = `
+            background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#007bff'};
+            color: white;
+            padding: 12px 20px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+            pointer-events: auto;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        `;
+        
+        document.getElementById('notification-container').appendChild(notification);
+        
+        // Animate in
+        setTimeout(() => {
+            notification.style.opacity = '1';
+            notification.style.transform = 'translateX(0)';
+        }, 10);
+        
+        // Auto remove
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }, duration);
+    };
+}
+
+/**
+ * DHTML integration: Smooth scrolling enhancements
+ */
+function initSmoothScrolling() {
+    const links = document.querySelectorAll('a[href^="#"]');
+    
+    links.forEach(link => {
+        link.addEventListener('click', function(e) {
+            const targetId = this.getAttribute('href').substring(1);
+            const targetElement = document.getElementById(targetId);
+            
+            if (targetElement) {
+                e.preventDefault();
+                targetElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+}
+
+/**
+ * DHTML integration: Interactive card animations
+ */
+function initCardAnimations() {
+    const cards = document.querySelectorAll('.card, .stat-card, .dashboard-card');
+    
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transition = 'transform 0.3s ease, box-shadow 0.3s ease';
+            this.style.transform = 'translateY(-5px)';
+            this.style.boxShadow = '0 10px 25px rgba(0,0,0,0.1)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = '';
+            this.style.boxShadow = '';
+        });
+    });
 }
 
 /**

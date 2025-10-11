@@ -42,10 +42,16 @@
                 
                     <div class="mb-3">
                         <label for="email" class="form-label">Email Address</label>
-                        <input type="email" class="form-control <%= typeof validationErrors !== 'undefined' && validationErrors.email ? 'is-invalid' : '' %>" 
-                            id="email" name="email" value="<%= typeof formData !== 'undefined' && formData.email ? formData.email : '' %>" 
-                            pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" 
-                            title="Please enter a valid email address (e.g., name@example.com)" required>
+                        <div class="input-group">
+                            <input type="email" class="form-control <%= typeof validationErrors !== 'undefined' && validationErrors.email ? 'is-invalid' : '' %>" 
+                                id="email" name="email" value="<%= typeof formData !== 'undefined' && formData.email ? formData.email : '' %>" 
+                                pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" 
+                                title="Please enter a valid email address (e.g., name@example.com)" 
+                                data-check-email="true" required>
+                            <span class="input-group-text" id="email-status">
+                                <i class="fas fa-question text-muted"></i>
+                            </span>
+                        </div>
                         <% if (typeof validationErrors !== 'undefined' && validationErrors.email) { %>
                             <div class="invalid-feedback">
                                 <%= validationErrors.email %>
@@ -163,6 +169,6 @@
     </div>
 </div>
 
-                <!-- Inline field-level helpers kept for backwards compatibility; main validator auto-attaches -->
+<script src="/js/ajax-functions.js"></script>
 
 <%- include('partials/footer') %> 

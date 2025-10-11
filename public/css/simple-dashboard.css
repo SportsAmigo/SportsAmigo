@@ -1,0 +1,711 @@
+/* 🎨 SIMPLE GREEN, GREY, RED & WHITE DASHBOARD CSS */
+/* Clean design with proper color harmony */
+
+/* ===============================================
+   🌟 SIMPLE COLOR VARIABLES - UPDATED PALETTE
+   =============================================== */
+:root {
+    /* Green, Grey, Red & White Palette */
+    --primary-red: #dc3545;
+    --primary-green: #28a745;
+    --primary-grey: #6c757d;
+    --dark-grey: #495057;
+    --light-grey: #f8f9fa;
+    --primary-white: #ffffff;
+    --border-grey: #dee2e6;
+    --text-dark: #212529;
+    --text-muted: #6c757d;
+    
+    /* Simple Spacing */
+    --space-xs: 0.5rem;
+    --space-sm: 1rem;
+    --space-md: 1.5rem;
+    --space-lg: 2rem;
+    --space-xl: 3rem;
+    
+    /* Simple Borders */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    
+    /* Minimal Transitions */
+    --transition: 0.2s ease;
+}
+
+/* ===============================================
+   🎯 BODY & GLOBAL RESET
+   =============================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: var(--light-grey);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    color: var(--text-dark);
+    line-height: 1.6;
+    font-weight: 400;
+}
+
+/* ===============================================
+   🏠 MAIN CONTAINER - SIMPLE DESIGN
+   =============================================== */
+.container-fluid {
+    background: var(--primary-white);
+    border: 1px solid var(--border-grey);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    margin: var(--space-md);
+    min-height: calc(100vh - 3rem);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* ===============================================
+   🃏 SIMPLE CARD SYSTEM - GREEN GREY RED WHITE
+   =============================================== */
+.enhanced-card {
+    background: var(--primary-white);
+    border: 1px solid var(--border-grey);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-md);
+    overflow: hidden;
+}
+
+.enhanced-card:hover {
+    border-color: var(--primary-grey);
+    transition: var(--transition);
+}
+
+.enhanced-card-header {
+    background: var(--primary-white);
+    border-bottom: 2px solid var(--primary-grey);
+    padding: var(--space-lg);
+}
+
+.enhanced-card-header h3,
+.enhanced-card-header h5 {
+    color: var(--text-dark);
+    font-weight: 600;
+    margin: 0;
+}
+
+.card-body {
+    padding: var(--space-lg);
+}
+
+/* ===============================================
+   📊 DASHBOARD STATISTICS CARDS - GREEN GREY RED
+   =============================================== */
+.dashboard-stat-card {
+    background: var(--primary-white);
+    border: 1px solid var(--border-grey);
+    border-radius: var(--radius-md);
+    padding: var(--space-lg);
+    text-align: center;
+    position: relative;
+    margin-bottom: var(--space-md);
+}
+
+.dashboard-stat-card:hover {
+    border-color: var(--primary-grey);
+    transition: var(--transition);
+}
+
+.dashboard-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--primary-grey);
+}
+
+.dashboard-stat-card.bg-primary {
+    background: var(--primary-red);
+    color: var(--primary-white);
+    border-color: var(--primary-red);
+}
+
+.dashboard-stat-card.bg-primary::before {
+    background: var(--primary-white);
+}
+
+.dashboard-stat-card.bg-success {
+    background: var(--primary-green);
+    color: var(--primary-white);
+    border-color: var(--primary-green);
+}
+
+.dashboard-stat-card.bg-success::before {
+    background: var(--primary-white);
+}
+
+.dashboard-stat-card.bg-warning {
+    background: var(--primary-grey);
+    color: var(--primary-white);
+    border-color: var(--primary-grey);
+}
+
+.dashboard-stat-card.bg-warning::before {
+    background: var(--primary-white);
+}
+
+.dashboard-stat-card.bg-info {
+    background: var(--dark-grey);
+    color: var(--primary-white);
+    border-color: var(--dark-grey);
+}
+
+.dashboard-stat-card.bg-info::before {
+    background: var(--primary-white);
+}
+
+.dashboard-stat-card .card-icon {
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-md);
+    font-size: 2rem;
+    opacity: 0.3;
+}
+
+.dashboard-stat-card h6 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: var(--space-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.dashboard-stat-card h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1;
+}
+
+/* ===============================================
+   🎨 SIMPLE BUTTON SYSTEM
+   =============================================== */
+.btn-enhanced {
+    background: var(--primary-red);
+    border: 1px solid var(--primary-red);
+    color: var(--primary-white);
+    font-weight: 500;
+    padding: var(--space-sm) var(--space-lg);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    display: inline-block;
+    transition: var(--transition);
+}
+
+.btn-enhanced:hover {
+    background: var(--primary-white);
+    color: var(--primary-red);
+    border-color: var(--primary-red);
+}
+
+.btn-enhanced.btn-success {
+    background: #28a745;
+    border-color: #28a745;
+}
+
+.btn-enhanced.btn-success:hover {
+    background: var(--primary-white);
+    color: #28a745;
+    border-color: #28a745;
+}
+
+.btn-enhanced.btn-warning {
+    background: #ffc107;
+    border-color: #ffc107;
+    color: var(--text-dark);
+}
+
+.btn-enhanced.btn-warning:hover {
+    background: var(--primary-white);
+    color: #ffc107;
+    border-color: #ffc107;
+}
+
+/* ===============================================
+   📋 SIMPLE QUICK ACCESS CARDS
+   =============================================== */
+.quick-access-card {
+    background: var(--primary-white);
+    border: 1px solid var(--border-gray);
+    border-radius: var(--radius-md);
+    padding: var(--space-lg);
+    text-align: center;
+    margin-bottom: var(--space-md);
+    transition: var(--transition);
+}
+
+.quick-access-card:hover {
+    border-color: var(--primary-red);
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.1);
+}
+
+.quick-access-card i {
+    font-size: 2.5rem;
+    color: var(--primary-red);
+    margin-bottom: var(--space-md);
+}
+
+.quick-access-card h5 {
+    font-weight: 600;
+    margin-bottom: var(--space-sm);
+    color: var(--text-dark);
+}
+
+.quick-access-card p {
+    color: var(--text-muted);
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+/* ===============================================
+   ⏰ SIMPLE COUNTDOWN TIMER
+   =============================================== */
+.countdown-timer {
+    background: var(--primary-white);
+    border: 1px solid var(--border-gray);
+    border-radius: var(--radius-md);
+    padding: var(--space-lg);
+    text-align: center;
+    border-top: 3px solid var(--primary-red);
+}
+
+.countdown-timer .time-unit {
+    display: inline-block;
+    margin: 0 var(--space-sm);
+    text-align: center;
+}
+
+.countdown-timer .time-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-red);
+    line-height: 1;
+}
+
+.countdown-timer .time-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    margin-top: var(--space-xs);
+}
+
+/* ===============================================
+   📈 SIMPLE PROGRESS BARS
+   =============================================== */
+.progress-enhanced {
+    height: 8px;
+    border-radius: var(--radius-sm);
+    background: var(--light-gray);
+    overflow: hidden;
+}
+
+.progress-enhanced .progress-bar {
+    background: var(--primary-red);
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+}
+
+/* ===============================================
+   📱 RESPONSIVE DESIGN
+   =============================================== */
+@media (max-width: 768px) {
+    .container-fluid {
+        margin: var(--space-sm);
+        padding: var(--space-lg);
+    }
+    
+    .dashboard-stat-card h2 {
+        font-size: 2rem;
+    }
+    
+    .countdown-timer .time-value {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .container-fluid {
+        margin: var(--space-xs);
+        padding: var(--space-md);
+    }
+    
+    .enhanced-card-header,
+    .card-body {
+        padding: var(--space-md);
+    }
+    
+    .dashboard-stat-card {
+        padding: var(--space-md);
+    }
+    
+    .dashboard-stat-card h2 {
+        font-size: 1.5rem;
+    }
+}
+
+/* ===============================================
+   🚫 HIDE UNWANTED ELEMENTS
+   =============================================== */
+#announcement-bar,
+.announcement-bar,
+.announcement-container {
+    display: none !important;
+}
+
+/* Remove any floating or glow effects */
+.floating-effect,
+.glow-effect {
+    animation: none !important;
+    box-shadow: none !important;
+}
+
+/* ===============================================
+   🎨 OVERRIDE BOOTSTRAP PRIMARY COLORS - RED THEME
+   =============================================== */
+
+/* Replace all blue (bg-primary) with red */
+.bg-primary {
+    background-color: var(--primary-red) !important;
+    border-color: var(--primary-red) !important;
+}
+
+/* Replace all blue buttons (btn-primary) with red */
+.btn-primary {
+    background-color: var(--primary-red) !important;
+    border-color: var(--primary-red) !important;
+    color: var(--primary-white) !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+    background-color: #c82333 !important;
+    border-color: #bd2130 !important;
+    color: var(--primary-white) !important;
+}
+
+/* Replace primary badges with red */
+.badge.bg-primary {
+    background-color: var(--primary-red) !important;
+}
+
+/* Replace primary progress bars with red */
+.progress-bar.bg-primary {
+    background-color: var(--primary-red) !important;
+}
+
+/* Replace primary navbar with dark gray */
+.navbar.bg-primary {
+    background-color: #343a40 !important;
+}
+
+/* Replace primary card headers with dark gray */
+.card-header.bg-primary {
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+}
+
+/* Replace primary alerts with red */
+.alert-primary {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+    border-color: var(--primary-red) !important;
+    color: var(--primary-red) !important;
+}
+
+/* Replace primary text with red */
+.text-primary {
+    color: var(--primary-red) !important;
+}
+
+/* Replace primary borders with red */
+.border-primary {
+    border-color: var(--primary-red) !important;
+}
+
+/* ===============================================
+   📱 FORM CONTROLS WITH RED THEME
+   =============================================== */
+.form-control:focus {
+    border-color: var(--primary-red) !important;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+.form-check-input:checked {
+    background-color: var(--primary-red) !important;
+    border-color: var(--primary-red) !important;
+}
+
+/* ===============================================
+   🎯 SPECIAL PROFILE PAGE STYLING
+   =============================================== */
+
+/* Profile card header - use gray instead of blue */
+.profile-header,
+.card-header.bg-primary {
+    background: linear-gradient(135deg, #6c757d, #495057) !important;
+    color: var(--primary-white) !important;
+}
+
+/* Profile buttons - ensure red styling */
+.profile-btn,
+.btn-primary {
+    background-color: var(--primary-red) !important;
+    border-color: var(--primary-red) !important;
+}
+
+.profile-btn:hover,
+.btn-primary:hover {
+    background-color: #c82333 !important;
+    border-color: #bd2130 !important;
+}
+
+/* Simple list styling */
+.list-group-item {
+    border: none;
+    border-bottom: 1px solid var(--border-gray);
+    padding: var(--space-sm) 0;
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+
+/* Simple badge styling */
+.badge {
+    background: var(--primary-red) !important;
+    color: var(--primary-white);
+    font-weight: 500;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+}
+
+/* Simple form controls */
+.form-control {
+    border: 1px solid var(--border-gray);
+    border-radius: var(--radius-sm);
+    padding: var(--space-sm);
+    transition: var(--transition);
+}
+
+.form-control:focus {
+    border-color: var(--primary-green);
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+/* Simple table styling */
+.table {
+    border-collapse: collapse;
+}
+
+.table th {
+    background: var(--light-grey);
+    border-bottom: 2px solid var(--primary-green);
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.table td {
+    border-bottom: 1px solid var(--border-grey);
+}
+
+/* Simple alert styling */
+.alert {
+    border: 1px solid var(--border-grey);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+}
+
+.alert-primary {
+    background: rgba(220, 53, 69, 0.1);
+    border-color: var(--primary-red);
+    color: var(--primary-red);
+}
+
+.alert-success {
+    background: rgba(40, 167, 69, 0.1);
+    border-color: var(--primary-green);
+    color: var(--primary-green);
+}
+
+.alert-warning {
+    background: rgba(108, 117, 125, 0.1);
+    border-color: var(--primary-grey);
+    color: var(--primary-grey);
+}
+
+.alert-info {
+    background: rgba(108, 117, 125, 0.1);
+    border-color: var(--primary-grey);
+    color: var(--primary-grey);
+}
+
+/* ===============================================
+   🏆 TEAM & EVENT MANAGEMENT - ENHANCED VISIBILITY
+   =============================================== */
+.team-management-section, .event-management-section {
+    background: var(--primary-white);
+    border: 1px solid var(--border-grey);
+    border-radius: var(--radius-md);
+    padding: var(--space-xl);
+    margin-bottom: var(--space-lg);
+}
+
+.team-management-section .section-title, 
+.event-management-section .section-title {
+    color: var(--text-dark);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-sm);
+    border-bottom: 2px solid var(--primary-green);
+}
+
+.team-management-section .section-description,
+.event-management-section .section-description {
+    color: var(--text-medium);
+    font-size: 1rem;
+    margin-bottom: var(--space-lg);
+    line-height: 1.5;
+    font-weight: 500;
+}
+
+.team-card, .event-card {
+    background: var(--primary-white);
+    border: 1px solid var(--border-grey);
+    border-radius: var(--radius-md);
+    padding: var(--space-lg);
+    margin-bottom: var(--space-md);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.team-card:hover, .event-card:hover {
+    border-color: var(--primary-green);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    transition: var(--transition);
+}
+
+.team-card .card-header {
+    background: var(--primary-green);
+    color: var(--primary-white);
+    padding: var(--space-md);
+    margin: calc(-1 * var(--space-lg)) calc(-1 * var(--space-lg)) var(--space-md) calc(-1 * var(--space-lg));
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    font-weight: 600;
+}
+
+.team-card .badge {
+    background: var(--primary-white) !important;
+    color: var(--primary-green) !important;
+    border: 1px solid var(--primary-white);
+    font-weight: 500;
+    padding: 0.25rem 0.5rem;
+}
+
+.event-card .card-header {
+    background: var(--primary-red);
+    color: var(--primary-white);
+    padding: var(--space-md);
+    margin: calc(-1 * var(--space-lg)) calc(-1 * var(--space-lg)) var(--space-md) calc(-1 * var(--space-lg));
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    font-weight: 600;
+}
+
+.event-card .badge {
+    background: var(--primary-white) !important;
+    color: var(--primary-red) !important;
+    border: 1px solid var(--primary-white);
+    font-weight: 500;
+    padding: 0.25rem 0.5rem;
+}
+
+/* Fix text visibility in cards */
+.team-card .card-body, .event-card .card-body {
+    color: var(--text-dark);
+}
+
+.team-card .card-body p, .event-card .card-body p {
+    color: var(--text-medium);
+    margin-bottom: var(--space-sm);
+}
+
+.team-card .card-body strong, .event-card .card-body strong {
+    color: var(--text-dark);
+}
+
+/* Enhanced action buttons */
+.team-action-buttons .btn, .event-action-buttons .btn {
+    margin-right: var(--space-sm);
+    margin-bottom: var(--space-xs);
+    font-weight: 500;
+    padding: 0.375rem 1rem;
+}
+
+.team-action-buttons .btn-outline-success {
+    border-color: var(--primary-green);
+    color: var(--primary-green);
+}
+
+.team-action-buttons .btn-outline-success:hover {
+    background: var(--primary-green);
+    color: var(--primary-white);
+}
+
+.team-action-buttons .btn-outline-danger {
+    border-color: var(--primary-red);
+    color: var(--primary-red);
+}
+
+.team-action-buttons .btn-outline-danger:hover {
+    background: var(--primary-red);
+    color: var(--primary-white);
+}
+
+.team-action-buttons .btn-outline-secondary {
+    border-color: var(--primary-grey);
+    color: var(--primary-grey);
+}
+
+.team-action-buttons .btn-outline-secondary:hover {
+    background: var(--primary-grey);
+    color: var(--primary-white);
+}
+
+/* Team member list styling */
+.team-members-list {
+    padding: var(--space-md) 0;
+}
+
+.team-members-list .member-item {
+    padding: var(--space-sm);
+    border: 1px solid var(--border-grey);
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--space-xs);
+    background: var(--light-grey);
+}
+
+.team-members-list .member-item:hover {
+    background: var(--primary-white);
+    border-color: var(--primary-green);
+}
+
+.team-members-list .member-name {
+    font-weight: 500;
+    color: var(--text-dark);
+}
+
+.team-members-list .member-role {
+    color: var(--text-medium);
+    font-size: 0.875rem;
+}

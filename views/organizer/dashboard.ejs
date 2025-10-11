@@ -1,88 +1,137 @@
 <%- include('../partials/header', { title: 'Organizer Dashboard - Sports Amigo' }) %>
 
-<!-- Dashboard Content -->
+<!-- 🎯 Ultra-Premium Dashboard Content -->
 <div class="container-fluid">
-    <!-- Dashboard Stats Row -->
+    <!-- ✨ Welcome Section -->
     <div class="row mb-4">
-        <div class="col-xl-3 col-md-6">
-            <div class="card dashboard-stat-card bg-primary text-white">
+        <div class="col-12">
+            <div class="enhanced-card floating-effect">
+                <div class="enhanced-card-header">
+                    <h3 class="mb-0">🎯 Organizer Command Center</h3>
+                </div>
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title">Total Events</h6>
-                            <h2 class="mb-0"><%= typeof totalEventsCount !== 'undefined' ? totalEventsCount : 0 %></h2>
-                        </div>
-                        <div class="card-icon">
-                            <i class="fas fa-calendar-alt"></i>
-                        </div>
+                    <h4 class="mb-3">Welcome back, Event Master! 🚀</h4>
+                    <p class="text-muted mb-0">Your central hub for managing events, tracking registrations, and overseeing tournament progress with professional precision.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 📊 Premium Dashboard Statistics -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="dashboard-stat-card bg-primary text-white glow-effect">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title mb-2">Total Events</h6>
+                        <h2 class="mb-0" data-live-stat="totalEvents"><%= typeof totalEventsCount !== 'undefined' ? totalEventsCount : 0 %></h2>
+                        <small class="text-white-50">Live updating</small>
+                    </div>
+                    <div class="card-icon">
+                        <i class="fas fa-calendar-alt"></i>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-xl-3 col-md-6">
-            <div class="card dashboard-stat-card bg-success text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title">Upcoming Events</h6>
-                            <h2 class="mb-0"><%= typeof upcomingEventsCount !== 'undefined' ? upcomingEventsCount : 0 %></h2>
-                        </div>
-                        <div class="card-icon">
-                            <i class="fas fa-calendar-plus"></i>
-                        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="dashboard-stat-card bg-success text-white glow-effect">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title mb-2">Active Teams</h6>
+                        <h2 class="mb-0" data-live-stat="activeTeams"><%= typeof upcomingEventsCount !== 'undefined' ? upcomingEventsCount : 0 %></h2>
+                        <small class="text-white-50">Live updating</small>
+                    </div>
+                    <div class="card-icon">
+                        <i class="fas fa-calendar-plus"></i>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-xl-3 col-md-6">
-            <div class="card dashboard-stat-card bg-info text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title">Registered Teams</h6>
-                            <h2 class="mb-0"><%= typeof registeredTeamsCount !== 'undefined' ? registeredTeamsCount : 0 %></h2>
-                        </div>
-                        <div class="card-icon">
-                            <i class="fas fa-users"></i>
-                        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="dashboard-stat-card bg-info text-white glow-effect">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title mb-2">Registered Teams</h6>
+                        <h2 class="mb-0"><%= typeof registeredTeamsCount !== 'undefined' ? registeredTeamsCount : 0 %></h2>
+                        <small class="text-white-50">Total participants</small>
+                    </div>
+                    <div class="card-icon">
+                        <i class="fas fa-users"></i>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-xl-3 col-md-6">
-            <div class="card dashboard-stat-card bg-warning text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title">Completed Events</h6>
-                            <h2 class="mb-0"><%= typeof completedEventsCount !== 'undefined' ? completedEventsCount : 0 %></h2>
-                        </div>
-                        <div class="card-icon">
-                            <i class="fas fa-trophy"></i>
-                        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="dashboard-stat-card bg-warning text-white glow-effect">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title mb-2">Completed Events</h6>
+                        <h2 class="mb-0"><%= typeof completedEventsCount !== 'undefined' ? completedEventsCount : 0 %></h2>
+                        <small class="text-white-50">Successfully finished</small>
+                    </div>
+                    <div class="card-icon">
+                        <i class="fas fa-trophy"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-                        <div class="card-body">
-                            <h4 class="card-title">Welcome back, <%= user.first_name || user.name?.split(' ')[0] || user.email %>!</h4>
-                            <% if (typeof nextEvent !== 'undefined' && nextEvent) { %>
-                                <p class="card-text">Your next event <strong><%= nextEvent.name %></strong> is scheduled for <strong><%= nextEvent.date %></strong>. You have <strong><%= nextEvent.teams_registered %></strong> registered teams so far.</p>
-                                <a href="/organizer/event/<%= nextEvent.id %>" class="btn btn-primary">Manage Event</a>
-                            <% } else { %>
-                                <p class="card-text">You don't have any upcoming events scheduled. Would you like to create one?</p>
-                                <a href="/organizer/create-event" class="btn btn-primary">Create Event</a>
-                            <% } %>
-                        </div>
-                    </div>
-                <% } %>
+    
+    <!-- 💎 Premium Welcome Message -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="enhanced-card floating-effect">
+                <div class="card-body">
+                    <h4 class="card-title mb-3">👋 Welcome back, <%= user.first_name || user.name?.split(' ')[0] || user.email %>!</h4>
+                    <% if (typeof nextEvent !== 'undefined' && nextEvent) { %>
+                        <p class="card-text mb-3">Your next event <strong class="text-primary"><%= nextEvent.name %></strong> is scheduled for <strong class="text-success"><%= nextEvent.date %></strong>. You have <strong class="text-warning"><%= nextEvent.teams_registered %></strong> registered teams so far.</p>
+                        <a href="/organizer/event/<%= nextEvent.id %>" class="btn btn-enhanced btn-lg">Manage Event 🎯</a>
+                    <% } else { %>
+                        <p class="card-text mb-3">You don't have any upcoming events scheduled. Ready to create something amazing?</p>
+                        <a href="/organizer/create-event" class="btn btn-enhanced btn-lg">Create Event 🚀</a>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                <!-- Quick Access Cards -->
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card mb-4">
-                            <div class="card-header bg-primary text-white">
+    <!-- 🚀 Premium Quick Access Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="quick-access-card">
+                <i class="fas fa-plus-circle"></i>
+                <h5>Create Event</h5>
+                <p>Launch your next tournament</p>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="quick-access-card">
+                <i class="fas fa-calendar-alt"></i>
+                <h5>Manage Events</h5>
+                <p>View and edit your events</p>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="quick-access-card">
+                <i class="fas fa-chart-bar"></i>
+                <h5>View Reports</h5>
+                <p>Analytics and insights</p>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="quick-access-card">
+                <i class="fas fa-user-cog"></i>
+                <h5>Profile Settings</h5>
+                <p>Update your information</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 📋 Event Management Section -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="enhanced-card mb-4">
+                <div class="enhanced-card-header">
                                 <h5 class="mb-0">Upcoming Events</h5>
                             </div>
                             <div class="card-body">
