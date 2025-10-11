@@ -34,7 +34,7 @@
             background: #ffffff;
             border-right: 2px solid #dc3545;
             padding: 0;
-            z-index: 1000;
+            z-index: 1040;
             transform: translateX(0);
             transition: transform 0.3s ease;
         }
@@ -202,7 +202,7 @@
             align-items: center;
             position: sticky;
             top: 0;
-            z-index: 999;
+            z-index: 1030;
         }
         
         .top-header h4 {
@@ -229,6 +229,52 @@
         /* 📦 SIMPLE CONTENT AREA */
         .content-area {
             padding: 0;
+        }
+        
+        /* 🎯 MODAL Z-INDEX FIX */
+        .modal {
+            z-index: 1055 !important;
+        }
+        
+        .modal-backdrop {
+            z-index: 1050 !important;
+        }
+        
+        /* Ensure modals appear above sidebar */
+        .sidebar {
+            z-index: 1040;
+        }
+        
+        .top-header {
+            z-index: 1030;
+        }
+        
+        /* Fix for modal backdrop being unresponsive */
+        .modal-backdrop.show {
+            opacity: 0.5;
+            pointer-events: auto;
+        }
+        
+        /* Ensure modal content is clickable */
+        .modal-dialog {
+            position: relative;
+            z-index: 1056;
+            pointer-events: auto;
+        }
+        
+        /* Prevent body scroll when modal is open */
+        body.modal-open {
+            overflow: hidden;
+            padding-right: 0px !important;
+        }
+        
+        /* Fix modal positioning */
+        .modal.show {
+            display: block !important;
+        }
+        
+        .modal.show .modal-dialog {
+            transform: none;
         }
         
         /* 📱 RESPONSIVE DESIGN */
@@ -286,9 +332,6 @@
                 </a></li>
                 <li><a href="/organizer/create-event" class="<%= path === '/organizer/create-event' ? 'active' : '' %>">
                     <i class="fas fa-plus-circle"></i> Create Event
-                </a></li>
-                <li><a href="/organizer/reports" class="<%= path === '/organizer/reports' ? 'active' : '' %>">
-                    <i class="fas fa-chart-bar"></i> Reports
                 </a></li>
                 <li><a href="/organizer/profile" class="<%= path === '/organizer/profile' ? 'active' : '' %>">
                     <i class="fas fa-user-circle"></i> Profile

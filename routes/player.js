@@ -216,7 +216,7 @@ router.get('/my-teams', async (req, res) => {
         const playerId = req.session.user._id;
         const teams = await Team.getPlayerTeams(playerId);
         
-        // Format teams for display
+        // Format teams for display - don't override team_members!
         const formattedTeams = teams.map(team => ({
             id: team._id,
             name: team.name,
@@ -227,7 +227,7 @@ router.get('/my-teams', async (req, res) => {
             members: team.max_members || 20,
             status: 'Active',
             role: 'Player',
-            team_members: team.members || []
+            team_members: team.team_members || [] // Use the populated team_members from the model
         }));
         
         res.render('player/my-teams', {
@@ -559,7 +559,7 @@ router.get('/event/:id', async (req, res) => {
             event: formattedEvent,
             teams: teams,
             messages: req.session.flashMessage || {},
-            layout: 'layouts/dashboard',
+            layout: 'layouts/sidebar-dashboard',
             path: '/player/browse-events'
         });
         
