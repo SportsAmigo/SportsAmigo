@@ -151,8 +151,12 @@ module.exports = {
                 throw new Error('Player ID is required');
             }
             
+            // Ensure playerId is properly formatted
+            const ObjectId = require('mongoose').Types.ObjectId;
+            const playerObjectId = new ObjectId(playerId);
+            
             // Find teams where player is a member
-            const teams = await Team.find({ 'members.player_id': playerId })
+            const teams = await Team.find({ 'members.player_id': playerObjectId })
                 .sort({ name: 1 })
                 .exec();
             
@@ -168,15 +172,59 @@ module.exports = {
                 return map;
             }, {});
             
-            // Add manager info to teams
+            // Get all unique member IDs from all teams
+            const allMemberIds = [];
+            teams.forEach(team => {
+                if (team.members && team.members.length > 0) {
+                    team.members.forEach(member => {
+                        if (member.player_id && !allMemberIds.includes(member.player_id.toString())) {
+                            allMemberIds.push(member.player_id.toString());
+                        }
+                    });
+                }
+            });
+            
+            // Get user information for all members
+            const memberUsers = await User.find({ _id: { $in: allMemberIds } })
+                .select('_id first_name last_name email')
+                .exec();
+            
+            // Create a map of user info by ID
+            const usersMap = memberUsers.reduce((map, user) => {
+                map[user._id.toString()] = user;
+                return map;
+            }, {});
+            
+            // Add manager info and member details to teams
             return teams.map(team => {
                 const manager = managersMap[team.manager_id.toString()];
+                const teamObj = team.toObject();
+                
+                // Add member details with user information
+                if (teamObj.members && teamObj.members.length > 0) {
+                    teamObj.team_members = teamObj.members.map(member => {
+                        const user = usersMap[member.player_id.toString()];
+                        return {
+                            ...member,
+                            player_id: member.player_id,
+                            first_name: user ? user.first_name : 'Unknown',
+                            last_name: user ? user.last_name : 'User',
+                            email: user ? user.email : 'No email',
+                            joined_date: member.joined_date,
+                            status: member.status || 'active'
+                        };
+                    });
+                } else {
+                    teamObj.team_members = [];
+                }
+                
                 return {
-                    ...team.toObject(),
-                    member_count: team.members ? team.members.length : 0,
+                    ...teamObj,
+                    member_count: teamObj.members ? teamObj.members.length : 0,
                     manager_first_name: manager ? manager.first_name : '',
                     manager_last_name: manager ? manager.last_name : '',
-                    manager_email: manager ? manager.email : ''
+                    manager_email: manager ? manager.email : '',
+                    manager_name: manager ? `${manager.first_name} ${manager.last_name}` : 'Team Manager'
                 };
             });
         } catch (err) {

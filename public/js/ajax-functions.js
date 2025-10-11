@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initDashboardUpdates();
     initAsyncForms();
     initEventSearch();
+    initModalHandlers();
 });
 
 /**
@@ -506,4 +507,78 @@ window.addEventListener('beforeunload', function() {
     if (dashboardUpdateInterval) {
         clearInterval(dashboardUpdateInterval);
     }
+});
+
+/**
+ * Modal Management Functions
+ * Ensures proper modal functionality and z-index handling
+ */
+function initModalHandlers() {
+    // Ensure all modals have proper z-index
+    document.addEventListener('shown.bs.modal', function(e) {
+        const modal = e.target;
+        const backdrop = document.querySelector('.modal-backdrop');
+        
+        if (backdrop) {
+            backdrop.style.zIndex = '1050';
+            backdrop.style.pointerEvents = 'auto';
+        }
+        modal.style.zIndex = '1055';
+        modal.style.display = 'block';
+        
+        // Fix for body scroll lock
+        document.body.style.paddingRight = '0px';
+        document.body.classList.add('modal-open');
+    });
+    
+    // Clean up when modal is hidden
+    document.addEventListener('hidden.bs.modal', function(e) {
+        // Remove any orphaned backdrops
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(backdrop => {
+            if (!document.querySelector('.modal.show')) {
+                backdrop.remove();
+            }
+        });
+        
+        // Reset body overflow
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+    });
+    
+    // Handle modal backdrop clicks properly
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('modal-backdrop')) {
+            const modal = document.querySelector('.modal.show');
+            if (modal) {
+                const modalInstance = bootstrap.Modal.getInstance(modal);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+            }
+        }
+    });
+    
+    // Ensure proper modal initialization for dynamically created modals
+    document.addEventListener('click', function(e) {
+        const trigger = e.target.closest('[data-bs-toggle="modal"]');
+        if (trigger) {
+            const targetSelector = trigger.getAttribute('data-bs-target');
+            if (targetSelector) {
+                const modalElement = document.querySelector(targetSelector);
+                if (modalElement) {
+                    // Ensure modal has proper classes and attributes
+                    modalElement.style.zIndex = '1055';
+                    modalElement.setAttribute('tabindex', '-1');
+                    modalElement.setAttribute('aria-hidden', 'true');
+                }
+            }
+        }
+    });
+}
+
+// Initialize modal handlers when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    initModalHandlers();
 });

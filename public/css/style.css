@@ -1271,11 +1271,11 @@ h3{
     text-decoration: underline;
 }
 
-/* Modal styles */
+/* Modal styles - Updated z-index to work with Bootstrap modals */
 .modal {
     display: none;
     position: fixed;
-    z-index: 1000;
+    z-index: 1055;
     left: 0;
     top: 0;
     width: 100%;
