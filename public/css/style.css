@@ -203,6 +203,23 @@ h3{
     transition: 0.5s;
 }
 
+/* Ensure player spotlight images have consistent dimensions and aspect ratio */
+.player-col img{
+    width: 90%;
+    height: 260px; /* fixed height to keep layout consistent */
+    object-fit: cover; /* crop while preserving aspect ratio */
+    display: block;
+    margin: 0 auto;
+    border-radius: 10px;
+}
+
+@media (max-width: 700px) {
+    .player-col img{
+        width: 100%;
+        height: 200px;
+    }
+}
+
 .popular-sports{
     width: 80%;
     margin: auto;
@@ -655,17 +672,21 @@ h3{
 
 /* Basketball event page specific styles */
 .basketball-header {
-    background-image: linear-gradient(rgba(4,9,30,0.7),rgba(4,9,30,0.7)),url(/images/basketball/basketball-header.jpg);
+    background-image: linear-gradient(rgba(4,9,30,0.7),rgba(4,9,30,0.7)),url(/images/events-header.jpg);
 }
 
 /* Cricket event page specific styles */
 .cricket-header {
-    background-image: linear-gradient(rgba(4,9,30,0.7),rgba(4,9,30,0.7)),url(/images/cricket/cricket-header.jpg);
+    background-image: linear-gradient(rgba(4,9,30,0.7),rgba(4,9,30,0.7)),url(/images/events-header.jpg);
 }
 
 /* Football event page specific styles */
 .football-header {
-    background-image: linear-gradient(rgba(4,9,30,0.7),rgba(4,9,30,0.7)),url(/images/football/football-header.jpg);
+    background-image: linear-gradient(rgba(4,9,30,0.7),rgba(4,9,30,0.7)),url(/images/events-header.jpg);
+}
+
+.events-header {
+    background-image: linear-gradient(rgba(4,9,30,0.7),rgba(4,9,30,0.7)),url(/images/events-header.jpg);
 }
 
 /* Event schedule styles */
