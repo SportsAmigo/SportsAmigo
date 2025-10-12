@@ -215,6 +215,7 @@ app.get('/test', (req, res) => {
 app.get('/events', (req, res) => {
   res.render('player/browse-events', { 
     title: 'Events',
+    headerType: 'events',
     description: 'Discover our exciting lineup of sporting events and competitions across South Africa',
     events: [
       {

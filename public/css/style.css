@@ -672,17 +672,21 @@ h3{
 
 /* Basketball event page specific styles */
 .basketball-header {
-    background-image: linear-gradient(rgba(4,9,30,0.7),rgba(4,9,30,0.7)),url(/images/basketball/basketball-header.jpg);
+    background-image: linear-gradient(rgba(4,9,30,0.7),rgba(4,9,30,0.7)),url(/images/events-header.jpg);
 }
 
 /* Cricket event page specific styles */
 .cricket-header {
-    background-image: linear-gradient(rgba(4,9,30,0.7),rgba(4,9,30,0.7)),url(/images/cricket/cricket-header.jpg);
+    background-image: linear-gradient(rgba(4,9,30,0.7),rgba(4,9,30,0.7)),url(/images/events-header.jpg);
 }
 
 /* Football event page specific styles */
 .football-header {
-    background-image: linear-gradient(rgba(4,9,30,0.7),rgba(4,9,30,0.7)),url(/images/football/football-header.jpg);
+    background-image: linear-gradient(rgba(4,9,30,0.7),rgba(4,9,30,0.7)),url(/images/events-header.jpg);
+}
+
+.events-header {
+    background-image: linear-gradient(rgba(4,9,30,0.7),rgba(4,9,30,0.7)),url(/images/events-header.jpg);
 }
 
 /* Event schedule styles */
