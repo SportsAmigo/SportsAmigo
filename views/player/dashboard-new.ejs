@@ -87,8 +87,29 @@
 
     <!-- Dashboard Cards Row -->
     <div class="row">
+        <!-- Live Activity Feed Card (DHTML Feature) -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Live Activity Feed</h5>
+                    <button type="button" class="btn btn-sm btn-outline-dark" id="refreshActivityBtn">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                <div class="card-body" id="activityFeedContainer" style="max-height: 300px; overflow-y: auto;">
+                    <div class="text-center py-3">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p class="text-muted mb-0">Loading live activities...</p>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <small class="text-muted">Auto-updates every 15 seconds</small>
+                </div>
+            </div>
+        </div>
+        
         <!-- Upcoming Events Card -->
-        <div class="col-lg-6">
+        <div class="col-lg-4">
             <div class="card mb-4">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Upcoming Events</h5>
@@ -120,12 +141,15 @@
         </div>
         
         <!-- My Teams Card -->
-        <div class="col-lg-6">
+        <div class="col-lg-4">
             <div class="card mb-4">
-                <div class="card-header bg-success text-white">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fas fa-users me-2"></i>My Teams</h5>
+                    <button type="button" class="btn btn-sm btn-outline-light" id="refreshTeamsBtn">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
                 </div>
-                <div class="card-body">
+                <div class="card-body" id="teamsContainer">
                     <% if (teams && teams.length > 0) { %>
                         <% teams.slice(0, 2).forEach(team => { %>
                             <div class="d-flex justify-content-between align-items-center border-bottom py-2">
@@ -437,6 +461,147 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize calendar when modal is shown
     document.getElementById('calendarModal').addEventListener('shown.bs.modal', function() {
         renderCalendar(currentDate);
+    });
+    
+    // ========== DHTML FEATURES FOR DEMO ==========
+    
+    // Live Activity Feed - Dynamic Content Generation
+    let activityUpdateInterval;
+    
+    function generateLiveActivity() {
+        const activities = [
+            { type: 'event', text: 'New cricket match scheduled for tomorrow', time: 'Just now', icon: 'fa-calendar-plus', color: 'text-primary' },
+            { type: 'team', text: 'You have a new team invitation from Tigers FC', time: '2 mins ago', icon: 'fa-users', color: 'text-success' },
+            { type: 'message', text: 'Coach updated training schedule', time: '5 mins ago', icon: 'fa-comment', color: 'text-info' },
+            { type: 'result', text: 'Match result: Eagles won 3-1', time: '10 mins ago', icon: 'fa-trophy', color: 'text-warning' },
+            { type: 'registration', text: 'Registration deadline approaching for Summer Cup', time: '15 mins ago', icon: 'fa-clock', color: 'text-danger' },
+            { type: 'player', text: 'John Smith joined your team', time: '20 mins ago', icon: 'fa-user-plus', color: 'text-success' },
+            { type: 'announcement', text: 'New sports facility opened near you', time: '30 mins ago', icon: 'fa-bullhorn', color: 'text-primary' }
+        ];
+        
+        return activities.sort(() => Math.random() - 0.5).slice(0, 4 + Math.floor(Math.random() * 3));
+    }
+    
+    function updateActivityFeed() {
+        const container = document.getElementById('activityFeedContainer');
+        if (!container) return;
+        
+        // Show loading state
+        container.innerHTML = `
+            <div class="text-center py-3">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p class="text-muted mb-0">Updating activities...</p>
+            </div>
+        `;
+        
+        // Simulate async delay
+        setTimeout(() => {
+            const activities = generateLiveActivity();
+            let activityHTML = '';
+            
+            activities.forEach(activity => {
+                activityHTML += `
+                    <div class="activity-item d-flex align-items-start mb-3 fade-in">
+                        <div class="activity-icon me-3">
+                            <i class="fas ${activity.icon} ${activity.color}"></i>
+                        </div>
+                        <div class="activity-content flex-grow-1">
+                            <p class="mb-1 small">${activity.text}</p>
+                            <small class="text-muted">${activity.time}</small>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = activityHTML;
+            
+            // Add fade-in animation to new items
+            container.querySelectorAll('.fade-in').forEach((item, index) => {
+                item.style.opacity = '0';
+                item.style.transform = 'translateY(10px)';
+                setTimeout(() => {
+                    item.style.transition = 'all 0.3s ease';
+                    item.style.opacity = '1';
+                    item.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        }, 500);
+    }
+    
+    function updateTeamsDisplay() {
+        const container = document.getElementById('teamsContainer');
+        if (!container) return;
+        
+        const teams = <%- JSON.stringify(teams || []) %>;
+        
+        if (teams && teams.length > 0) {
+            let teamsHTML = '';
+            teams.slice(0, 3).forEach(team => {
+                const memberCount = team.members ? team.members.length : 0;
+                const progressPercent = Math.min((memberCount / (team.max_members || 10)) * 100, 100);
+                
+                teamsHTML += `
+                    <div class="team-item border-bottom py-2">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">${team.name}</h6>
+                                <small class="text-muted">${team.sport_type}</small>
+                                <div class="progress mt-2" style="height: 4px;">
+                                    <div class="progress-bar bg-success" style="width: ${progressPercent}%"></div>
+                                </div>
+                                <small class="text-muted">${memberCount}/${team.max_members || 10} members</small>
+                            </div>
+                            <span class="badge bg-success">Active</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            teamsHTML += `
+                <div class="mt-3">
+                    <a href="/player/my-teams" class="btn btn-outline-success btn-sm">View All Teams</a>
+                    <a href="/player/browse-teams" class="btn btn-outline-info btn-sm ms-2">Join New Team</a>
+                </div>
+            `;
+            
+            container.innerHTML = teamsHTML;
+        } else {
+            container.innerHTML = `
+                <div class="text-center py-3">
+                    <p class="text-muted">You haven't joined any teams yet</p>
+                    <a href="/player/browse-teams" class="btn btn-success btn-sm">Join a Team</a>
+                </div>
+            `;
+        }
+    }
+    
+    // Event Listeners for Interactive Elements
+    document.getElementById('refreshActivityBtn').addEventListener('click', function() {
+        this.querySelector('i').classList.add('fa-spin');
+        updateActivityFeed();
+        setTimeout(() => {
+            this.querySelector('i').classList.remove('fa-spin');
+        }, 1000);
+    });
+    
+    document.getElementById('refreshTeamsBtn').addEventListener('click', function() {
+        this.querySelector('i').classList.add('fa-spin');
+        updateTeamsDisplay();
+        setTimeout(() => {
+            this.querySelector('i').classList.remove('fa-spin');
+        }, 500);
+    });
+    
+    // Auto-update activity feed every 15 seconds
+    updateActivityFeed(); // Initial load
+    updateTeamsDisplay(); // Initial load
+    activityUpdateInterval = setInterval(updateActivityFeed, 15000);
+    
+    // Clean up interval when page unloads
+    window.addEventListener('beforeunload', function() {
+        if (activityUpdateInterval) {
+            clearInterval(activityUpdateInterval);
+        }
     });
 });
 </script>

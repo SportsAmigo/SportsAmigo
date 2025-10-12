@@ -3,6 +3,8 @@ const router = express.Router();
 const User = require('../models/user');
 const Event = require('../models/event');
 const Team = require('../models/team');
+const TeamSchema = require('../models/schemas/teamSchema');
+const EventSchema = require('../models/schemas/eventSchema');
 const Registration = require('../models/registration');
 
 /**
@@ -60,51 +62,25 @@ router.post('/teams/:teamId/join', async (req, res) => {
         
         console.log(`API: User ${userId} joining team ${teamId}`);
         
-        // Find the team
-        const team = await Team.findById(teamId);
-        if (!team) {
-            return res.status(404).json({ 
-                success: false, 
-                message: 'Team not found' 
-            });
-        }
+        // Use Team model method to add join request
+        const result = await Team.addJoinRequest(teamId, userId);
         
-        // Check if user is already a member
-        const isMember = team.members.some(member => member.user_id.toString() === userId);
-        if (isMember) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'You are already a member of this team' 
-            });
-        }
+        // Get team details for success message
+        const team = await Team.getTeamById(teamId);
+        const teamName = team ? team.name : 'the team';
         
-        // Check if team is full
-        if (team.members.length >= team.max_members) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Team is full' 
-            });
-        }
-        
-        // Add user to team members
-        team.members.push({
-            user_id: userId,
-            role: 'player',
-            joined_at: new Date()
-        });
-        
-        await team.save();
+        console.log('Team join request successful:', { teamId, teamName });
         
         res.json({ 
             success: true, 
-            message: `Successfully joined ${team.name}` 
+            message: `Your request to join ${teamName} has been sent to the team manager. You will be notified when it's approved.`
         });
         
     } catch (error) {
-        console.error('Error joining team:', error);
+        console.error('Error joining team via API:', error);
         res.status(500).json({ 
             success: false, 
-            message: 'Error joining team' 
+            message: `Error requesting to join team: ${error.message}` 
         });
     }
 });
@@ -170,7 +146,7 @@ router.post('/events/:eventId/register', async (req, res) => {
         console.log(`API: User ${userId} registering for event ${eventId}`);
         
         // Check if event exists
-        const event = await Event.findById(eventId);
+        const event = await EventSchema.findById(eventId);
         if (!event) {
             return res.status(404).json({ 
                 success: false, 
@@ -243,10 +219,10 @@ router.post('/events/:eventId/unregister', async (req, res) => {
             });
         }
         
-        const event = await Event.findById(eventId);
+        const event = await EventSchema.findById(eventId);
         res.json({ 
             success: true, 
-            message: `Successfully unregistered from ${event?.name || 'event'}` 
+            message: `Successfully unregistered from ${event?.title || 'event'}` 
         });
         
     } catch (error) {
@@ -312,19 +288,19 @@ router.post('/search-events', async (req, res) => {
         }
         
         // Search events
-        const events = await Event.find(searchCriteria)
+        const events = await EventSchema.find(searchCriteria)
             .limit(10)
-            .sort({ date: 1 })
+            .sort({ event_date: 1 })
             .populate('organizer_id', 'first_name last_name');
         
-        // Format events for frontend
+        // Format events for response
         const formattedEvents = events.map(event => ({
             id: event._id,
-            name: event.name,
+            title: event.title,
             description: event.description,
-            date: event.date.toLocaleDateString(),
+            date: event.event_date.toLocaleDateString(),
             location: event.location,
-            sport: event.sport_type,
+            sport: event.sport_type || event.category,
             organizer: event.organizer_id ? 
                 `${event.organizer_id.first_name} ${event.organizer_id.last_name}` : 
                 'Unknown'
@@ -351,7 +327,7 @@ router.get('/events/:eventId', async (req, res) => {
         
         console.log(`API: Fetching event details for ${eventId}`);
         
-        const event = await Event.findById(eventId)
+        const event = await EventSchema.findById(eventId)
             .populate('organizer_id', 'first_name last_name');
         
         if (!event) {

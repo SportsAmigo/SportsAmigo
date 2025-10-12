@@ -97,6 +97,24 @@
 
     <!-- 🚀 Premium Quick Access Cards -->
     <div class="row mb-4">
+        <!-- Live Notifications Panel (DHTML Feature) -->
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card h-100">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="fas fa-bell me-2"></i>Live Notifications</h6>
+                    <button type="button" class="btn btn-sm btn-outline-light" id="refreshNotificationsBtn">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                <div class="card-body p-2" id="notificationsContainer" style="max-height: 250px; overflow-y: auto;">
+                    <div class="text-center py-3">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p class="text-muted mb-0 small">Loading notifications...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <div class="col-lg-3 col-md-6 mb-3">
             <div class="quick-access-card">
                 <i class="fas fa-plus-circle"></i>
@@ -297,6 +315,70 @@
                                                             }
                                                         });
                                                     });
+                                                    
+                                                    // ========== DHTML: Live Notifications System ==========
+                                                    function generateOrganizerNotifications() {
+                                                        const notifications = [
+                                                            { type: 'registration', text: 'New team registered for Summer Cup', time: 'Just now', icon: 'fa-user-plus', color: 'text-success' },
+                                                            { type: 'payment', text: 'Payment received for entry fees', time: '3 mins ago', icon: 'fa-credit-card', color: 'text-success' },
+                                                            { type: 'query', text: 'Team captain sent a message', time: '5 mins ago', icon: 'fa-comment', color: 'text-info' },
+                                                            { type: 'deadline', text: 'Registration closes in 2 days', time: '10 mins ago', icon: 'fa-clock', color: 'text-warning' },
+                                                            { type: 'update', text: 'Venue details updated for Football Tournament', time: '15 mins ago', icon: 'fa-map-marker-alt', color: 'text-primary' },
+                                                            { type: 'approval', text: 'Your event was approved and published', time: '20 mins ago', icon: 'fa-check-circle', color: 'text-success' },
+                                                            { type: 'cancellation', text: 'Team Eagles withdrew from tournament', time: '25 mins ago', icon: 'fa-exclamation-triangle', color: 'text-danger' }
+                                                        ];
+                                                        
+                                                        return notifications.sort(() => Math.random() - 0.5).slice(0, 4 + Math.floor(Math.random() * 2));
+                                                    }
+                                                    
+                                                    function updateNotifications() {
+                                                        const container = document.getElementById('notificationsContainer');
+                                                        if (!container) return;
+                                                        
+                                                        // Show loading
+                                                        container.innerHTML = `
+                                                            <div class="text-center py-3">
+                                                                <i class="fas fa-spinner fa-spin"></i>
+                                                                <p class="text-muted mb-0 small">Updating...</p>
+                                                            </div>
+                                                        `;
+                                                        
+                                                        setTimeout(() => {
+                                                            const notifications = generateOrganizerNotifications();
+                                                            let notificationHTML = '';
+                                                            
+                                                            notifications.forEach(notification => {
+                                                                notificationHTML += `
+                                                                    <div class="notification-item d-flex align-items-start mb-2 p-2 border-bottom">
+                                                                        <div class="notification-icon me-2">
+                                                                            <i class="fas ${notification.icon} ${notification.color}"></i>
+                                                                        </div>
+                                                                        <div class="notification-content flex-grow-1">
+                                                                            <p class="mb-1 small">${notification.text}</p>
+                                                                            <small class="text-muted">${notification.time}</small>
+                                                                        </div>
+                                                                    </div>
+                                                                `;
+                                                            });
+                                                            
+                                                            container.innerHTML = notificationHTML;
+                                                        }, 600);
+                                                    }
+                                                    
+                                                    // Event listener for refresh button
+                                                    document.getElementById('refreshNotificationsBtn').addEventListener('click', function() {
+                                                        this.querySelector('i').classList.add('fa-spin');
+                                                        updateNotifications();
+                                                        setTimeout(() => {
+                                                            this.querySelector('i').classList.remove('fa-spin');
+                                                        }, 1000);
+                                                    });
+                                                    
+                                                    // Initialize notifications
+                                                    updateNotifications();
+                                                    
+                                                    // Auto-refresh every 20 seconds
+                                                    setInterval(updateNotifications, 20000);
                                                 </script>
                                             <% } else { %>
                                                 <p class="text-muted">Not enough data to show trends.</p>

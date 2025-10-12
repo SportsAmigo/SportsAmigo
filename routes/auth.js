@@ -34,11 +34,24 @@ router.post('/login/:role', async (req, res, next) => {
         
         console.log('Login attempt:', { email, role });
         
+        // Check if this is an AJAX request
+        const isAjax = req.headers['content-type'] === 'application/json' || 
+                      req.headers['x-requested-with'] === 'XMLHttpRequest';
+        
         // Authenticate user
         const user = await userController.authUser(email, password);
         
         if (!user) {
             console.log('Login failed: Invalid credentials');
+            
+            if (isAjax) {
+                return res.json({
+                    success: false,
+                    message: 'Invalid email or password',
+                    errors: { email: 'Invalid email or password' }
+                });
+            }
+            
             return res.render('login', { 
                 role,
                 error: 'Invalid email or password',
@@ -52,9 +65,20 @@ router.post('/login/:role', async (req, res, next) => {
         // Check if the user's role matches the requested role
         if (role && user.role !== role) {
             console.log('Login failed: Role mismatch. User role:', user.role, 'Requested role:', role);
+            
+            const errorMessage = `You are registered as a ${user.role}, not a ${role}. Please use the correct login page.`;
+            
+            if (isAjax) {
+                return res.json({
+                    success: false,
+                    message: errorMessage,
+                    errors: { role: errorMessage }
+                });
+            }
+            
             return res.render('login', { 
                 role,
-                error: `You are registered as a ${user.role}, not a ${role}. Please use the correct login page.`,
+                error: errorMessage,
                 validationErrors: {},
                 email: email || ''
             });
@@ -65,9 +89,18 @@ router.post('/login/:role', async (req, res, next) => {
         const freshUserData = await User.getUserById(user._id);
         
         if (!freshUserData) {
+            const errorMessage = 'Failed to retrieve user data. Please try again.';
+            
+            if (isAjax) {
+                return res.json({
+                    success: false,
+                    message: errorMessage
+                });
+            }
+            
             return res.render('login', { 
                 role,
-                error: 'Failed to retrieve user data. Please try again.',
+                error: errorMessage,
                 validationErrors: {},
                 email: email || ''
             });
@@ -96,15 +129,55 @@ router.post('/login/:role', async (req, res, next) => {
         req.session.save(err => {
             if (err) {
                 console.error('Error saving session:', err);
+                
+                if (isAjax) {
+                    return res.json({
+                        success: false,
+                        message: 'Session error. Please try again.'
+                    });
+                }
+                
+                return res.render('login', { 
+                    role,
+                    error: 'Session error. Please try again.',
+                    validationErrors: {},
+                    email: email || ''
+                });
             }
+            
             console.log('User logged in successfully:', freshUserData.email, 'Profile image:', freshUserData.profile_image);
+            
+            if (isAjax) {
+                return res.json({
+                    success: true,
+                    message: 'Login successful!',
+                    redirectUrl: `/${user.role}`,
+                    user: {
+                        name: sessionUser.name,
+                        email: sessionUser.email,
+                        role: sessionUser.role
+                    }
+                });
+            }
             
             // Redirect to appropriate dashboard
             return res.redirect(`/${user.role}`);
         });
     } catch (err) {
         console.error('Error during login:', err);
+        
+        const isAjax = req.headers['content-type'] === 'application/json' || 
+                      req.headers['x-requested-with'] === 'XMLHttpRequest';
+        
+        if (isAjax) {
+            return res.json({
+                success: false,
+                message: 'An error occurred. Please try again.'
+            });
+        }
+        
         return res.render('login', { 
+            role: req.params.role,
             error: 'An error occurred. Please try again.',
             validationErrors: {},
             email: req.body.email || ''
@@ -125,49 +198,156 @@ router.get('/signup/:role', (req, res) => {
 });
 
 // Handle signup form submission
-router.post('/signup/:role', (req, res, next) => {
-    // Add role to body
-    req.body.role = req.params.role;
-    
-    // Form validation
-    const validationErrors = {};
-    
-    if (!req.body.first_name) validationErrors.first_name = 'First name is required';
-    if (!req.body.last_name) validationErrors.last_name = 'Last name is required';
-    
-    // Email validation
-    if (!req.body.email) {
-        validationErrors.email = 'Email is required';
-    } else {
-        // Regex pattern for email validation
-        const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-        if (!emailPattern.test(req.body.email)) {
-            validationErrors.email = 'Please enter a valid email address';
+router.post('/signup/:role', async (req, res, next) => {
+    try {
+        // Add role to body
+        req.body.role = req.params.role;
+        
+        // Check if this is an AJAX request
+        const isAjax = req.headers['content-type'] === 'application/json' || 
+                      req.headers['x-requested-with'] === 'XMLHttpRequest';
+        
+        // Form validation
+        const validationErrors = {};
+        
+        if (!req.body.first_name) validationErrors.first_name = 'First name is required';
+        if (!req.body.last_name) validationErrors.last_name = 'Last name is required';
+        
+        // Email validation
+        if (!req.body.email) {
+            validationErrors.email = 'Email is required';
+        } else {
+            // Regex pattern for email validation
+            const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            if (!emailPattern.test(req.body.email)) {
+                validationErrors.email = 'Please enter a valid email address';
+            }
         }
-    }
-    
-    // Phone validation
-    if (!req.body.phone) {
-        validationErrors.phone = 'Phone number is required';
-    } else {
-        // Regex pattern for 10-digit phone number
-        const phonePattern = /^[0-9]{10}$/;
-        if (!phonePattern.test(req.body.phone)) {
-            validationErrors.phone = 'Please enter a valid 10-digit phone number';
+        
+        // Phone validation
+        if (!req.body.phone) {
+            validationErrors.phone = 'Phone number is required';
+        } else {
+            // Regex pattern for 10-digit phone number
+            const phonePattern = /^[0-9]{10}$/;
+            if (!phonePattern.test(req.body.phone)) {
+                validationErrors.phone = 'Please enter a valid 10-digit phone number';
+            }
         }
-    }
-    
-    if (!req.body.password) validationErrors.password = 'Password is required';
-    if (req.body.password && req.body.password.length < 6) validationErrors.password = 'Password must be at least 6 characters';
-    if (!req.body.confirm_password) validationErrors.confirm_password = 'Please confirm your password';
-    if (req.body.password !== req.body.confirm_password) validationErrors.confirm_password = 'Passwords do not match';
-    
-    // If validation fails, re-render the form with errors
-    if (Object.keys(validationErrors).length > 0) {
+        
+        if (!req.body.password) validationErrors.password = 'Password is required';
+        if (req.body.password && req.body.password.length < 6) validationErrors.password = 'Password must be at least 6 characters';
+        if (!req.body.confirm_password) validationErrors.confirm_password = 'Please confirm your password';
+        if (req.body.password !== req.body.confirm_password) validationErrors.confirm_password = 'Passwords do not match';
+        
+        // If validation fails, return appropriate response
+        if (Object.keys(validationErrors).length > 0) {
+            if (isAjax) {
+                return res.json({
+                    success: false,
+                    message: 'Please fix the validation errors',
+                    errors: validationErrors
+                });
+            }
+            
+            return res.render('signup', { 
+                role: req.params.role,
+                error: 'Please fix the errors below',
+                validationErrors,
+                formData: { 
+                    first_name: req.body.first_name, 
+                    last_name: req.body.last_name, 
+                    email: req.body.email, 
+                    phone: req.body.phone 
+                }
+            });
+        }
+        
+        // Create custom request handler for AJAX
+        if (isAjax) {
+            const userController = require('../controllers/userController');
+            
+            try {
+                // Check if user already exists
+                const User = require('../models/user');
+                const existingUser = await User.getUserByEmail(req.body.email);
+                
+                if (existingUser) {
+                    return res.json({
+                        success: false,
+                        message: 'Email already registered',
+                        errors: { email: 'This email is already registered' }
+                    });
+                }
+                
+                // Create new user
+                const newUser = await User.createUser({
+                    first_name: req.body.first_name,
+                    last_name: req.body.last_name,
+                    email: req.body.email,
+                    phone: req.body.phone,
+                    password: req.body.password,
+                    role: req.body.role
+                });
+                
+                if (newUser) {
+                    console.log('New user created via AJAX:', newUser.email);
+                    
+                    return res.json({
+                        success: true,
+                        message: 'Registration successful! Please login with your credentials.',
+                        redirectUrl: `/auth/login/${req.body.role}`,
+                        user: {
+                            name: newUser.first_name + ' ' + newUser.last_name,
+                            email: newUser.email,
+                            role: newUser.role
+                        }
+                    });
+                } else {
+                    return res.json({
+                        success: false,
+                        message: 'Failed to create user account'
+                    });
+                }
+                
+            } catch (error) {
+                console.error('AJAX signup error:', error);
+                
+                if (error.message && error.message.includes('duplicate')) {
+                    return res.json({
+                        success: false,
+                        message: 'Email already registered',
+                        errors: { email: 'This email is already registered' }
+                    });
+                }
+                
+                return res.json({
+                    success: false,
+                    message: 'Registration failed. Please try again.'
+                });
+            }
+        }
+        
+        // For non-AJAX requests, use the original controller
+        userController.register(req, res, next);
+        
+    } catch (error) {
+        console.error('Signup error:', error);
+        
+        const isAjax = req.headers['content-type'] === 'application/json' || 
+                      req.headers['x-requested-with'] === 'XMLHttpRequest';
+        
+        if (isAjax) {
+            return res.json({
+                success: false,
+                message: 'An error occurred during registration. Please try again.'
+            });
+        }
+        
         return res.render('signup', { 
             role: req.params.role,
-            error: 'Please fix the errors below',
-            validationErrors,
+            error: 'An error occurred. Please try again.',
+            validationErrors: {},
             formData: { 
                 first_name: req.body.first_name, 
                 last_name: req.body.last_name, 
@@ -176,8 +356,6 @@ router.post('/signup/:role', (req, res, next) => {
             }
         });
     }
-    
-    userController.register(req, res, next);
 });
 
 // Logout route

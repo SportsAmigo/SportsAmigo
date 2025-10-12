@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { Event, Team, User } = require('../models');
+const EventSchema = require('../models/schemas/eventSchema');
+const TeamSchema = require('../models/schemas/teamSchema');
 const PlayerProfile = require('../models/playerProfile');
 const Profile = require('../models/profile');
 const userController = require('../controllers/userController');
@@ -948,9 +950,9 @@ router.post('/update-photo', isPlayer, upload.single('photo'), async (req, res) 
 });
 
 // Route to request to join a team
-router.post('/request-join-team', async (req, res) => {
+router.post('/request-join-team/:teamId', async (req, res) => {
     try {
-        const teamId = req.body.teamId;
+        const teamId = req.params.teamId; // Get team ID from URL parameter
         const playerId = req.session.user._id;
         
         if (!teamId || !playerId) {
@@ -989,6 +991,230 @@ router.post('/request-join-team', async (req, res) => {
             text: `Error requesting to join team: ${err.message}`
         };
         res.redirect('/player/browse-teams');
+    }
+});
+
+// API Routes for AJAX functionality
+
+// API route to get all events for browse page
+router.get('/api/events/browse', async (req, res) => {
+    try {
+        const events = await EventSchema.find({ 
+            status: 'upcoming',
+            registrationDeadline: { $gte: new Date() }
+        }).sort({ eventDate: 1 });
+        
+        res.json({ 
+            success: true, 
+            events: events 
+        });
+    } catch (error) {
+        console.error('Error fetching events:', error);
+        res.json({ 
+            success: false, 
+            message: 'Failed to load events' 
+        });
+    }
+});
+
+// API route for event search with filters
+router.get('/api/events/search', async (req, res) => {
+    try {
+        const { search, category } = req.query;
+        let query = { 
+            status: 'upcoming',
+            registrationDeadline: { $gte: new Date() }
+        };
+        
+        // Add search term filter
+        if (search) {
+            query.$or = [
+                { title: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } },
+                { location: { $regex: search, $options: 'i' } }
+            ];
+        }
+        
+        // Add category filter
+        if (category) {
+            query.category = { $regex: category, $options: 'i' };
+        }
+        
+        const events = await EventSchema.find(query).sort({ eventDate: 1 });
+        
+        res.json({ 
+            success: true, 
+            events: events,
+            count: events.length
+        });
+    } catch (error) {
+        console.error('Error searching events:', error);
+        res.json({ 
+            success: false, 
+            message: 'Search failed. Please try again.' 
+        });
+    }
+});
+
+// API route to get player's joined events for calendar
+router.get('/api/player/events', async (req, res) => {
+    try {
+        const userId = req.session.user._id;
+        const events = await EventSchema.find({ 
+            participants: userId 
+        }).sort({ eventDate: 1 });
+        
+        res.json({ 
+            success: true, 
+            events: events 
+        });
+    } catch (error) {
+        console.error('Error fetching player events:', error);
+        res.json({ 
+            success: false, 
+            message: 'Failed to load your events' 
+        });
+    }
+});
+
+// API route to join an event via AJAX
+router.post('/api/events/:eventId/join', async (req, res) => {
+    try {
+        const eventId = req.params.eventId;
+        const userId = req.session.user._id;
+        
+        const event = await EventSchema.findById(eventId);
+        if (!event) {
+            return res.json({ 
+                success: false, 
+                message: 'Event not found' 
+            });
+        }
+        
+        // Check if already joined
+        if (event.participants.includes(userId)) {
+            return res.json({ 
+                success: false, 
+                message: 'You are already registered for this event' 
+            });
+        }
+        
+        // Check if event is full
+        if (event.participants.length >= event.maxParticipants) {
+            return res.json({ 
+                success: false, 
+                message: 'Event is full' 
+            });
+        }
+        
+        // Check if registration deadline has passed
+        if (new Date() > event.registrationDeadline) {
+            return res.json({ 
+                success: false, 
+                message: 'Registration deadline has passed' 
+            });
+        }
+        
+        // Add participant
+        event.participants.push(userId);
+        await event.save();
+        
+        res.json({ 
+            success: true, 
+            message: 'Successfully joined the event!',
+            participantCount: event.participants.length
+        });
+        
+    } catch (error) {
+        console.error('Error joining event:', error);
+        res.json({ 
+            success: false, 
+            message: 'Failed to join event. Please try again.' 
+        });
+    }
+});
+
+// API route for team search with filters
+router.get('/api/teams/search', async (req, res) => {
+    try {
+        console.log('Team search API called with query:', req.query);
+        const { search, sport } = req.query;
+        let query = {};
+        
+        // Add search term filter
+        if (search) {
+            query.$or = [
+                { name: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } },
+                { location: { $regex: search, $options: 'i' } }
+            ];
+        }
+        
+        // Add sport filter
+        if (sport) {
+            query.sport_type = { $regex: sport, $options: 'i' };
+        }
+        
+        console.log('Team search query:', query);
+        
+        const teams = await TeamSchema.find(query)
+            .populate('manager_id', 'first_name last_name email')
+            .populate('members', 'first_name last_name')
+            .sort({ name: 1 });
+        
+        console.log('Found teams:', teams.length);
+        
+        res.json({ 
+            success: true, 
+            teams: teams,
+            count: teams.length
+        });
+    } catch (error) {
+        console.error('Error searching teams:', error);
+        res.json({ 
+            success: false, 
+            message: 'Search failed. Please try again.' 
+        });
+    }
+});
+
+// API route to join a team via AJAX
+router.post('/api/teams/:teamId/join', async (req, res) => {
+    try {
+        const teamId = req.params.teamId;
+        const playerId = req.session.user._id;
+        
+        console.log('Team join API called:', { teamId, playerId });
+        
+        if (!teamId || !playerId) {
+            return res.json({ 
+                success: false, 
+                message: 'Team ID and player ID are required' 
+            });
+        }
+        
+        console.log(`Player ${playerId} is requesting to join team ${teamId} via AJAX`);
+        
+        // Call Team model method to add join request
+        const result = await Team.addJoinRequest(teamId, playerId);
+        
+        // Get team details for the success message
+        const team = await Team.getTeamById(teamId);
+        const teamName = team ? team.name : 'the team';
+        
+        console.log('Team join successful:', { teamId, teamName });
+        
+        res.json({ 
+            success: true, 
+            message: `Your request to join ${teamName} has been sent to the team manager. You will be notified when it's approved.`
+        });
+        
+    } catch (error) {
+        console.error('Error requesting to join team via AJAX:', error);
+        res.json({ 
+            success: false, 
+            message: `Error requesting to join team: ${error.message}` 
+        });
     }
 });
 

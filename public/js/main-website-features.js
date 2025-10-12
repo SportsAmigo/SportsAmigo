@@ -1,5 +1,4 @@
 // Main Website AJAX & DHTML Integration
-// No demo page restrictions - works on main website
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🏈 AJAX & DHTML Features Active on Main Website');

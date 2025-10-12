@@ -10,7 +10,31 @@
           <div class="card-body">
               <p class="lead mb-4">Explore and join upcoming events:</p>
               
-              <div class="row row-cols-1 row-cols-md-2 g-4">
+              <!-- AJAX Search Section -->
+              <div class="row mb-4">
+                  <div class="col-md-8">
+                      <input type="text" id="event-search-input" class="form-control" 
+                             placeholder="Search events (e.g., football, cricket, tournament...)">
+                  </div>
+                  <div class="col-md-4">
+                      <select id="event-category-filter" class="form-control">
+                          <option value="">All Sports</option>
+                          <option value="football">Football</option>
+                          <option value="cricket">Cricket</option>
+                          <option value="basketball">Basketball</option>
+                          <option value="tennis">Tennis</option>
+                          <option value="badminton">Badminton</option>
+                      </select>
+                  </div>
+              </div>
+              
+              <!-- Search Results Container -->
+              <div id="search-results">
+                  <div class="row row-cols-1 row-cols-md-2 g-4" id="events-grid"></div>
+              </div>
+              
+              <!-- Default Events Display -->
+              <div id="default-events" class="row row-cols-1 row-cols-md-2 g-4">
                   <% if (events && events.length > 0) { %>
                       <% events.forEach(event => { %>
                       <div class="col">
@@ -32,14 +56,52 @@
                       </div>
                       <% }); %>
                   <% } else { %>
-                      <div class="col-12 text-center">
-                          <p class="text-muted">No upcoming events. Check back later!</p>
+                      <!-- Event Overview Table when no events to browse -->
+                      <div class="col-md-12">
+                          <div class="card mb-4">
+                              <div class="card-header bg-warning text-dark">
+                                  <h5 class="mb-0">Event Overview</h5>
+                              </div>
+                              <div class="card-body">
+                                  <div class="table-responsive">
+                                      <table class="table table-hover">
+                                          <thead>
+                                              <tr>
+                                                  <th>Event</th>
+                                                  <th>Date</th>
+                                                  <th>Location</th>
+                                                  <th>Participants</th>
+                                                  <th>Status</th>
+                                              </tr>
+                                          </thead>
+                                          <tbody>
+                                              <% if (events && events.length > 0) { %>
+                                                  <% events.forEach(event => { %>
+                                                      <tr>
+                                                          <td><%= event.name %></td>
+                                                          <td><%= event.date %></td>
+                                                          <td><%= event.location %></td>
+                                                          <td><%= event.participants %></td>
+                                                          <td><%= event.status %></td>
+                                                      </tr>
+                                                  <% }); %>
+                                              <% } else { %>
+                                                  <tr>
+                                                      <td colspan="5" class="text-center">No event statistics available</td>
+                                                  </tr>
+                                              <% } %>
+                                          </tbody>
+                                      </table>
+                                  </div>
+                              </div>
+                          </div>
                       </div>
                   <% } %>
               </div>
               
-              <h4 class="mt-5 mb-3">Event Statistics</h4>
-              <div class="row">
+              <!-- Event Overview Table when events exist -->
+              <% if (events && events.length > 0) { %>
+              <div class="row mt-5">
                   <div class="col-md-12">
                       <div class="card mb-4">
                           <div class="card-header bg-warning text-dark">
@@ -58,21 +120,15 @@
                                           </tr>
                                       </thead>
                                       <tbody>
-                                          <% if (events && events.length > 0) { %>
-                                              <% events.forEach(event => { %>
-                                                  <tr>
-                                                      <td><%= event.name %></td>
-                                                      <td><%= event.date %></td>
-                                                      <td><%= event.location %></td>
-                                                      <td><%= event.participants %></td>
-                                                      <td><%= event.status %></td>
-                                                  </tr>
-                                              <% }); %>
-                                          <% } else { %>
+                                          <% events.forEach(event => { %>
                                               <tr>
-                                                  <td colspan="5" class="text-center">No event statistics available</td>
+                                                  <td><%= event.name %></td>
+                                                  <td><%= event.date %></td>
+                                                  <td><%= event.location %></td>
+                                                  <td><%= event.participants %></td>
+                                                  <td><%= event.status %></td>
                                               </tr>
-                                          <% } %>
+                                          <% }); %>
                                       </tbody>
                                   </table>
                               </div>
@@ -80,7 +136,184 @@
                       </div>
                   </div>
               </div>
+              <% } %>
           </div>
       </div>
   </div>
 </div>
+
+<!-- AJAX Event Search Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('event-search-input');
+    const categoryFilter = document.getElementById('event-category-filter');
+    const searchResults = document.getElementById('search-results');
+    const defaultEvents = document.getElementById('default-events');
+    const eventsGrid = document.getElementById('events-grid');
+    
+    let searchTimeout;
+    let currentEvents = [];
+    
+    // Initialize with all events
+    loadAllEvents();
+    
+    // Real-time search with debounce
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            performSearch();
+        }, 300);
+    });
+    
+    categoryFilter.addEventListener('change', performSearch);
+    
+    function loadAllEvents() {
+        fetch('/player/api/events/browse')
+            .then(response => response.json())
+            .then(data => {
+                currentEvents = data.events || [];
+                displayEvents(currentEvents);
+                searchResults.style.display = 'none';
+                defaultEvents.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error loading events:', error);
+                showError('Failed to load events');
+            });
+    }
+    
+    function performSearch() {
+        const searchTerm = searchInput.value.trim();
+        const category = categoryFilter.value;
+        
+        if (!searchTerm && !category) {
+            searchResults.style.display = 'none';
+            defaultEvents.style.display = 'block';
+            return;
+        }
+        
+        // Show search results container
+        searchResults.style.display = 'block';
+        defaultEvents.style.display = 'none';
+        
+        // Show loading state
+        eventsGrid.innerHTML = `
+            <div class="col-12 text-center">
+                <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">Searching...</span>
+                </div>
+                <p class="mt-2">Searching events...</p>
+            </div>
+        `;
+        
+        // AJAX search request
+        const searchParams = new URLSearchParams();
+        if (searchTerm) searchParams.append('search', searchTerm);
+        if (category) searchParams.append('category', category);
+        
+        fetch(`/player/api/events/search?${searchParams.toString()}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displaySearchResults(data.events);
+                } else {
+                    showError(data.message || 'Search failed');
+                }
+            })
+            .catch(error => {
+                console.error('Search error:', error);
+                showError('Failed to search events');
+            });
+    }
+    
+    function displayEvents(events) {
+        const container = defaultEvents;
+        if (events.length === 0) {
+            container.innerHTML = `
+                <div class="col-12 text-center">
+                    <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                    <h5>No events available</h5>
+                    <p class="text-muted">Check back later for new events!</p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = events.map(event => createEventCard(event)).join('');
+    }
+    
+    function displaySearchResults(events) {
+        if (events.length === 0) {
+            eventsGrid.innerHTML = `
+                <div class="col-12 text-center">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h5>No events found</h5>
+                    <p class="text-muted">Try different search terms or browse all events</p>
+                </div>
+            `;
+            return;
+        }
+        
+        eventsGrid.innerHTML = events.map(event => createEventCard(event)).join('');
+    }
+    
+    function createEventCard(event) {
+        const registrationDeadline = new Date(event.registrationDeadline);
+        const eventDate = new Date(event.eventDate);
+        const isExpired = registrationDeadline < new Date();
+        
+        return `
+            <div class="col">
+                <div class="card h-100 ${isExpired ? 'border-danger' : 'border-success'} event-card">
+                    <div class="card-header bg-${isExpired ? 'danger' : 'success'} text-white">
+                        <h5 class="card-title mb-0">${event.title}</h5>
+                        <small><i class="fas fa-tag"></i> ${event.category || 'General'}</small>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">${event.description}</p>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-calendar text-primary"></i> ${eventDate.toLocaleDateString()}</li>
+                            <li><i class="fas fa-clock text-primary"></i> ${event.time}</li>
+                            <li><i class="fas fa-map-marker-alt text-primary"></i> ${event.location}</li>
+                            <li><i class="fas fa-users text-primary"></i> Max: ${event.maxParticipants}</li>
+                            <li><i class="fas fa-hourglass-end text-warning"></i> Register by: ${registrationDeadline.toLocaleDateString()}</li>
+                        </ul>
+                    </div>
+                    <div class="card-footer">
+                        ${isExpired ? 
+                            '<button class="btn btn-secondary w-100" disabled>Registration Closed</button>' :
+                            `<a href="/player/event-details/${event._id}" class="btn btn-success w-100">View Details</a>`
+                        }
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    function showError(message) {
+        eventsGrid.innerHTML = `
+            <div class="col-12">
+                <div class="alert alert-danger" role="alert">
+                    <i class="fas fa-exclamation-triangle"></i> ${message}
+                </div>
+            </div>
+        `;
+    }
+});
+</script>
+
+<style>
+.event-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.event-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+#event-search-input:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+</style>

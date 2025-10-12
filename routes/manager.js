@@ -313,8 +313,29 @@ router.post('/create-team', async (req, res) => {
     try {
         const { name, sport_type, description, max_members } = req.body;
         
-        // Validate required fields
-        if (!name || !sport_type) {
+        // Check if this is an AJAX request
+        const isAjax = req.headers['content-type'] === 'application/json' || 
+                      req.headers['x-requested-with'] === 'XMLHttpRequest';
+        
+        // Validation
+        const validationErrors = {};
+        
+        if (!name) validationErrors.name = 'Team name is required';
+        if (!sport_type) validationErrors.sport_type = 'Sport type is required';
+        if (max_members && (isNaN(max_members) || parseInt(max_members) < 1)) {
+            validationErrors.max_members = 'Max members must be a positive number';
+        }
+        
+        // If validation fails, return appropriate response
+        if (Object.keys(validationErrors).length > 0) {
+            if (isAjax) {
+                return res.json({
+                    success: false,
+                    message: 'Please fix the validation errors',
+                    errors: validationErrors
+                });
+            }
+            
             req.session.messages = { error: 'Team name and sport type are required' };
             return res.redirect('/manager/create-team');
         }
@@ -332,15 +353,50 @@ router.post('/create-team', async (req, res) => {
         try {
             const team = await Team.createTeam(teamData);
             console.log(`Team created with ID: ${team._id}`);
+            
+            if (isAjax) {
+                return res.json({
+                    success: true,
+                    message: 'Team created successfully!',
+                    redirectUrl: '/manager/my-teams',
+                    team: {
+                        id: team._id,
+                        name: team.name,
+                        sport_type: team.sport_type,
+                        description: team.description,
+                        max_members: team.max_members
+                    }
+                });
+            }
+            
             req.session.messages = { success: 'Team created successfully!' };
             res.redirect('/manager/my-teams');
         } catch (error) {
             console.error('Error creating team:', error);
+            
+            if (isAjax) {
+                return res.json({
+                    success: false,
+                    message: 'Failed to create team: ' + error.message
+                });
+            }
+            
             req.session.messages = { error: 'Failed to create team: ' + error.message };
             return res.redirect('/manager/create-team');
         }
     } catch (err) {
         console.error('Error in create-team route:', err);
+        
+        const isAjax = req.headers['content-type'] === 'application/json' || 
+                      req.headers['x-requested-with'] === 'XMLHttpRequest';
+        
+        if (isAjax) {
+            return res.json({
+                success: false,
+                message: 'An error occurred while creating the team'
+            });
+        }
+        
         req.session.messages = { error: 'An error occurred while creating the team' };
         res.redirect('/manager/create-team');
     }
