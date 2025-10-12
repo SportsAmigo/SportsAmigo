@@ -3,7 +3,8 @@
 // Enhanced with DHTML integration for dynamic user experience
 document.addEventListener('DOMContentLoaded', function () {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  const phoneRegex = /^[0-9]{10}$/;
+  // Indian mobile numbers: 10 digits and start with 6-9
+  const phoneRegex = /^[6-9][0-9]{9}$/;
 
   // DHTML integration: Dynamic form enhancement variables
   let formSubmissionInProgress = false;

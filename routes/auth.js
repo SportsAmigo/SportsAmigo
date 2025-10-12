@@ -224,14 +224,14 @@ router.post('/signup/:role', async (req, res, next) => {
             }
         }
         
-        // Phone validation
+        // Phone validation (Indian mobile numbers should start with 6,7,8,9)
         if (!req.body.phone) {
             validationErrors.phone = 'Phone number is required';
         } else {
-            // Regex pattern for 10-digit phone number
-            const phonePattern = /^[0-9]{10}$/;
+            // Regex pattern for 10-digit Indian mobile numbers starting with 6-9
+            const phonePattern = /^[6-9][0-9]{9}$/;
             if (!phonePattern.test(req.body.phone)) {
-                validationErrors.phone = 'Please enter a valid 10-digit phone number';
+                validationErrors.phone = 'Please enter a valid 10-digit mobile number starting with 6,7,8 or 9';
             }
         }
         
