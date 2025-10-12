@@ -10,6 +10,136 @@ document.addEventListener('DOMContentLoaded', function () {
   const validationDelayTimeout = {};
   const VALIDATION_DELAY = 300; // milliseconds
 
+  // AJAX form submission with fetch API
+  async function submitFormWithAjax(form, event) {
+    event.preventDefault();
+    
+    if (formSubmissionInProgress) {
+      return false;
+    }
+    
+    formSubmissionInProgress = true;
+    const submitButton = form.querySelector('button[type="submit"], input[type="submit"]');
+    const originalButtonText = submitButton ? submitButton.textContent : '';
+    
+    try {
+      // Show loading state
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
+      }
+      
+      // Create JSON data from the form
+      const formData = new FormData(form);
+      const jsonData = {};
+      
+      // Convert FormData to JSON object
+      for (let [key, value] of formData.entries()) {
+        jsonData[key] = value;
+      }
+      
+      console.log('Submitting AJAX form data:', jsonData);
+      
+      // Make fetch request with JSON data
+      const response = await fetch(form.action, {
+        method: form.method || 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify(jsonData)
+      });
+      
+      const result = await response.json();
+      
+      console.log('AJAX response:', result);
+      
+      if (response.ok && result.success) {
+        // Success response
+        showFormMessage(form, 'success', result.message || 'Form submitted successfully!');
+        
+        if (result.redirectUrl) {
+          setTimeout(() => {
+            window.location.href = result.redirectUrl;
+          }, 1500);
+        } else {
+          form.reset();
+          // Clear validation states
+          const fields = form.querySelectorAll('.is-valid, .is-invalid');
+          fields.forEach(field => {
+            field.classList.remove('is-valid', 'is-invalid');
+          });
+          const feedbacks = form.querySelectorAll('.invalid-feedback, .valid-feedback');
+          feedbacks.forEach(feedback => feedback.remove());
+        }
+      } else {
+        // Error response
+        showFormMessage(form, 'error', result.message || 'Submission failed');
+        
+        // Display field-specific errors if available
+        if (result.errors) {
+          Object.keys(result.errors).forEach(fieldName => {
+            const field = form.querySelector(`[name="${fieldName}"]`);
+            if (field) {
+              field.classList.add('is-invalid');
+              field.classList.remove('is-valid');
+              
+              // Remove existing feedback
+              const existingFeedback = field.parentNode.querySelector('.invalid-feedback');
+              if (existingFeedback) {
+                existingFeedback.remove();
+              }
+              
+              // Add new feedback
+              const feedback = document.createElement('div');
+              feedback.className = 'invalid-feedback';
+              feedback.textContent = result.errors[fieldName];
+              field.parentNode.appendChild(feedback);
+            }
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Form submission error:', error);
+      showFormMessage(form, 'error', 'Network error. Please check your connection and try again.');
+    } finally {
+      formSubmissionInProgress = false;
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalButtonText;
+      }
+    }
+    
+    return false;
+  }
+  
+  function showFormMessage(form, type, message) {
+    // Remove existing messages
+    const existingMessages = form.querySelectorAll('.form-ajax-message');
+    existingMessages.forEach(msg => msg.remove());
+    
+    // Create new message
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `alert alert-${type === 'error' ? 'danger' : 'success'} form-ajax-message`;
+    messageDiv.style.marginTop = '1rem';
+    messageDiv.innerHTML = `
+      <i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'check-circle'} me-2"></i>
+      ${message}
+    `;
+    
+    // Insert at the top of the form
+    form.insertBefore(messageDiv, form.firstChild);
+    
+    // Auto-remove success messages after 5 seconds
+    if (type === 'success') {
+      setTimeout(() => {
+        if (messageDiv.parentNode) {
+          messageDiv.remove();
+        }
+      }, 5000);
+    }
+  }
+
   function createError(el, msg) {
     // try to reuse existing error element
     let next = el.nextElementSibling;
@@ -305,23 +435,36 @@ document.addEventListener('DOMContentLoaded', function () {
           firstInvalid.focus();
         }
       } else {
-        // DHTML integration: Show loading state on submit button
-        if (submitButton) {
-          formSubmissionInProgress = true;
-          const originalText = submitButton.textContent;
-          submitButton.disabled = true;
-          submitButton.textContent = 'Submitting...';
-          submitButton.style.opacity = '0.6';
-          
-          // Reset after 10 seconds (fallback)
-          setTimeout(() => {
-            if (submitButton) {
-              submitButton.disabled = false;
-              submitButton.textContent = originalText;
-              submitButton.style.opacity = '1';
-              formSubmissionInProgress = false;
-            }
-          }, 10000);
+        // Check if form should use AJAX (has data-ajax attribute or is certain forms)
+        const useAjax = form.hasAttribute('data-ajax') || 
+                       form.id === 'signup-form' || 
+                       form.id === 'login-form' ||
+                       form.action.includes('create-event') ||
+                       form.action.includes('create-team') ||
+                       form.action.includes('join-team');
+        
+        if (useAjax) {
+          // Use AJAX submission
+          submitFormWithAjax(form, e);
+        } else {
+          // DHTML integration: Show loading state on submit button for regular submission
+          if (submitButton) {
+            formSubmissionInProgress = true;
+            const originalText = submitButton.textContent;
+            submitButton.disabled = true;
+            submitButton.textContent = 'Submitting...';
+            submitButton.style.opacity = '0.6';
+            
+            // Reset after 10 seconds (fallback)
+            setTimeout(() => {
+              if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = originalText;
+                submitButton.style.opacity = '1';
+                formSubmissionInProgress = false;
+              }
+            }, 10000);
+          }
         }
       }
     });

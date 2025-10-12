@@ -23,7 +23,7 @@
                             <label for="teamSearch" class="form-label">Search Teams</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                <input type="text" class="form-control" id="teamSearch" placeholder="Search by team name...">
+                                <input type="text" id="teamSearch" class="form-control" placeholder="Search by team name, sport, or description...">
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -36,6 +36,7 @@
                                 <option value="Tennis">Tennis</option>
                                 <option value="Swimming">Swimming</option>
                                 <option value="Volleyball">Volleyball</option>
+                                <option value="Badminton">Badminton</option>
                             </select>
                         </div>
                     </div>
@@ -60,7 +61,7 @@
     <% } %>
 
     <!-- Teams Grid -->
-    <div class="row" id="teamsContainer">
+    <div class="row" id="teams-container">
         <% if (availableTeams && availableTeams.length > 0) { %>
             <% availableTeams.forEach(team => { %>
                 <div class="col-md-6 col-lg-4 mb-4 team-card" data-sport="<%= team.sport_type %>">
@@ -175,8 +176,239 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Add event listeners for search and filter
-    teamSearch.addEventListener('input', filterTeams);
-    sportFilter.addEventListener('change', filterTeams);
-});
-</script> 
+    // AJAX Team Search with real-time filtering
+    let searchTimeout;
+    
+    function performAjaxSearch() {
+        const searchTerm = teamSearch.value.trim();
+        const sportTerm = sportFilter.value;
+        
+        // If no search terms, show default teams
+        if (!searchTerm && !sportTerm) {
+            filterTeams(); // Use existing local filter
+            return;
+        }
+        
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            // Show loading state
+            const teamsContainer = document.getElementById('teams-container');
+            const originalContent = teamsContainer.innerHTML;
+            
+            teamsContainer.innerHTML = `
+                <div class="col-12 text-center">
+                    <div class="spinner-border text-info" role="status">
+                        <span class="visually-hidden">Searching teams...</span>
+                    </div>
+                    <p class="mt-2">Searching teams...</p>
+                </div>
+            `;
+            
+            // Build search parameters
+            const searchParams = new URLSearchParams();
+            if (searchTerm) searchParams.append('search', searchTerm);
+            if (sportTerm) searchParams.append('sport', sportTerm);
+            
+            // AJAX request for team search
+            fetch(`/player/api/teams/search?${searchParams.toString()}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displaySearchResults(data.teams);
+                    } else {
+                        teamsContainer.innerHTML = originalContent;
+                        showSearchError(data.message || 'Search failed');
+                    }
+                })
+                .catch(error => {
+                    console.error('Team search error:', error);
+                    teamsContainer.innerHTML = originalContent;
+                    showSearchError('Failed to search teams');
+                });
+        }, 500);
+    }
+    
+    function displaySearchResults(teams) {
+        const teamsContainer = document.getElementById('teams-container');
+        
+        if (teams.length === 0) {
+            teamsContainer.innerHTML = `
+                <div class="col-12 text-center">
+                    <i class="fas fa-users-slash fa-3x text-muted mb-3"></i>
+                    <h5>No teams found</h5>
+                    <p class="text-muted">Try different search terms or browse all teams</p>
+                </div>
+            `;
+            return;
+        }
+        
+        teamsContainer.innerHTML = teams.map(team => createTeamCard(team)).join('');
+    }
+    
+    function createTeamCard(team) {
+        const managerName = team.manager_id ? `${team.manager_id.first_name} ${team.manager_id.last_name}` : 'Unknown';
+        const memberCount = team.members ? team.members.length : 0;
+        
+        return `
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 team-card" data-team-name="${team.name.toLowerCase()}" data-team-sport="${team.sport_type}">
+                    <div class="card-header bg-info text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">${team.name}</h5>
+                            <span class="badge bg-light text-dark">${team.sport_type}</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">${team.description || 'No description available'}</p>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-user-tie text-primary me-2"></i> Manager: ${managerName}</li>
+                            <li><i class="fas fa-users text-primary me-2"></i> Members: ${memberCount}/${team.max_members || 'N/A'}</li>
+                            <li><i class="fas fa-map-marker-alt text-primary me-2"></i> Location: ${team.location || 'Not specified'}</li>
+                        </ul>
+                    </div>
+                    <div class="card-footer">
+                        <form action="/player/request-join-team/${team._id}" method="POST" class="team-join-form" data-team-id="${team._id}">
+                            <button type="submit" class="btn btn-info w-100 join-team-btn" ${memberCount >= team.max_members ? 'disabled' : ''}>
+                                <i class="fas fa-user-plus me-2"></i>
+                                ${memberCount >= team.max_members ? 'Team Full' : 'Request to Join'}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    function showSearchError(message) {
+        const teamsContainer = document.getElementById('teams-container');
+        teamsContainer.innerHTML = `
+            <div class="col-12">
+                <div class="alert alert-warning" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i> ${message}
+                </div>
+            </div>
+        `;
+    }
+    
+    // Enhanced event listeners
+    teamSearch.addEventListener('input', function() {
+        if (this.value.length >= 2 || sportFilter.value) {
+            performAjaxSearch();
+        } else if (this.value.length === 0 && !sportFilter.value) {
+            filterTeams(); // Fall back to local filtering
+        }
+    });
+    
+    sportFilter.addEventListener('change', function() {
+        if (teamSearch.value.length >= 2 || this.value) {
+            performAjaxSearch();
+        } else {
+            filterTeams(); // Fall back to local filtering
+        }
+    });
+    
+    // AJAX Team Join Functionality
+    document.addEventListener('click', function(e) {
+        // Handle dynamically created join buttons
+        if (e.target.classList.contains('join-team-btn') || e.target.closest('.join-team-btn')) {
+            e.preventDefault();
+            
+            const button = e.target.classList.contains('join-team-btn') ? e.target : e.target.closest('.join-team-btn');
+            const form = button.closest('.team-join-form');
+            const teamId = form.dataset.teamId;
+            
+            if (!teamId) {
+                alert('Team ID not found. Please refresh the page and try again.');
+                return;
+            }
+            
+            joinTeamViaAjax(button, teamId);
+        }
+        
+        // Handle server-rendered join buttons
+        if (e.target.dataset.teamAction === 'join' || e.target.closest('[data-team-action="join"]')) {
+            e.preventDefault();
+            
+            const button = e.target.dataset.teamAction === 'join' ? e.target : e.target.closest('[data-team-action="join"]');
+            const teamId = button.dataset.teamId;
+            
+            if (!teamId) {
+                alert('Team ID not found. Please refresh the page and try again.');
+                return;
+            }
+            
+            joinTeamViaAjax(button, teamId);
+        }
+    });
+    
+    function joinTeamViaAjax(button, teamId) {
+        // Show loading state
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sending Request...';
+        button.disabled = true;
+        
+        // Send AJAX request
+        fetch(`/api/teams/${teamId}/join`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                button.innerHTML = '<i class="fas fa-check me-2"></i>Request Sent';
+                button.classList.remove('btn-info', 'btn-primary');
+                button.classList.add('btn-success');
+                
+                // Show success message
+                showTeamMessage(data.message, 'success');
+            } else {
+                // Restore button
+                button.innerHTML = originalText;
+                button.disabled = false;
+                
+                // Show error message
+                showTeamMessage(data.message || 'Failed to send join request', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error joining team:', error);
+            
+            // Restore button
+            button.innerHTML = originalText;
+            button.disabled = false;
+            
+            showTeamMessage('Failed to send join request. Please try again.', 'error');
+        });
+    }
+    
+    function showTeamMessage(message, type) {
+        // Remove existing messages
+        const existingMessage = document.querySelector('.team-message');
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+        
+        // Create new message
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show team-message`;
+        messageDiv.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        // Insert after search section
+        const searchCard = document.querySelector('.card');
+        searchCard.parentNode.insertBefore(messageDiv, searchCard.nextSibling);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (messageDiv.parentNode) {
+                messageDiv.remove();
+            }
+        }, 5000);
+    }
+}); 

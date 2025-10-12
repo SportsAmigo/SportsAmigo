@@ -529,6 +529,49 @@ router.post('/create-event', async (req, res) => {
     try {
         console.log('Creating new event with data:', req.body);
         
+        // Check if this is an AJAX request
+        const isAjax = req.headers['content-type'] === 'application/json' || 
+                      req.headers['x-requested-with'] === 'XMLHttpRequest';
+        
+        // Validation
+        const validationErrors = {};
+        
+        if (!req.body.name) validationErrors.name = 'Event name is required';
+        if (!req.body.sport) validationErrors.sport = 'Sport type is required';
+        if (!req.body.start_date) validationErrors.start_date = 'Event date is required';
+        if (!req.body.location) validationErrors.location = 'Location is required';
+        
+        // Check if event date is in the future
+        if (req.body.start_date && new Date(req.body.start_date) <= new Date()) {
+            validationErrors.start_date = 'Event date must be in the future';
+        }
+        
+        // Check if registration deadline is before event date
+        if (req.body.registration_deadline && req.body.start_date) {
+            if (new Date(req.body.registration_deadline) >= new Date(req.body.start_date)) {
+                validationErrors.registration_deadline = 'Registration deadline must be before event date';
+            }
+        }
+        
+        // If validation fails, return appropriate response
+        if (Object.keys(validationErrors).length > 0) {
+            if (isAjax) {
+                return res.json({
+                    success: false,
+                    message: 'Please fix the validation errors',
+                    errors: validationErrors
+                });
+            }
+            
+            // For non-AJAX, you might want to re-render the form with errors
+            return res.render('organizer/create-event', { 
+                error: 'Please fix the errors below',
+                validationErrors,
+                formData: req.body,
+                layout: 'layouts/dashboard'
+            });
+        }
+        
         // Create event data object from form data
         const eventData = {
             organizer_id: req.session.user._id,
@@ -550,6 +593,21 @@ router.post('/create-event', async (req, res) => {
             const newEvent = await Event.createEvent(eventData);
             console.log(`Event created successfully with ID: ${newEvent._id}`);
             
+            if (isAjax) {
+                return res.json({
+                    success: true,
+                    message: 'Event created successfully!',
+                    redirectUrl: '/organizer/manage-events',
+                    event: {
+                        id: newEvent._id,
+                        title: newEvent.title,
+                        sport: newEvent.sport_type,
+                        date: newEvent.event_date,
+                        location: newEvent.location
+                    }
+                });
+            }
+            
             // Add success message to session
             req.session.message = {
                 type: 'success',
@@ -566,6 +624,14 @@ router.post('/create-event', async (req, res) => {
             });
         } catch (err) {
             console.error('Error saving event to database:', err);
+            
+            if (isAjax) {
+                return res.json({
+                    success: false,
+                    message: 'Failed to create event: ' + err.message
+                });
+            }
+            
             return res.status(500).render('error', {
                 title: '500 - Server Error',
                 message: 'An error occurred while creating the event: ' + err.message,
@@ -574,6 +640,17 @@ router.post('/create-event', async (req, res) => {
         }
     } catch (error) {
         console.error('Error creating event:', error);
+        
+        const isAjax = req.headers['content-type'] === 'application/json' || 
+                      req.headers['x-requested-with'] === 'XMLHttpRequest';
+        
+        if (isAjax) {
+            return res.json({
+                success: false,
+                message: 'An error occurred while creating the event'
+            });
+        }
+        
         res.status(500).send('Error creating event: ' + error.message);
     }
 });
