@@ -73,11 +73,27 @@ app.use((req, res, next) => {
     delete req.session.flashMessage;
   }
   
-  // Pass user to all views
+  // Pass user and cart data to all views
   if (req.session && req.session.user) {
     res.locals.user = req.session.user;
   } else {
     res.locals.user = null;
+  }
+  
+  // Pass shopUser if exists
+  if (req.session && req.session.shopUser) {
+    res.locals.shopUser = req.session.shopUser;
+  } else {
+    res.locals.shopUser = null;
+  }
+  
+  // Pass cart data to all views
+  if (req.session && req.session.cart) {
+    res.locals.cart = req.session.cart;
+    res.locals.cartCount = req.session.cart.itemCount || 0;
+  } else {
+    res.locals.cart = { items: [], itemCount: 0, totalAmount: 0 };
+    res.locals.cartCount = 0;
   }
   
   next();
@@ -89,6 +105,11 @@ const organizerRoutes = require('./routes/organizer');
 const playerRoutes = require('./routes/player');
 const managerRoutes = require('./routes/manager');
 const apiRoutes = require('./routes/api');
+const shopRoutes = require('./routes/shop');
+const walletRoutes = require('./routes/wallet');
+const shopLoginRoutes = require('./routes/shopLogin');
+const checkoutRoutes = require('./routes/checkout');
+const cartRoutes = require('./routes/cart');
 
 // Try to import admin routes with error handling
 let adminRoutes;
@@ -171,6 +192,46 @@ if (typeof managerRoutes === 'function') {
   console.error('Manager routes is not a function, it is:', typeof managerRoutes);
 }
 
+// Shop Routes
+if (typeof shopRoutes === 'function') {
+  app.use('/shop', shopRoutes);
+  console.log('Shop routes configured successfully');
+} else {
+  console.error('Shop routes is not a function, it is:', typeof shopRoutes);
+}
+
+// Wallet Routes
+if (typeof walletRoutes === 'function') {
+  app.use('/wallet', walletRoutes);
+  console.log('Wallet routes configured successfully');
+} else {
+  console.error('Wallet routes is not a function, it is:', typeof walletRoutes);
+}
+
+// Shop Login Routes
+if (typeof shopLoginRoutes === 'function') {
+  app.use('/shop-login', shopLoginRoutes);
+  console.log('Shop login routes configured successfully');
+} else {
+  console.error('Shop login routes is not a function, it is:', typeof shopLoginRoutes);
+}
+
+// Checkout Routes
+if (typeof checkoutRoutes === 'function') {
+  app.use('/checkout', checkoutRoutes);
+  console.log('Checkout routes configured successfully');
+} else {
+  console.error('Checkout routes is not a function, it is:', typeof checkoutRoutes);
+}
+
+// Cart Routes
+if (typeof cartRoutes === 'function') {
+  app.use('/cart', cartRoutes);
+  console.log('Cart routes configured successfully');
+} else {
+  console.error('Cart routes is not a function, it is:', typeof cartRoutes);
+}
+
 // API Routes for AJAX functionality
 if (apiRoutes && typeof apiRoutes === 'function') {
   app.use('/api', apiRoutes);
@@ -185,21 +246,13 @@ if (adminRoutes && typeof adminRoutes === 'function') {
   console.log('Admin routes configured successfully');
 } else {
   console.warn('Warning: Admin routes not loaded, /admin endpoints will be unavailable');
-  
-  // Add fallback admin login route 
-  app.get('/admin/login', (req, res) => {
-    res.render('admin-login', { 
-      title: 'Admin Login',
-      error: 'Admin module is currently unavailable. Please try again later.'
-    });
-  });
 }
 
 // Home page - use EJS template
 app.get('/', (req, res) => {
   res.render('index', { 
     title: 'Sports Amigo - Home',
-    description: 'Join the largest sports community in South Africa and experience the thrill of competition, the joy of teamwork, and the pride of victory.'
+    description: 'Join the largest sports community in India and experience the thrill of competition, the joy of teamwork, and the pride of victory.'
   });
 });
 
@@ -216,7 +269,7 @@ app.get('/events', (req, res) => {
   res.render('player/browse-events', { 
     title: 'Events',
     headerType: 'events',
-    description: 'Discover our exciting lineup of sporting events and competitions across South Africa',
+    description: 'Discover our exciting lineup of sporting events and competitions across India',
     events: [
       {
         id: 1,
@@ -326,7 +379,7 @@ app.get('/events/basketball', (req, res) => {
 app.get('/about', (req, res) => {
   res.render('about', { 
     title: 'About Us',
-    description: 'Learn more about the South African Sports Association and our mission to promote sports excellence across the country.'
+    description: 'Learn more about the Indian Sports Association and our mission to promote sports excellence across the country.'
   });
 });
 
@@ -334,7 +387,7 @@ app.get('/about', (req, res) => {
 app.get('/contact', (req, res) => {
   res.render('contact', { 
     title: 'Contact Us',
-    description: 'Get in touch with the South African Sports Association. We are here to help and support your sporting journey.'
+    description: 'Get in touch with the Indian Sports Association. We are here to help and support your sporting journey.'
   });
 });
 

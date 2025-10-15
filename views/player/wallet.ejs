@@ -1,0 +1,254 @@
+<%- include('../partials/header') %>
+
+<section class="header shop-header">
+    <nav>
+        <a href="/"><img src="/images/sports-amigo-logo.png" alt="SportsAmigo Association Logo"></a>
+        <div class="nav-links" id="navLinks">
+            <i class="fa fa-times" onclick="hideMenu()"></i>
+            <ul>
+                <li><a href="/">HOME</a></li>
+                <li><a href="/about">ABOUT</a></li>
+                <li class="dropdown">
+                    <a href="/events">EVENTS</a>
+                    <div class="dropdown-content">
+                        <a href="/events/football">Football</a>
+                        <a href="/events/cricket">Cricket</a>
+                        <a href="/events/basketball">Basketball</a>
+                    </div>
+                </li>
+                <li><a href="/shop">SHOP</a></li>
+                <li><a href="/contact">CONTACT</a></li>
+                <li><a href="/shop/cart">🛒 Cart (<span id="cartCount"><%= cartCount || 0 %></span>)</a></li>
+                <li class="dropdown">
+                    <a href="#" class="active"><%= user.first_name %></a>
+                    <div class="dropdown-content">
+                        <a href="/wallet" class="active">💰 My Wallet</a>
+                        <a href="/shop/orders">My Orders</a>
+                        <a href="/player/dashboard">Dashboard</a>
+                        <a href="/logout">Logout</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <i class="fa fa-bars" onclick="showMenu()"></i>
+    </nav>
+
+    <div class="text-box">
+        <h1>My Wallet</h1>
+        <p>Manage your wallet balance and view transaction history.</p>
+    </div>
+</section>
+
+<!-- Wallet Section -->
+<section class="wallet-section">
+    <div class="container">
+        <!-- Wallet Balance Card -->
+        <div class="wallet-balance-card">
+            <div class="balance-header">
+                <h2>My Wallet Balance</h2>
+                <div class="balance-amount" id="walletBalance">
+                    $<span id="balanceValue"><%= userBalance.toFixed(2) %></span>
+                </div>
+                <p class="balance-status">
+                    <span class="status-indicator active"></span>
+                    Wallet Active
+                </p>
+            </div>
+            
+            <div class="quick-actions">
+                <button class="add-funds-btn" onclick="showAddFundsModal()">
+                    + Add Funds
+                </button>
+                <button class="view-history-btn" onclick="scrollToTransactions()">
+                    View History
+                </button>
+                <a href="/shop" class="shop-now-btn">
+                    Shop Now
+                </a>
+            </div>
+        </div>
+
+        <!-- Wallet Statistics -->
+        <div class="wallet-stats">
+            <div class="stat-card">
+                <div class="stat-icon">+</div>
+                <div class="stat-info">
+                    <h3>Total Credits</h3>
+                    <p>₹<%= wallet.totalCredits.toFixed(2) %></p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">-</div>
+                <div class="stat-info">
+                    <h3>Total Debits</h3>
+                    <p>₹<%= wallet.totalDebits.toFixed(2) %></p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">#</div>
+                <div class="stat-info">
+                    <h3>Transactions</h3>
+                    <p><%= wallet.transactionCount %></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaction History -->
+        <div class="transaction-history" id="transactionHistory">
+            <div class="history-header">
+                <h2>Recent Transactions</h2>
+                <div class="transaction-filters">
+                    <select id="transactionFilter" onchange="filterTransactions()">
+                        <option value="all">All Transactions</option>
+                        <option value="credit">Credits Only</option>
+                        <option value="debit">Debits Only</option>
+                    </select>
+                    <button class="refresh-btn" onclick="refreshTransactions()">🔄</button>
+                </div>
+            </div>
+
+            <div class="transactions-list" id="transactionsList">
+                <% if (wallet.recentTransactions && wallet.recentTransactions.length > 0) { %>
+                    <% wallet.recentTransactions.forEach(transaction => { %>
+                        <div class="transaction-item <%= transaction.transactionType.toLowerCase() %>">
+                            <div class="transaction-icon">
+                                <% if (transaction.transactionType === 'Credit') { %>
+                                    💰
+                                <% } else { %>
+                                    🛍️
+                                <% } %>
+                            </div>
+                            <div class="transaction-details">
+                                <h4><%= transaction.description %></h4>
+                                <p class="transaction-time">
+                                    <%= new Date(transaction.timestamp).toLocaleDateString('en-IN', { 
+                                        year: 'numeric', 
+                                        month: 'short', 
+                                        day: 'numeric', 
+                                        hour: '2-digit', 
+                                        minute: '2-digit' 
+                                    }) %>
+                                </p>
+                                <% if (transaction.referenceId) { %>
+                                    <p class="transaction-ref">Ref: <%= transaction.referenceId %></p>
+                                <% } %>
+                            </div>
+                            <div class="transaction-amount <%= transaction.transactionType.toLowerCase() %>">
+                                <% if (transaction.transactionType === 'Credit') { %>
+                                    +₹<%= transaction.amount.toFixed(2) %>
+                                <% } else { %>
+                                    -₹<%= transaction.amount.toFixed(2) %>
+                                <% } %>
+                            </div>
+                            <div class="transaction-balance">
+                                Balance: ₹<%= transaction.balanceAfter.toFixed(2) %>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="no-transactions">
+                        <div class="no-transactions-icon">💳</div>
+                        <h3>No transactions yet</h3>
+                        <p>Your transaction history will appear here once you start using your wallet.</p>
+                    </div>
+                <% } %>
+            </div>
+
+            <div class="load-more-container" id="loadMoreContainer">
+                <button class="load-more-btn" onclick="loadMoreTransactions()">
+                    Load More Transactions
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Add Funds Modal -->
+<div id="addFundsModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('addFundsModal')">&times;</span>
+        <div class="modal-body">
+            <h2>Add Funds to Wallet</h2>
+            <form id="addFundsForm">
+                <div class="form-group">
+                    <label for="fundAmount">Amount (₹)</label>
+                    <input type="number" id="fundAmount" name="amount" min="1" max="50000" 
+                           placeholder="Enter amount to add" required />
+                    <small class="form-help">Minimum: ₹1 | Maximum: ₹50,000</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="paymentMethod">Payment Method</label>
+                    <select id="paymentMethod" name="paymentMethod">
+                        <option value="Online Banking">Online Banking</option>
+                        <option value="UPI">UPI</option>
+                        <option value="Credit Card">Credit Card</option>
+                        <option value="Debit Card">Debit Card</option>
+                    </select>
+                </div>
+
+                <div class="quick-amounts">
+                    <h4>Quick Add:</h4>
+                    <div class="quick-amount-buttons">
+                        <button type="button" onclick="setQuickAmount(100)">₹100</button>
+                        <button type="button" onclick="setQuickAmount(500)">₹500</button>
+                        <button type="button" onclick="setQuickAmount(1000)">₹1000</button>
+                        <button type="button" onclick="setQuickAmount(2000)">₹2000</button>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" onclick="closeModal('addFundsModal')" class="cancel-btn">
+                        Cancel
+                    </button>
+                    <button type="submit" class="add-funds-submit-btn">
+                        Add Funds
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div id="successModal" class="modal" style="display: none;">
+    <div class="modal-content success">
+        <span class="close" onclick="closeModal('successModal')">&times;</span>
+        <div class="modal-body">
+            <div class="success-icon">✅</div>
+            <h2>Success!</h2>
+            <p id="successMessage">Funds added successfully!</p>
+            <div class="new-balance" id="newBalanceDisplay">
+                New Balance: ₹<span id="newBalanceAmount">0.00</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Error Modal -->
+<div id="errorModal" class="modal" style="display: none;">
+    <div class="modal-content error">
+        <span class="close" onclick="closeModal('errorModal')">&times;</span>
+        <div class="modal-body">
+            <div class="error-icon">❌</div>
+            <h2>Error</h2>
+            <p id="errorMessage">Something went wrong!</p>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div id="loadingModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-body loading">
+            <div class="spinner"></div>
+            <p>Processing your request...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Load CSS and JS -->
+<link rel="stylesheet" href="/css/wallet.css">
+<script src="/js/wallet.js"></script>
+
+<%- include('../partials/footer') %>

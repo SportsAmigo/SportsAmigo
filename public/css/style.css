@@ -17,6 +17,10 @@ html {
     position: relative;
 }
 
+.shop-header{
+    background-image: linear-gradient(rgba(4,9,30,0.7),rgba(4,9,30,0.7)),url(/images/shopee.jpg);
+}
+
 nav{
     display: flex;
     padding: 0.8% 6%;
@@ -1620,6 +1624,110 @@ h3{
     0%, 100% { transform: translateX(0); }
     25% { transform: translateX(-2px); }
     75% { transform: translateX(2px); }
+}
+
+/* Form Validation Animations */
+.form-group {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.form-group input,
+.form-group select {
+    transition: all 0.3s ease;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    padding: 12px;
+    width: 100%;
+    font-size: 14px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 10px rgba(0, 123, 255, 0.2);
+    transform: scale(1.02);
+}
+
+.form-group input.valid,
+.form-group select.valid {
+    border-color: #28a745;
+    background-color: #f8fff9;
+    box-shadow: 0 0 10px rgba(40, 167, 69, 0.2);
+}
+
+.form-group input.error,
+.form-group select.error {
+    border-color: #dc3545;
+    background-color: #fff5f5;
+    box-shadow: 0 0 10px rgba(220, 53, 69, 0.2);
+}
+
+.form-group input.shake {
+    animation: shake 0.6s ease-in-out;
+}
+
+.field-error {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 5px;
+    display: block;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+}
+
+.field-error.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.success-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #28a745;
+    font-weight: bold;
+    font-size: 16px;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.form-group input.valid + .success-icon {
+    opacity: 1;
+}
+
+/* Checkout Button Animation */
+.checkout-button {
+    transition: all 0.3s ease;
+}
+
+.checkout-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+}
+
+.checkout-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 1s linear infinite;
+    margin-right: 8px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
 /* Responsive Design */

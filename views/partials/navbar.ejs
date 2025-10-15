@@ -20,6 +20,12 @@
             <li class="nav-item">
               <a class="nav-link" href="/player/browse-events">Browse Events</a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/shop">🛒 Shop</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/wallet">💰 Wallet</a>
+            </li>
           <% } else if (user.role === 'manager') { %>
             <li class="nav-item">
               <a class="nav-link" href="/manager/dashboard">Dashboard</a>
@@ -33,6 +39,9 @@
             <li class="nav-item">
               <a class="nav-link" href="/manager/browse-events">Browse Events</a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/shop">🛒 Shop</a>
+            </li>
           <% } else if (user.role === 'organizer') { %>
             <li class="nav-item">
               <a class="nav-link" href="/organizer/dashboard">Dashboard</a>
@@ -42,6 +51,9 @@
             </li>
             <li class="nav-item">
               <a class="nav-link" href="/organizer/create-event">Create Event</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/shop">🛒 Shop</a>
             </li>
           <% } %>
         <% } else { %>
@@ -57,15 +69,30 @@
         <% } %>
       </ul>
       <ul class="navbar-nav">
+        <!-- Cart Icon for all users -->
+        <% if (cartCount > 0) { %>
+          <li class="nav-item">
+            <a class="nav-link" href="/shop/cart">
+              🛒 Cart (<span id="cartCount"><%= cartCount %></span>)
+            </a>
+          </li>
+        <% } %>
+        
         <% if (user) { %>
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
               <%= user.first_name %> <%= user.last_name %>
             </a>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-              <li><a class="dropdown-item" href="/<%= user.role %>/profile">Profile</a></li>
+              <% if (user.role === 'player') { %>
+                <li><a class="dropdown-item" href="/wallet">💰 My Wallet</a></li>
+                <li><a class="dropdown-item" href="/shop/orders">📦 My Orders</a></li>
+                <li><hr class="dropdown-divider"></li>
+              <% } %>
+              <li><a class="dropdown-item" href="/<%= user.role %>/dashboard">🏠 Dashboard</a></li>
+              <li><a class="dropdown-item" href="/<%= user.role %>/profile">👤 Profile</a></li>
               <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item" href="/auth/logout">Logout</a></li>
+              <li><a class="dropdown-item" href="/auth/logout">🚪 Logout</a></li>
             </ul>
           </li>
         <% } else { %>
