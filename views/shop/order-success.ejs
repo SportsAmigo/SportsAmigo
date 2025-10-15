@@ -1,0 +1,365 @@
+<%- include('../partials/header') %>
+
+<section class="header shop-header">
+    <nav>
+        <a href="/"><img src="/images/sports-amigo-logo.png" alt="SportsAmigo Association Logo"></a>
+        <div class="nav-links" id="navLinks">
+            <i class="fa fa-times" onclick="hideMenu()"></i>
+            <ul>
+                <li><a href="/">HOME</a></li>
+                <li><a href="/about">ABOUT</a></li>
+                <li class="dropdown">
+                    <a href="/events">EVENTS</a>
+                    <div class="dropdown-content">
+                        <a href="/events/football">Football</a>
+                        <a href="/events/cricket">Cricket</a>
+                        <a href="/events/basketball">Basketball</a>
+                    </div>
+                </li>
+                <li><a href="/shop">SHOP</a></li>
+                <li><a href="/contact">CONTACT</a></li>
+            </ul>
+        </div>
+        <i class="fa fa-bars" onclick="showMenu()"></i>
+    </nav>
+
+    <div class="text-box">
+        <h1>Order Confirmed! 🎉</h1>
+        <p>Thank you for shopping with SportsAmigo. Your order has been placed successfully.</p>
+    </div>
+</section>
+
+<!-- Order Success Section -->
+<section class="order-success-section">
+    <div class="container">
+        <div class="success-content">
+            <!-- Confetti Animation -->
+            <div class="confetti-container">
+                <div class="confetti"></div>
+                <div class="confetti"></div>
+                <div class="confetti"></div>
+                <div class="confetti"></div>
+                <div class="confetti"></div>
+            </div>
+
+            <!-- Order Details Card -->
+            <div class="order-details-card">
+                <div class="success-header">
+                    <div class="success-icon">🎉</div>
+                    <h2>Order Confirmed!</h2>
+                    <p class="order-number">Order #<%= order.orderNumber %></p>
+                </div>
+
+                <!-- Delivery Information -->
+                <div class="delivery-info">
+                    <h3>📦 Delivery Information</h3>
+                    <div class="delivery-date">
+                        <strong>Expected Delivery:</strong> <%= deliveryDate %>
+                    </div>
+                    <div class="delivery-address">
+                        <strong>Delivery Address:</strong>
+                        <p><%= order.customerInfo.fullName %></p>
+                        <p><%= order.customerInfo.address %></p>
+                        <p>Phone: <%= order.customerInfo.phone %></p>
+                    </div>
+                </div>
+
+                <!-- Payment Information -->
+                <div class="payment-info">
+                    <h3>💳 Payment Information</h3>
+                    <div class="payment-method">
+                        <strong>Payment Method:</strong> 
+                        <% if (order.paymentMethod === 'Wallet') { %>
+                            <span class="wallet-payment">💰 SportsAmigo Wallet</span>
+                        <% } else { %>
+                            <span class="cod-payment">🚚 Cash on Delivery</span>
+                        <% } %>
+                    </div>
+                    <div class="payment-amount">
+                        <strong>Total Amount:</strong> $<%= order.totalAmount.toFixed(2) %>
+                    </div>
+                    <% if (walletUsed) { %>
+                        <div class="wallet-deduction">
+                            <span class="deduction-text">✅ $<%= order.totalAmount.toFixed(2) %> deducted from your wallet</span>
+                        </div>
+                    <% } %>
+                </div>
+
+                <!-- Order Items -->
+                <div class="order-items">
+                    <h3>📋 Order Summary</h3>
+                    <div class="items-list">
+                        <% order.orderItems.forEach(item => { %>
+                            <div class="order-item">
+                                <div class="item-image">
+                                    <img src="<%= item.imageUrl %>" alt="<%= item.name %>" />
+                                </div>
+                                <div class="item-details">
+                                    <h4><%= item.name %></h4>
+                                    <p class="item-price">$<%= item.price.toFixed(2) %> × <%= item.quantity %></p>
+                                </div>
+                                <div class="item-total">
+                                    $<%= (item.price * item.quantity).toFixed(2) %>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+                    <div class="order-total">
+                        <strong>Total: $<%= order.totalAmount.toFixed(2) %></strong>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="success-actions">
+                    <a href="/shop" class="back-to-shop-btn">← Back to Shop</a>
+                    <a href="/shop/orders" class="view-orders-btn">View My Orders</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Load CSS for order success -->
+<style>
+.order-success-section {
+    padding: 50px 20px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 60vh;
+}
+
+.success-content {
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+}
+
+/* Confetti Animation */
+.confetti-container {
+    position: absolute;
+    top: -50px;
+    left: 0;
+    right: 0;
+    height: 100px;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #ff6b6b;
+    animation: confetti-fall 3s linear infinite;
+}
+
+.confetti:nth-child(1) { left: 10%; background: #ff6b6b; animation-delay: 0s; }
+.confetti:nth-child(2) { left: 30%; background: #4ecdc4; animation-delay: 0.5s; }
+.confetti:nth-child(3) { left: 50%; background: #45b7d1; animation-delay: 1s; }
+.confetti:nth-child(4) { left: 70%; background: #96ceb4; animation-delay: 1.5s; }
+.confetti:nth-child(5) { left: 90%; background: #feca57; animation-delay: 2s; }
+
+@keyframes confetti-fall {
+    0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(500px) rotate(720deg); opacity: 0; }
+}
+
+/* Order Details Card */
+.order-details-card {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    margin-top: 60px;
+}
+
+.success-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.success-icon {
+    font-size: 4rem;
+    margin-bottom: 10px;
+}
+
+.success-header h2 {
+    color: #2d3436;
+    margin-bottom: 10px;
+}
+
+.order-number {
+    color: #636e72;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+/* Information Sections */
+.delivery-info, .payment-info, .order-items {
+    margin-bottom: 25px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.delivery-info h3, .payment-info h3, .order-items h3 {
+    color: #2d3436;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+}
+
+.delivery-date, .delivery-address, .payment-method, .payment-amount {
+    margin-bottom: 10px;
+}
+
+.wallet-payment {
+    color: #00b894;
+    font-weight: 600;
+}
+
+.cod-payment {
+    color: #e17055;
+    font-weight: 600;
+}
+
+.wallet-deduction {
+    margin-top: 10px;
+    padding: 10px;
+    background: #d1f2eb;
+    border-radius: 5px;
+}
+
+.deduction-text {
+    color: #00b894;
+    font-weight: 600;
+}
+
+/* Order Items */
+.items-list {
+    margin-bottom: 15px;
+}
+
+.order-item {
+    display: flex;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.order-item:last-child {
+    border-bottom: none;
+}
+
+.item-image {
+    width: 60px;
+    height: 60px;
+    margin-right: 15px;
+}
+
+.item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.item-details {
+    flex: 1;
+}
+
+.item-details h4 {
+    margin: 0 0 5px 0;
+    color: #2d3436;
+}
+
+.item-price {
+    color: #636e72;
+    margin: 0;
+}
+
+.item-total {
+    font-weight: 600;
+    color: #2d3436;
+}
+
+.order-total {
+    text-align: right;
+    font-size: 1.2rem;
+    color: #2d3436;
+    padding-top: 15px;
+    border-top: 2px solid #ddd;
+}
+
+/* Action Buttons */
+.success-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+.back-to-shop-btn, .view-orders-btn {
+    padding: 12px 25px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.back-to-shop-btn {
+    background: #74b9ff;
+    color: white;
+}
+
+.back-to-shop-btn:hover {
+    background: #0984e3;
+    transform: translateY(-2px);
+}
+
+.view-orders-btn {
+    background: #00b894;
+    color: white;
+}
+
+.view-orders-btn:hover {
+    background: #00a085;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .order-details-card {
+        padding: 20px;
+        margin: 20px 10px;
+    }
+    
+    .success-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .back-to-shop-btn, .view-orders-btn {
+        width: 100%;
+        max-width: 250px;
+        text-align: center;
+    }
+}
+</style>
+
+<script>
+// Add some interactivity
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate success icon
+    const successIcon = document.querySelector('.success-icon');
+    if (successIcon) {
+        successIcon.style.transform = 'scale(0)';
+        setTimeout(() => {
+            successIcon.style.transition = 'transform 0.5s ease-out';
+            successIcon.style.transform = 'scale(1)';
+        }, 500);
+    }
+    
+    // Show success message
+    console.log('Order confirmed successfully! 🎉');
+});
+</script>
+
+<%- include('../partials/footer') %>

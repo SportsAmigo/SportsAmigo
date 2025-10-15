@@ -15,8 +15,21 @@
                     <a href="/events/basketball">Basketball</a>
                 </div>
             </li>
+            <li><a href="/shop">SHOP</a></li>
             <li><a href="/contact">CONTACT</a></li>
-            <li><a href="/login">LOGIN</a></li>
+            <% if (user && user.email) { %>
+                <li><a href="/shop/cart">🛒 Cart (<span id="cartCount"><%= cartCount || 0 %></span>)</a></li>
+                <li class="dropdown">
+                    <a href="#"><%= user.first_name || user.email %></a>
+                    <div class="dropdown-content">
+                        <a href="/shop/orders">My Orders</a>
+                        <a href="/<%= user.role %>/dashboard">Dashboard</a>
+                        <a href="/logout">Logout</a>
+                    </div>
+                </li>
+            <% } else { %>
+                <li><a href="/login">LOGIN</a></li>
+            <% } %>
         </ul>
     </div>
     <i class="fa fa-bars" onclick="showMenu()"></i>

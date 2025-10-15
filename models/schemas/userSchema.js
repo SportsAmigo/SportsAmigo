@@ -43,6 +43,18 @@ const userSchema = new Schema({
     preferred_sports: String,  // For players (comma-separated)
     organization_name: String, // For organizers
     team_name: String          // For managers
+  },
+  // Wallet balance for players
+  walletBalance: {
+    type: Number,
+    default: 1000, // Starting balance of ₹1000
+    min: 0
+  },
+  // Wallet status
+  walletStatus: {
+    type: String,
+    enum: ['Active', 'Suspended', 'Closed'],
+    default: 'Active'
   }
 });
 

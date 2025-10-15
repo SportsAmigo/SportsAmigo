@@ -1,0 +1,294 @@
+<%- include('../partials/header') %>
+
+<section class="header shop-header">
+    <nav>
+        <a href="/"><img src="/images/sports-amigo-logo.png" alt="SportsAmigo Association Logo"></a>
+        <div class="nav-links" id="navLinks">
+            <i class="fa fa-times" onclick="hideMenu()"></i>
+            <ul>
+                <li><a href="/">HOME</a></li>
+                <li><a href="/about">ABOUT</a></li>
+                <li class="dropdown">
+                    <a href="/events">EVENTS</a>
+                    <div class="dropdown-content">
+                        <a href="/events/football">Football</a>
+                        <a href="/events/cricket">Cricket</a>
+                        <a href="/events/basketball">Basketball</a>
+                    </div>
+                </li>
+                <li><a href="/shop">SHOP</a></li>
+                <li><a href="/contact">CONTACT</a></li>
+                <li><a href="/cart" class="active cart-link">🛒 Cart (<span id="cartCount"><%= cart.itemCount || 0 %></span>)</a></li>
+                <% if (shopUser) { %>
+                    <li class="dropdown">
+                        <a href="#"><%= shopUser.firstName %></a>
+                        <div class="dropdown-content">
+                            <% if (shopUser.role === 'player') { %>
+                                <a href="/wallet">💰 My Wallet</a>
+                            <% } %>
+                            <a href="/shop/orders">My Orders</a>
+                            <a href="#" onclick="shopLogout()">Logout</a>
+                        </div>
+                    </li>
+                <% } else { %>
+                    <li><a href="/shop-login">LOGIN</a></li>
+                <% } %>
+            </ul>
+        </div>
+        <i class="fa fa-bars" onclick="showMenu()"></i>
+    </nav>
+
+    <div class="text-box">
+        <h1>Shopping Cart</h1>
+        <p>Review your selected items before checkout.</p>
+    </div>
+</section>
+
+<!-- Cart Section -->
+<section class="cart-section">
+    <div class="container">
+        <div class="cart-content">
+            <div class="cart-items">
+                <h2>Your Cart Items</h2>
+                
+                <% if (cart && cart.items && cart.items.length > 0) { %>
+                    <div class="cart-items-list">
+                        <% cart.items.forEach(item => { %>
+                            <div class="cart-item" data-item-id="<%= item.itemId %>">
+                                <div class="item-image">
+                                    <img src="<%= item.imageUrl || '/images/shop/default-product.jpg' %>" alt="<%= item.name %>" />
+                                </div>
+                                <div class="item-details">
+                                    <h3><%= item.name %></h3>
+                                    <p class="item-price">$<%= item.price.toFixed(2) %></p>
+                                </div>
+                                <div class="item-quantity">
+                                    <label>Quantity:</label>
+                                    <div class="quantity-controls">
+                                        <button class="quantity-decrease" data-item-id="<%= item.itemId %>">-</button>
+                                        <input type="number" class="quantity-input" value="<%= item.quantity %>" min="1" max="99" 
+                                               data-item-id="<%= item.itemId %>" />
+                                        <button class="quantity-increase" data-item-id="<%= item.itemId %>">+</button>
+                                    </div>
+                                </div>
+                                <div class="item-total">
+                                    <p>$<%= (item.price * item.quantity).toFixed(2) %></p>
+                                </div>
+                                <div class="item-actions">
+                                    <button class="remove-btn" onclick="removeFromCart('<%= item.itemId %>')">
+                                        🗑️ Remove
+                                    </button>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+                <% } else { %>
+                    <div class="empty-cart">
+                        <div class="empty-cart-icon">🛒</div>
+                        <h3>Your cart is empty</h3>
+                        <p>Add some amazing sports products to get started!</p>
+                        <a href="/shop" class="continue-shopping-btn">Continue Shopping</a>
+                    </div>
+                <% } %>
+            </div>
+
+            <!-- Cart Summary -->
+            <% if (cart && cart.items && cart.items.length > 0) { %>
+                <div class="cart-summary">
+                    <h2>Order Summary</h2>
+                    <div class="summary-details">
+                        <div class="summary-row">
+                            <span>Items (<%= cart.itemCount %>):</span>
+                            <span>$<%= cart.totalAmount.toFixed(2) %></span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Shipping:</span>
+                            <span class="free-shipping">FREE</span>
+                        </div>
+                        <div class="summary-row total">
+                            <strong>
+                                <span>Total:</span>
+                                <span>$<%= cart.totalAmount.toFixed(2) %></span>
+                            </strong>
+                        </div>
+                    </div>
+
+                    <div class="checkout-info">
+                        <p>Review your items and proceed to secure checkout for shipping and payment details.</p>
+                        <% if (!shopUser) { %>
+                            <div class="login-required">
+                                <p><strong>Login required to complete purchase</strong></p>
+                                <p>You'll be redirected to login before checkout.</p>
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <div class="cart-actions">
+                        <a href="/shop" class="continue-shopping">← Continue Shopping</a>
+                        <% if (shopUser) { %>
+                            <button class="checkout-btn" onclick="goToCheckout()">
+                                Proceed to Checkout
+                            </button>
+                        <% } else { %>
+                            <button class="checkout-btn" onclick="proceedToLogin()">
+                                Login to Purchase
+                            </button>
+                        <% } %>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</section>
+
+<!-- Loading Modal -->
+<div id="loadingModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-body loading">
+            <div class="spinner"></div>
+            <p>Processing your order...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Success Message Modal -->
+<div id="successModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('successModal')">&times;</span>
+        <div class="modal-body">
+            <h2>✅ Success!</h2>
+            <p id="successMessage">Cart updated successfully!</p>
+        </div>
+    </div>
+</div>
+
+<!-- Error Message Modal -->
+<div id="errorModal" class="modal" style="display: none;">
+    <div class="modal-content error">
+        <span class="close" onclick="closeModal('errorModal')">&times;</span>
+        <div class="modal-body">
+            <h2>❌ Error</h2>
+            <p id="errorMessage">Something went wrong!</p>
+        </div>
+    </div>
+</div>
+
+<!-- Load CSS and JS -->
+<link rel="stylesheet" href="/css/shop.css">
+<script src="/js/shop.js"></script>
+
+<script>
+// Cart-specific functions
+function proceedToLogin() {
+    // Store cart in session and redirect to login
+    window.location.href = '/shop-login?returnUrl=/checkout';
+}
+
+function goToCheckout() {
+    window.location.href = '/checkout';
+}
+
+// Event listeners for cart controls using data attributes
+document.addEventListener('DOMContentLoaded', function() {
+    // Quantity decrease buttons
+    document.querySelectorAll('.quantity-decrease').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const itemId = this.dataset.itemId;
+            const currentQty = parseInt(this.parentElement.querySelector('.quantity-input').value);
+            if (currentQty > 1) {
+                updateQuantity(itemId, currentQty - 1);
+            }
+        });
+    });
+    
+    // Quantity increase buttons
+    document.querySelectorAll('.quantity-increase').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const itemId = this.dataset.itemId;
+            const currentQty = parseInt(this.parentElement.querySelector('.quantity-input').value);
+            updateQuantity(itemId, currentQty + 1);
+        });
+    });
+    
+    // Remove item buttons
+    document.querySelectorAll('.remove-item').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const itemId = this.dataset.itemId;
+            removeFromCart(itemId);
+        });
+    });
+});
+
+// Update cart quantity
+function updateQuantity(itemId, quantity) {
+    fetch('/cart/update', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ itemId: itemId, quantity: quantity })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Reload page to update cart display
+            window.location.reload();
+        } else {
+            alert('Error updating cart: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error updating cart');
+    });
+}
+
+// Remove item from cart
+function removeFromCart(itemId) {
+    if (confirm('Remove this item from cart?')) {
+        fetch('/cart/remove', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ itemId: itemId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Reload page to update cart display
+                window.location.reload();
+            } else {
+                alert('Error removing item: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error removing item');
+        });
+    }
+}
+
+// Clear entire cart
+function clearCart() {
+    if (confirm('Remove all items from cart?')) {
+        fetch('/cart/clear', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert('Error clearing cart: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error clearing cart');
+        });
+    }
+}
+</script>
+
+<%- include('../partials/footer') %>

@@ -12,7 +12,11 @@ const isLoggedIn = (req, res, next) => {
 
 // Home page with role selection
 router.get('/', (req, res) => {
-    res.render('index');
+    res.render('index', {
+        title: 'SportsAmigo - Home',
+        cartCount: res.locals.cartCount || 0,
+        user: res.locals.user || null
+    });
 });
 
 // Login page for each role

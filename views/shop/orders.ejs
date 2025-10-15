@@ -1,0 +1,165 @@
+<%- include('../partials/header') %>
+
+<section class="header shop-header">
+    <nav>
+        <a href="/"><img src="/images/sports-amigo-logo.png" alt="SportsAmigo Association Logo"></a>
+        <div class="nav-links" id="navLinks">
+            <i class="fa fa-times" onclick="hideMenu()"></i>
+            <ul>
+                <li><a href="/">HOME</a></li>
+                <li><a href="/about">ABOUT</a></li>
+                <li class="dropdown">
+                    <a href="/events">EVENTS</a>
+                    <div class="dropdown-content">
+                        <a href="/events/football">Football</a>
+                        <a href="/events/cricket">Cricket</a>
+                        <a href="/events/basketball">Basketball</a>
+                    </div>
+                </li>
+                <li><a href="/shop">SHOP</a></li>
+                <li><a href="/contact">CONTACT</a></li>
+                <li><a href="/shop/cart">🛒 Cart (<span id="cartCount"><%= cartCount || 0 %></span>)</a></li>
+                <li class="dropdown">
+                    <a href="#" class="active"><%= user.first_name %></a>
+                    <div class="dropdown-content">
+                        <% if (user.role === 'player') { %>
+                            <a href="/wallet">💰 My Wallet</a>
+                        <% } %>
+                        <a href="/shop/orders" class="active">My Orders</a>
+                        <a href="/logout">Logout</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <i class="fa fa-bars" onclick="showMenu()"></i>
+    </nav>
+
+    <div class="text-box">
+        <h1>My Orders</h1>
+        <p>Track your purchase history and order status.</p>
+    </div>
+</section>
+
+<!-- Orders Section -->
+<section class="orders-section">
+    <div class="container">
+        <h1>Order History</h1>
+        
+        <% if (orders && orders.length > 0) { %>
+            <div class="orders-list">
+                <% orders.forEach(order => { %>
+                    <div class="order-card">
+                        <div class="order-header">
+                            <div class="order-info">
+                                <h3>Order #<%= order.orderNumber %></h3>
+                                <p class="order-date">
+                                    Placed on <%= new Date(order.orderDate).toLocaleDateString('en-US', { 
+                                        year: 'numeric', 
+                                        month: 'long', 
+                                        day: 'numeric' 
+                                    }) %>
+                                </p>
+                            </div>
+                            <div class="order-status">
+                                <span class="status-badge status-<%= order.status.toLowerCase().replace(/\s+/g, '-') %>">
+                                    <%= order.status %>
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="order-summary">
+                            <div class="order-details">
+                                <p><strong>Total Amount:</strong> $<%= order.totalAmount.toFixed(2) %></p>
+                                <p><strong>Items:</strong> <%= order.itemCount %> item<%= order.itemCount !== 1 ? 's' : '' %></p>
+                                <p><strong>Payment Method:</strong> <%= order.paymentMethod %></p>
+                                <% if (order.expectedDelivery) { %>
+                                    <p><strong>Expected Delivery:</strong> 
+                                        <%= new Date(order.expectedDelivery).toLocaleDateString() %>
+                                    </p>
+                                <% } %>
+                                <% if (order.deliveredAt) { %>
+                                    <p><strong>Delivered On:</strong> 
+                                        <%= new Date(order.deliveredAt).toLocaleDateString() %>
+                                    </p>
+                                <% } %>
+                            </div>
+                        </div>
+                        
+                        <div class="order-items-preview">
+                            <h4>Items:</h4>
+                            <div class="items-grid">
+                                <% order.orderItems.slice(0, 3).forEach(item => { %>
+                                    <div class="item-preview">
+                                        <img src="<%= item.imageUrl || '/images/shop/default-product.jpg' %>" alt="<%= item.name %>" />
+                                        <div class="item-info">
+                                            <p class="item-name"><%= item.name %></p>
+                                            <p class="item-quantity">Qty: <%= item.quantity %></p>
+                                            <p class="item-price">$<%= item.price.toFixed(2) %></p>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                                <% if (order.orderItems.length > 3) { %>
+                                    <div class="more-items">
+                                        <p>+<%= order.orderItems.length - 3 %> more items</p>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                        
+                        <div class="order-actions">
+                            <a href="/shop/order/<%= order._id %>" class="view-details-btn">View Details</a>
+                            <% if (order.status === 'Delivered') { %>
+                                <button class="reorder-btn" onclick="reorderItems('<%= order._id %>')">Reorder</button>
+                            <% } %>
+                            <% if (order.status === 'Placed' || order.status === 'Processing') { %>
+                                <button class="cancel-order-btn" onclick="cancelOrder('<%= order._id %>')">Cancel Order</button>
+                            <% } %>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        <% } else { %>
+            <div class="no-orders">
+                <div class="no-orders-icon">📦</div>
+                <h3>No orders yet</h3>
+                <p>You haven't placed any orders yet. Start shopping to see your orders here!</p>
+                <a href="/shop" class="start-shopping-btn">Start Shopping</a>
+            </div>
+        <% } %>
+        
+        <!-- Pagination (if needed in future) -->
+        <!-- <div class="pagination">
+            <button class="prev-btn" disabled>Previous</button>
+            <span class="page-info">Page 1 of 1</span>
+            <button class="next-btn" disabled>Next</button>
+        </div> -->
+    </div>
+</section>
+
+<!-- Success Message Modal -->
+<div id="successModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('successModal')">&times;</span>
+        <div class="modal-body">
+            <h2>✅ Success!</h2>
+            <p id="successMessage">Action completed successfully!</p>
+        </div>
+    </div>
+</div>
+
+<!-- Error Message Modal -->
+<div id="errorModal" class="modal" style="display: none;">
+    <div class="modal-content error">
+        <span class="close" onclick="closeModal('errorModal')">&times;</span>
+        <div class="modal-body">
+            <h2>❌ Error</h2>
+            <p id="errorMessage">Something went wrong!</p>
+        </div>
+    </div>
+</div>
+
+<!-- Load CSS and JS -->
+<link rel="stylesheet" href="/css/shop.css">
+<script src="/js/shop.js"></script>
+
+<%- include('../partials/footer') %>

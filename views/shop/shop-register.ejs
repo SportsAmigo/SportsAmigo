@@ -1,0 +1,389 @@
+<%- include('../partials/header') %>
+
+<section class="header shop-header">
+    <nav>
+        <a href="/"><img src="/images/sports-amigo-logo.png" alt="SportsAmigo Association Logo"></a>
+        <div class="nav-links" id="navLinks">
+            <i class="fa fa-times" onclick="hideMenu()"></i>
+            <ul>
+                <li><a href="/">HOME</a></li>
+                <li><a href="/about">ABOUT</a></li>
+                <li><a href="/shop">SHOP</a></li>
+                <li><a href="/contact">CONTACT</a></li>
+                <li><a href="/cart" class="cart-link">
+                    🛒 Cart (<span id="cartCount"><%= cart.itemCount || 0 %></span>)
+                </a></li>
+            </ul>
+        </div>
+        <i class="fa fa-bars" onclick="showMenu()"></i>
+    </nav>
+
+    <div class="text-box">
+        <h1>Create Your Account</h1>
+        <p>Join SportsAmigo and get $500 welcome bonus!</p>
+    </div>
+</section>
+
+<!-- Registration Section -->
+<section class="login-section">
+    <div class="container">
+        <div class="login-content">
+            <!-- Cart Summary Sidebar -->
+            <div class="cart-summary-sidebar">
+                <h2>🛒 Your Order</h2>
+                
+                <% if (cart && cart.items && cart.items.length > 0) { %>
+                    <div class="cart-items">
+                        <% cart.items.forEach(item => { %>
+                            <div class="cart-item-mini">
+                                <img src="<%= item.imageUrl || '/images/shop/default-product.jpg' %>" 
+                                     alt="<%= item.name %>" class="item-image-mini" />
+                                <div class="item-details-mini">
+                                    <h4><%= item.name %></h4>
+                                    <p>Qty: <%= item.quantity %> × $<%= item.price.toFixed(2) %></p>
+                                    <p class="item-total">$<%= (item.price * item.quantity).toFixed(2) %></p>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+                    
+                    <div class="order-total">
+                        <div class="total-row">
+                            <span>Items (<%= cart.itemCount %>):</span>
+                            <span>$<%= cart.totalAmount.toFixed(2) %></span>
+                        </div>
+                        <div class="total-row">
+                            <span>Shipping:</span>
+                            <span class="free-shipping">FREE</span>
+                        </div>
+                        <div class="total-row grand-total">
+                            <strong>
+                                <span>Total:</span>
+                                <span>$<%= cart.totalAmount.toFixed(2) %></span>
+                            </strong>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <div class="empty-cart-mini">
+                        <p>Your cart is empty</p>
+                        <a href="/shop" class="continue-shopping-btn">Continue Shopping</a>
+                    </div>
+                <% } %>
+                
+                <!-- Welcome Bonus -->
+                <div class="welcome-bonus">
+                    <h3>🎉 Welcome Bonus</h3>
+                    <p>Create an account and get <strong>$500</strong> credited to your wallet instantly!</p>
+                </div>
+            </div>
+
+            <!-- Registration Form -->
+            <div class="login-form-container">
+                <div class="login-form">
+                    <h2>🚀 Create Your Account</h2>
+                    <p class="login-subtitle">Join thousands of sports enthusiasts on SportsAmigo</p>
+                    
+                    <% if (error) { %>
+                        <div class="error-message">
+                            <i class="fa fa-exclamation-circle"></i>
+                            <%= error %>
+                        </div>
+                    <% } %>
+                    
+                    <% if (success) { %>
+                        <div class="success-message">
+                            <i class="fa fa-check-circle"></i>
+                            <%= success %>
+                        </div>
+                    <% } %>
+                    
+                    <form method="POST" action="/shop-login/register" id="shopRegisterForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="firstName">First Name</label>
+                                <div class="input-group">
+                                    <i class="fa fa-user input-icon"></i>
+                                    <input type="text" id="firstName" name="firstName" 
+                                           placeholder="Enter your first name" required />
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="lastName">Last Name</label>
+                                <div class="input-group">
+                                    <i class="fa fa-user input-icon"></i>
+                                    <input type="text" id="lastName" name="lastName" 
+                                           placeholder="Enter your last name" required />
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <div class="input-group">
+                                <i class="fa fa-envelope input-icon"></i>
+                                <input type="email" id="email" name="email" 
+                                       placeholder="Enter your email" required />
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="password">Password</label>
+                                <div class="input-group">
+                                    <i class="fa fa-lock input-icon"></i>
+                                    <input type="password" id="password" name="password" 
+                                           placeholder="Create a password" required minlength="6" />
+                                    <button type="button" class="toggle-password" onclick="togglePassword('password')">
+                                        <i class="fa fa-eye" id="toggleIcon1"></i>
+                                    </button>
+                                </div>
+                                <small class="field-hint">Minimum 6 characters</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="confirmPassword">Confirm Password</label>
+                                <div class="input-group">
+                                    <i class="fa fa-lock input-icon"></i>
+                                    <input type="password" id="confirmPassword" name="confirmPassword" 
+                                           placeholder="Confirm your password" required />
+                                    <button type="button" class="toggle-password" onclick="togglePassword('confirmPassword')">
+                                        <i class="fa fa-eye" id="toggleIcon2"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="login-btn register-btn">
+                                <i class="fa fa-user-plus"></i>
+                                Create Account & Get $500 Bonus
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="login-options">
+                        <div class="divider">
+                            <span>Already have an account?</span>
+                        </div>
+                        
+                        <a href="/shop-login" class="register-link login-link-alt">
+                            <i class="fa fa-sign-in"></i>
+                            Sign In to Your Account
+                        </a>
+                        
+                        <div class="back-options">
+                            <a href="/cart" class="back-to-cart">
+                                <i class="fa fa-arrow-left"></i>
+                                Back to Cart
+                            </a>
+                            <a href="/shop" class="continue-shopping">
+                                <i class="fa fa-shopping-bag"></i>
+                                Continue Shopping
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Security Notice -->
+                <div class="security-notice">
+                    <h3>🔒 Your Data is Safe</h3>
+                    <p>We use industry-standard encryption to protect your personal information. Your privacy is our priority, and we never share your data with third parties.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Load CSS -->
+<link rel="stylesheet" href="/css/shop-login.css">
+
+<!-- JavaScript -->
+<script>
+    // Toggle password visibility
+    function togglePassword(fieldId) {
+        const passwordInput = document.getElementById(fieldId);
+        const iconId = fieldId === 'password' ? 'toggleIcon1' : 'toggleIcon2';
+        const toggleIcon = document.getElementById(iconId);
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleIcon.classList.remove('fa-eye');
+            toggleIcon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            toggleIcon.classList.remove('fa-eye-slash');
+            toggleIcon.classList.add('fa-eye');
+        }
+    }
+    
+    // Form validation
+    document.getElementById('shopRegisterForm').addEventListener('submit', function(e) {
+        const firstName = document.getElementById('firstName').value.trim();
+        const lastName = document.getElementById('lastName').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        
+        // Basic validation
+        if (!firstName || !lastName || !email || !password || !confirmPassword) {
+            e.preventDefault();
+            showError('Please fill in all fields');
+            return;
+        }
+        
+        if (!isValidEmail(email)) {
+            e.preventDefault();
+            showError('Please enter a valid email address');
+            return;
+        }
+        
+        if (password.length < 6) {
+            e.preventDefault();
+            showError('Password must be at least 6 characters long');
+            return;
+        }
+        
+        if (password !== confirmPassword) {
+            e.preventDefault();
+            showError('Passwords do not match');
+            return;
+        }
+        
+        // Show loading state
+        const submitBtn = document.querySelector('.register-btn');
+        submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Creating Account...';
+        submitBtn.disabled = true;
+    });
+    
+    // Real-time password match validation
+    document.getElementById('confirmPassword').addEventListener('input', function() {
+        const password = document.getElementById('password').value;
+        const confirmPassword = this.value;
+        const submitBtn = document.querySelector('.register-btn');
+        
+        if (confirmPassword && password !== confirmPassword) {
+            this.style.borderColor = '#e74c3c';
+            submitBtn.disabled = true;
+        } else {
+            this.style.borderColor = '#e1e5e9';
+            submitBtn.disabled = false;
+        }
+    });
+    
+    // Email validation
+    function isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+    
+    // Show error message
+    function showError(message) {
+        // Remove existing error
+        const existingError = document.querySelector('.dynamic-error');
+        if (existingError) {
+            existingError.remove();
+        }
+        
+        // Create new error
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message dynamic-error';
+        errorDiv.innerHTML = `<i class="fa fa-exclamation-circle"></i> ${message}`;
+        
+        // Insert before form
+        const form = document.getElementById('shopRegisterForm');
+        form.parentNode.insertBefore(errorDiv, form);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (errorDiv.parentNode) {
+                errorDiv.remove();
+            }
+        }, 5000);
+    }
+    
+    // Focus on first input
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('firstName').focus();
+    });
+</script>
+
+<style>
+    /* Additional styles for registration form */
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 0;
+    }
+    
+    .form-row .form-group {
+        margin-bottom: 25px;
+    }
+    
+    .field-hint {
+        color: #666;
+        font-size: 0.8em;
+        margin-top: 5px;
+        display: block;
+    }
+    
+    .register-btn {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+    }
+    
+    .register-btn:hover:not(:disabled) {
+        box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3) !important;
+    }
+    
+    .login-link-alt {
+        background: #667eea !important;
+    }
+    
+    .login-link-alt:hover {
+        background: #5a67d8 !important;
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3) !important;
+    }
+    
+    .welcome-bonus {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-top: 20px;
+        text-align: center;
+    }
+    
+    .welcome-bonus h3 {
+        margin-bottom: 10px;
+        font-size: 1.1em;
+    }
+    
+    .welcome-bonus p {
+        margin: 0;
+        font-size: 0.9em;
+        line-height: 1.4;
+    }
+    
+    .success-message {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+        border-radius: 8px;
+        padding: 12px 15px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    @media (max-width: 768px) {
+        .form-row {
+            grid-template-columns: 1fr;
+            gap: 0;
+        }
+    }
+</style>
+
+<%- include('../partials/footer') %>

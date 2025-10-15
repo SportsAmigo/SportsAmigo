@@ -1,0 +1,196 @@
+<%- include('../partials/header') %>
+
+<section class="header shop-header">
+    <nav>
+        <a href="/"><img src="/images/sports-amigo-logo.png" alt="SportsAmigo Association Logo"></a>
+        <div class="nav-links" id="navLinks">
+            <i class="fa fa-times" onclick="hideMenu()"></i>
+            <ul>
+                <li><a href="/">HOME</a></li>
+                <li><a href="/about">ABOUT</a></li>
+                <li class="dropdown">
+                    <a href="/events">EVENTS</a>
+                    <div class="dropdown-content">
+                        <a href="/events/football">Football</a>
+                        <a href="/events/cricket">Cricket</a>
+                        <a href="/events/basketball">Basketball</a>
+                    </div>
+                </li>
+                <li><a href="/shop">SHOP</a></li>
+                <li><a href="/contact">CONTACT</a></li>
+                <li><a href="/shop/cart">🛒 Cart (0)</a></li>
+                <li class="dropdown">
+                    <a href="#"><%= user.first_name %></a>
+                    <div class="dropdown-content">
+                        <a href="/shop/orders">My Orders</a>
+                        <a href="/logout">Logout</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <i class="fa fa-bars" onclick="showMenu()"></i>
+    </nav>
+
+    <div class="text-box">
+        <h1>Order Confirmation</h1>
+        <p>Thank you for your purchase!</p>
+    </div>
+</section>
+
+<!-- Order Confirmation Section -->
+<section class="checkout-success-section">
+    <div class="container">
+        <div class="success-content">
+            <div class="success-icon">
+                <div class="checkmark">✓</div>
+            </div>
+            
+            <h1>Order Placed Successfully!</h1>
+            <p class="success-message">
+                Thank you for shopping with SportsAmigo! Your order has been confirmed and is being processed.
+            </p>
+
+            <!-- Order Details -->
+            <div class="order-details">
+                <h2>Order Information</h2>
+                <div class="order-info-grid">
+                    <div class="info-item">
+                        <strong>Order Number:</strong>
+                        <span><%= order.orderNumber %></span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Order Date:</strong>
+                        <span><%= new Date(order.orderDate).toLocaleDateString() %></span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Total Amount:</strong>
+                        <span class="total-amount">$<%= order.totalAmount.toFixed(2) %></span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Expected Delivery:</strong>
+                        <span><%= new Date(order.expectedDelivery).toLocaleDateString() %></span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Payment Method:</strong>
+                        <span><%= order.paymentMethod %></span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Order Status:</strong>
+                        <span class="status"><%= order.status %></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Items -->
+            <div class="order-items">
+                <h2>Items Ordered</h2>
+                <div class="items-list">
+                    <% order.orderItems.forEach(item => { %>
+                        <div class="order-item">
+                            <div class="item-image">
+                                <img src="<%= item.imageUrl || '/images/shop/default-product.jpg' %>" alt="<%= item.name %>" />
+                            </div>
+                            <div class="item-details">
+                                <h3><%= item.name %></h3>
+                                <p>Quantity: <%= item.quantity %></p>
+                                <p class="item-price">$<%= item.price.toFixed(2) %> each</p>
+                                <p class="item-total"><strong>Subtotal: $<%= (item.price * item.quantity).toFixed(2) %></strong></p>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            </div>
+
+            <!-- Shipping Address -->
+            <% if (order.shippingAddress && order.shippingAddress.street) { %>
+                <div class="shipping-info">
+                    <h2>Shipping Address</h2>
+                    <div class="address-details">
+                        <p><%= order.shippingAddress.street %></p>
+                        <p><%= order.shippingAddress.city %>, <%= order.shippingAddress.state %> <%= order.shippingAddress.zipCode %></p>
+                        <p><%= order.shippingAddress.country %></p>
+                    </div>
+                </div>
+            <% } %>
+
+            <!-- What's Next -->
+            <div class="next-steps">
+                <h2>What happens next?</h2>
+                <div class="steps-list">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3>Order Processing</h3>
+                            <p>We'll prepare your items and get them ready for shipping.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3>Shipment</h3>
+                            <p>Your order will be shipped and you'll receive a tracking number.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3>Delivery</h3>
+                            <p>Your order will arrive at your address within 3-7 business days.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <a href="/shop" class="continue-shopping-btn">Continue Shopping</a>
+                <a href="/shop/orders" class="view-orders-btn">View All Orders</a>
+                <a href="/shop/order/<%= order._id %>" class="track-order-btn">Track This Order</a>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="contact-info">
+                <p>
+                    <strong>Need help?</strong> 
+                    Contact our customer service at 
+                    <a href="mailto:support@sportsamigo.com">support@sportsamigo.com</a> 
+                    or call us at <a href="tel:+1234567890">+1 (234) 567-890</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Confetti Animation -->
+<div id="confetti-container"></div>
+
+<!-- Load CSS and JS -->
+<link rel="stylesheet" href="/css/shop.css">
+<script src="/js/shop.js"></script>
+<script>
+    // Simple confetti effect
+    function createConfetti() {
+        const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57'];
+        const confettiContainer = document.getElementById('confetti-container');
+        
+        for (let i = 0; i < 50; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.left = Math.random() * 100 + '%';
+            confetti.style.animationDelay = Math.random() * 3 + 's';
+            confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
+            confettiContainer.appendChild(confetti);
+            
+            // Remove confetti after animation
+            setTimeout(() => {
+                confetti.remove();
+            }, 5000);
+        }
+    }
+    
+    // Start confetti on page load
+    window.addEventListener('load', createConfetti);
+</script>
+
+<%- include('../partials/footer') %>
