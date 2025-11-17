@@ -1,0 +1,199 @@
+<!-- Finance Analytics Dashboard -->
+<div class="container-fluid">
+    <div class="row page-titles">
+        <div class="col-md-12 align-self-center">
+            <h4 class="text-themecolor">Financial Analytics</h4>
+        </div>
+    </div>
+    
+    <!-- Date Range Filter -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <select id="report-type" class="form-select form-control">
+                                <option value="monthly">Monthly Report</option>
+                                <option value="quarterly">Quarterly Report</option>
+                                <option value="yearly">Yearly Report</option>
+                                <option value="custom">Custom Date Range</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex">
+                                <div class="input-group me-2" style="max-width: 160px;">
+                                    <input type="date" id="from-date" class="form-control" placeholder="From Date">
+                                </div>
+                                <div class="input-group" style="max-width: 160px;">
+                                    <input type="date" id="to-date" class="form-control" placeholder="To Date">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-primary w-100" id="generate-report-btn">
+                                <i class="bi bi-bar-chart-line me-1"></i> Generate Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Financial Summary Cards -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Revenue</h5>
+                    <h2>₹85,625</h2>
+                    <p><i class="bi bi-arrow-up"></i> 15% increase from previous period</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Expenses</h5>
+                    <h2>₹58,875</h2>
+                    <p><i class="bi bi-arrow-down"></i> 8% decrease from previous period</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Net Profit</h5>
+                    <h2>₹26,750</h2>
+                    <p><i class="bi bi-arrow-up"></i> 22% increase from previous period</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Payments</h5>
+                    <h2>₹15,500</h2>
+                    <p><i class="bi bi-arrow-down"></i> 5% decrease from previous period</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Revenue Charts -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h4 class="card-title">Revenue by Source</h4>
+                    <div class="chart-placeholder py-5">
+                        <i class="bi bi-bar-chart-line" style="font-size: 48px; color: #ccc;"></i>
+                        <p class="mt-3 text-muted">Graph yet to come</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h4 class="card-title">Monthly Revenue Trend</h4>
+                    <div class="chart-placeholder py-5">
+                        <i class="bi bi-graph-up" style="font-size: 48px; color: #ccc;"></i>
+                        <p class="mt-3 text-muted">Graph yet to come</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Expense Analysis -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h4 class="card-title">Expense Breakdown</h4>
+                    <div class="chart-placeholder py-5">
+                        <i class="bi bi-pie-chart" style="font-size: 48px; color: #ccc;"></i>
+                        <p class="mt-3 text-muted">Graph yet to come</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h4 class="card-title">Sport Revenue Comparison</h4>
+                    <div class="chart-placeholder py-5">
+                        <i class="bi bi-bar-chart" style="font-size: 48px; color: #ccc;"></i>
+                        <p class="mt-3 text-muted">Graph yet to come</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Revenue Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Revenue Breakdown</h4>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Revenue Source</th>
+                                    <th>Current Period</th>
+                                    <th>Previous Period</th>
+                                    <th>Change (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Player Registration Fees</td>
+                                    <td>₹39,375</td>
+                                    <td>₹36,000</td>
+                                    <td class="text-success">+9.4%</td>
+                                </tr>
+                                <tr>
+                                    <td>Team Registration Fees</td>
+                                    <td>₹27,000</td>
+                                    <td>₹24,000</td>
+                                    <td class="text-success">+12.5%</td>
+                                </tr>
+                                <tr>
+                                    <td>Tournament Entry Fees</td>
+                                    <td>₹12,000</td>
+                                    <td>₹9,000</td>
+                                    <td class="text-success">+33.3%</td>
+                                </tr>
+                                <tr>
+                                    <td>Sponsorships</td>
+                                    <td>₹7,250</td>
+                                    <td>₹6,300</td>
+                                    <td class="text-success">+15.4%</td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr class="bg-light">
+                                    <th>Total</th>
+                                    <th>₹85,625</th>
+                                    <th>₹75,300</th>
+                                    <th class="text-success">+13.7%</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Script removed as charts are replaced with placeholders
+</script> 

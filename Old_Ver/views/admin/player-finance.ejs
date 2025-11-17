@@ -1,0 +1,219 @@
+<!-- Player Finance Management -->
+<div class="container-fluid">
+    <div class="row page-titles">
+        <div class="col-md-12 align-self-center">
+            <h4 class="text-themecolor">Player Finance Management</h4>
+        </div>
+    </div>
+    
+    <!-- Filters and Search -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <input type="text" id="player-search" class="form-control search-input" placeholder="Search players...">
+                                <div class="input-group-append">
+                                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <select id="status-filter" class="form-select form-control">
+                                <option value="">All Payment Statuses</option>
+                                <option value="paid">Paid</option>
+                                <option value="pending">Pending</option>
+                                <option value="overdue">Overdue</option>
+                            </select>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="d-flex">
+                                <div class="input-group me-2" style="max-width: 160px;">
+                                    <input type="date" id="from-date" class="form-control" placeholder="From Date">
+                                </div>
+                                <div class="input-group" style="max-width: 160px;">
+                                    <input type="date" id="to-date" class="form-control" placeholder="To Date">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Player Finance Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Player Finance Records</h4>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Player Name</th>
+                                    <th>Email</th>
+                                    <th>Team</th>
+                                    <th>Fee Type</th>
+                                    <th>Amount</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="player-name">Rahul Sharma</td>
+                                    <td>rahul.s@example.com</td>
+                                    <td>Mumbai Tigers</td>
+                                    <td>Registration Fee</td>
+                                    <td>₹15,800</td>
+                                    <td>15 Jan 2024</td>
+                                    <td><span class="payment-status badge bg-success text-white p-2">Paid</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary view-btn"><i class="bi bi-eye"></i></button>
+                                        <button class="btn btn-sm btn-info edit-btn"><i class="bi bi-pencil"></i></button>
+                                        <button class="btn btn-sm btn-danger delete-btn"><i class="bi bi-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="player-name">Ananya Patel</td>
+                                    <td>ananya.p@example.com</td>
+                                    <td>Chennai Challengers</td>
+                                    <td>Tournament Fee</td>
+                                    <td>₹9,500</td>
+                                    <td>20 Feb 2024</td>
+                                    <td><span class="payment-status badge bg-warning text-white p-2">Pending</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary view-btn"><i class="bi bi-eye"></i></button>
+                                        <button class="btn btn-sm btn-info edit-btn"><i class="bi bi-pencil"></i></button>
+                                        <button class="btn btn-sm btn-danger delete-btn"><i class="bi bi-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="player-name">Aryan Mehta</td>
+                                    <td>aryan.m@example.com</td>
+                                    <td>Delhi Strikers</td>
+                                    <td>Annual Membership</td>
+                                    <td>₹22,500</td>
+                                    <td>5 Mar 2024</td>
+                                    <td><span class="payment-status badge bg-success text-white p-2">Paid</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary view-btn"><i class="bi bi-eye"></i></button>
+                                        <button class="btn btn-sm btn-info edit-btn"><i class="bi bi-pencil"></i></button>
+                                        <button class="btn btn-sm btn-danger delete-btn"><i class="bi bi-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="player-name">Ishita Reddy</td>
+                                    <td>ishita.r@example.com</td>
+                                    <td>Bangalore Blazers</td>
+                                    <td>Tournament Fee</td>
+                                    <td>₹9,500</td>
+                                    <td>10 Jan 2024</td>
+                                    <td><span class="payment-status badge bg-danger text-white p-2">Overdue</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary view-btn"><i class="bi bi-eye"></i></button>
+                                        <button class="btn btn-sm btn-info edit-btn"><i class="bi bi-pencil"></i></button>
+                                        <button class="btn btn-sm btn-danger delete-btn"><i class="bi bi-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="player-name">Vihaan Malhotra</td>
+                                    <td>vihaan.m@example.com</td>
+                                    <td>Kolkata Warriors</td>
+                                    <td>Registration Fee</td>
+                                    <td>₹15,800</td>
+                                    <td>15 Apr 2024</td>
+                                    <td><span class="payment-status badge bg-success text-white p-2">Paid</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary view-btn"><i class="bi bi-eye"></i></button>
+                                        <button class="btn btn-sm btn-info edit-btn"><i class="bi bi-pencil"></i></button>
+                                        <button class="btn btn-sm btn-danger delete-btn"><i class="bi bi-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="player-name">Aanya Joshi</td>
+                                    <td>aanya.j@example.com</td>
+                                    <td>Hyderabad Heroes</td>
+                                    <td>Annual Membership</td>
+                                    <td>₹22,500</td>
+                                    <td>1 Mar 2024</td>
+                                    <td><span class="payment-status badge bg-warning text-white p-2">Pending</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary view-btn"><i class="bi bi-eye"></i></button>
+                                        <button class="btn btn-sm btn-info edit-btn"><i class="bi bi-pencil"></i></button>
+                                        <button class="btn btn-sm btn-danger delete-btn"><i class="bi bi-trash"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <nav aria-label="Page navigation" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1">Previous</a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Finance Summary Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Financial Summary</h4>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total Revenue</h5>
+                                    <h3>₹95,600</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">Paid</h5>
+                                    <h3>₹54,100</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">Pending</h5>
+                                    <h3>₹32,000</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-danger text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">Overdue</h5>
+                                    <h3>₹9,500</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

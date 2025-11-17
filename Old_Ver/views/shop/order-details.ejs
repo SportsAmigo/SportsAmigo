@@ -1,0 +1,402 @@
+<%- include('../partials/header') %>
+
+<section class="header shop-header">
+    <nav>
+        <a href="/"><img src="/images/sports-amigo-logo.png" alt="SportsAmigo Association Logo"></a>
+        <div class="nav-links" id="navLinks">
+            <i class="fa fa-times" onclick="hideMenu()"></i>
+            <ul>
+                <li><a href="/">HOME</a></li>
+                <li><a href="/about">ABOUT</a></li>
+                <li class="dropdown">
+                    <a href="/events">EVENTS</a>
+                    <div class="dropdown-content">
+                        <a href="/events/football">Football</a>
+                        <a href="/events/cricket">Cricket</a>
+                        <a href="/events/basketball">Basketball</a>
+                    </div>
+                </li>
+                <li><a href="/shop" class="active">SHOP</a></li>
+                <li><a href="/contact">CONTACT</a></li>
+                <li><a href="/cart">🛒 Cart (<span id="cartCount"><%= cartCount || 0 %></span>)</a></li>
+                <% if (shopUser) { %>
+                    <li class="dropdown">
+                        <a href="#"><%= shopUser.firstName %></a>
+                        <div class="dropdown-content">
+                            <% if (shopUser.role === 'player') { %>
+                                <a href="/wallet">💰 My Wallet</a>
+                            <% } %>
+                            <a href="/shop/orders">My Orders</a>
+                            <a href="#" onclick="shopLogout()">Logout</a>
+                        </div>
+                    </li>
+                <% } else { %>
+                    <li><a href="/shop-login">LOGIN</a></li>
+                <% } %>
+            </ul>
+        </div>
+        <i class="fa fa-bars" onclick="showMenu()"></i>
+    </nav>
+
+    <div class="text-box">
+        <h1>Order Details</h1>
+        <p>View your order information and track delivery status</p>
+    </div>
+</section>
+
+<!-- Order Details Section -->
+<section class="order-details-section">
+    <div class="container">
+        <div class="order-details-content">
+            <!-- Order Header -->
+            <div class="order-header">
+                <div class="order-info">
+                    <h2>Order #<%= order.orderNumber %></h2>
+                    <p class="order-date">Placed on <%= new Date(order.orderDate).toLocaleDateString('en-US', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                    }) %></p>
+                </div>
+                <div class="order-status">
+                    <span class="status-badge status-<%= order.status.toLowerCase().replace(/\s+/g, '-') %>">
+                        <%= order.status %>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="order-summary-card">
+                <h3>Order Summary</h3>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <span class="label">Total Amount:</span>
+                        <span class="value">$<%= order.totalAmount.toFixed(2) %></span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Items Count:</span>
+                        <span class="value"><%= order.itemCount %> item<%= order.itemCount !== 1 ? 's' : '' %></span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Payment Method:</span>
+                        <span class="value"><%= order.paymentMethod %></span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Payment Status:</span>
+                        <span class="value payment-<%= order.paymentStatus.toLowerCase() %>"><%= order.paymentStatus %></span>
+                    </div>
+                    <% if (deliveryDate && deliveryDate !== 'To be determined') { %>
+                    <div class="summary-item">
+                        <span class="label">Expected Delivery:</span>
+                        <span class="value"><%= deliveryDate %></span>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Customer Information -->
+            <div class="customer-info-card">
+                <h3>Customer Information</h3>
+                <div class="customer-details">
+                    <p><strong>Name:</strong> <%= order.customerInfo.fullName %></p>
+                    <p><strong>Phone:</strong> <%= order.customerInfo.phone %></p>
+                    <% if (order.customerInfo.email) { %>
+                    <p><strong>Email:</strong> <%= order.customerInfo.email %></p>
+                    <% } %>
+                    <p><strong>Delivery Address:</strong> <%= order.customerInfo.address %></p>
+                </div>
+            </div>
+
+            <!-- Order Items -->
+            <div class="order-items-card">
+                <h3>Order Items (<%= order.orderItems.length %>)</h3>
+                <div class="items-list">
+                    <% order.orderItems.forEach(item => { %>
+                        <div class="order-item">
+                            <div class="item-image">
+                                <img src="<%= item.imageUrl || '/images/shop/default-product.jpg' %>" alt="<%= item.name %>" />
+                            </div>
+                            <div class="item-details">
+                                <h4><%= item.name %></h4>
+                                <p class="item-price">$<%= item.price.toFixed(2) %> each</p>
+                                <p class="item-quantity">Quantity: <%= item.quantity %></p>
+                            </div>
+                            <div class="item-total">
+                                <span class="total-price">$<%= (item.price * item.quantity).toFixed(2) %></span>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+                
+                <!-- Order Total -->
+                <div class="order-total">
+                    <div class="total-breakdown">
+                        <div class="total-row">
+                            <span>Subtotal:</span>
+                            <span>$<%= order.totalAmount.toFixed(2) %></span>
+                        </div>
+                        <div class="total-row">
+                            <span>Shipping:</span>
+                            <span>FREE</span>
+                        </div>
+                        <div class="total-row final-total">
+                            <strong>
+                                <span>Total:</span>
+                                <span>$<%= order.totalAmount.toFixed(2) %></span>
+                            </strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="order-actions">
+                <a href="/shop/orders" class="btn btn-secondary">← Back to Orders</a>
+                <% if (order.status === 'Delivered') { %>
+                    <button class="btn btn-primary" onclick="downloadInvoice('<%= order._id %>')">Download Invoice</button>
+                <% } %>
+                <% if (order.status === 'Confirmed' || order.status === 'Processing') { %>
+                    <button class="btn btn-danger" onclick="cancelOrder('<%= order._id %>')">Cancel Order</button>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Load CSS -->
+<style>
+.order-details-section {
+    padding: 50px 0;
+    background-color: #f8f9fa;
+    min-height: 70vh;
+}
+
+.order-details-content {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.order-header h2 {
+    margin: 0;
+    color: #333;
+    font-size: 28px;
+}
+
+.order-date {
+    color: #666;
+    margin: 5px 0 0 0;
+}
+
+.status-badge {
+    padding: 8px 16px;
+    border-radius: 25px;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 12px;
+}
+
+.status-confirmed { background-color: #28a745; color: white; }
+.status-processing { background-color: #ffc107; color: #333; }
+.status-shipped { background-color: #17a2b8; color: white; }
+.status-delivered { background-color: #28a745; color: white; }
+.status-cancelled { background-color: #dc3545; color: white; }
+
+.order-summary-card, .customer-info-card, .order-items-card {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.order-summary-card h3, .customer-info-card h3, .order-items-card h3 {
+    margin: 0 0 20px 0;
+    color: #333;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 10px;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.summary-item .label {
+    font-weight: 600;
+    color: #555;
+}
+
+.summary-item .value {
+    color: #333;
+}
+
+.payment-paid { color: #28a745; font-weight: bold; }
+.payment-pending { color: #ffc107; font-weight: bold; }
+.payment-failed { color: #dc3545; font-weight: bold; }
+
+.customer-details p {
+    margin: 10px 0;
+    color: #555;
+}
+
+.items-list {
+    margin-bottom: 30px;
+}
+
+.order-item {
+    display: flex;
+    align-items: center;
+    padding: 20px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.order-item:last-child {
+    border-bottom: none;
+}
+
+.item-image {
+    width: 80px;
+    height: 80px;
+    margin-right: 20px;
+}
+
+.item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.item-details {
+    flex: 1;
+}
+
+.item-details h4 {
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.item-details p {
+    margin: 5px 0;
+    color: #666;
+}
+
+.item-total {
+    text-align: right;
+}
+
+.total-price {
+    font-size: 18px;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.order-total {
+    border-top: 2px solid #eee;
+    padding-top: 20px;
+}
+
+.total-breakdown {
+    max-width: 300px;
+    margin-left: auto;
+}
+
+.total-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+}
+
+.final-total {
+    border-top: 1px solid #333;
+    margin-top: 10px;
+    padding-top: 10px;
+    font-size: 18px;
+}
+
+.order-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary { background-color: #007bff; color: white; }
+.btn-secondary { background-color: #6c757d; color: white; }
+.btn-danger { background-color: #dc3545; color: white; }
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+@media (max-width: 768px) {
+    .order-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+    
+    .summary-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .order-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+    
+    .order-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+</style>
+
+<script>
+function downloadInvoice(orderId) {
+    // This would typically generate and download a PDF invoice
+    alert('Invoice download functionality will be implemented soon!');
+}
+
+function cancelOrder(orderId) {
+    if (confirm('Are you sure you want to cancel this order?')) {
+        // This would send a request to cancel the order
+        alert('Order cancellation functionality will be implemented soon!');
+    }
+}
+</script>
+
+<%- include('../partials/footer') %>

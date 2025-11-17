@@ -1,0 +1,154 @@
+<%- include('../partials/header') %>
+
+<section class="header shop-header">
+    <nav>
+        <a href="/"><img src="/images/sports-amigo-logo.png" alt="SportsAmigo Association Logo"></a>
+        <div class="nav-links" id="navLinks">
+            <i class="fa fa-times" onclick="hideMenu()"></i>
+            <ul>
+                <li><a href="/">HOME</a></li>
+                <li><a href="/about">ABOUT</a></li>
+                <li class="dropdown">
+                    <a href="/events">EVENTS</a>
+                    <div class="dropdown-content">
+                        <a href="/events/football">Football</a>
+                        <a href="/events/cricket">Cricket</a>
+                        <a href="/events/basketball">Basketball</a>
+                    </div>
+                </li>
+                <li><a href="/shop" class="active">SHOP</a></li>
+                <li><a href="/contact">CONTACT</a></li>
+                <li><a href="/cart" class="cart-link">
+                    🛒 Cart (<span id="cartCount"><%= cart.itemCount || 0 %></span>)
+                </a></li>
+                <% if (shopUser) { %>
+                    <li class="dropdown">
+                        <a href="#"><%= shopUser.firstName %></a>
+                        <div class="dropdown-content">
+                            <% if (shopUser.role === 'player') { %>
+                                <a href="/wallet">💰 My Wallet</a>
+                            <% } %>
+                            <a href="/shop/orders">My Orders</a>
+                            <a href="#" onclick="shopLogout()">Logout</a>
+                        </div>
+                    </li>
+                <% } else { %>
+                    <li><a href="/shop-login">LOGIN</a></li>
+                <% } %>
+            </ul>
+        </div>
+        <i class="fa fa-bars" onclick="showMenu()"></i>
+    </nav>
+
+    <div class="text-box">
+        <h1>SportsAmigo Shop</h1>
+        <p>Discover premium sports gear, apparel, and equipment for all your sporting needs.</p>
+    </div>
+</section>
+
+<!-- Shop Section -->
+<section class="shop-section">
+    <div class="container">
+        <h1>Browse Products</h1>
+        
+        <!-- Search and Filter Bar -->
+        <div class="shop-controls">
+            <div class="search-container">
+                <input type="text" id="searchBox" placeholder="Search products..." value="<%= searchTerm %>" />
+                <button type="button" onclick="searchProducts()">🔍</button>
+            </div>
+            
+            <div class="filter-container">
+                <select id="categoryFilter" onchange="filterByCategory()">
+                    <option value="">All Categories</option>
+                    <% categories.forEach(category => { %>
+                        <option value="<%= category %>" <%= selectedCategory === category ? 'selected' : '' %>><%= category %></option>
+                    <% }); %>
+                </select>
+            </div>
+            
+            <div class="sort-container">
+                <select id="sortBy" onchange="sortProducts()">
+                    <option value="name">Sort by Name</option>
+                    <option value="price-low">Price: Low to High</option>
+                    <option value="price-high">Price: High to Low</option>
+                    <option value="newest">Newest First</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Products Grid -->
+        <div id="productsContainer" class="products-grid">
+            <% if (products && products.length > 0) { %>
+                <% products.forEach(product => { %>
+                    <div class="product-card" data-category="<%= product.category %>" data-price="<%= product.price %>" data-name="<%= product.name %>">
+                        <div class="product-image">
+                            <img src="<%= product.imageUrl || '/images/shop/default-product.jpg' %>" alt="<%= product.name %>" />
+                            <% if (product.stock === 0) { %>
+                                <div class="out-of-stock-overlay">Out of Stock</div>
+                            <% } %>
+                        </div>
+                        <div class="product-info">
+                            <h3><%= product.name %></h3>
+                            <p class="product-category"><%= product.category %></p>
+                            <p class="product-description"><%= product.description.substring(0, 100) %>...</p>
+                            <div class="product-price">$<%= product.price.toFixed(2) %></div>
+                            <% if (product.stock > 0) { %>
+                                <button 
+                                    class="add-to-cart-btn" 
+                                    data-product-id="<%= product._id %>"
+                                    onclick="addToCart('<%= product._id %>')"
+                                >
+                                    🛒 Add to Cart
+                                    </button>
+                            <% } else { %>
+                                <button class="add-to-cart-btn disabled" disabled>
+                                    ❌ Out of Stock
+                                </button>
+                            <% } %>
+                        </div>
+                    </div>
+                <% }); %>
+            <% } else { %>
+                <div class="no-products">
+                    <h3>No products found</h3>
+                    <p>Try adjusting your search or filter criteria.</p>
+                </div>
+            <% } %>
+        </div>
+
+        <!-- Loading indicator for AJAX searches -->
+        <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+            <div class="spinner"></div>
+            <p>Loading products...</p>
+        </div>
+    </div>
+</section>
+
+<!-- Success Message Modal -->
+<div id="successModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('successModal')">&times;</span>
+        <div class="modal-body">
+            <h2>✅ Success!</h2>
+            <p id="successMessage">Item added to cart successfully!</p>
+        </div>
+    </div>
+</div>
+
+<!-- Error Message Modal -->
+<div id="errorModal" class="modal" style="display: none;">
+    <div class="modal-content error">
+        <span class="close" onclick="closeModal('errorModal')">&times;</span>
+        <div class="modal-body">
+            <h2>❌ Error</h2>
+            <p id="errorMessage">Something went wrong!</p>
+        </div>
+    </div>
+</div>
+
+<!-- Load CSS and JS -->
+<link rel="stylesheet" href="/css/shop.css">
+<script src="/js/shop.js"></script>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,294 @@
+<!-- Activity Logs Page -->
+<div class="container-fluid mt-4">
+    <!-- Search and Filters -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="Search activities..." id="activitySearchInput">
+                <button class="btn btn-primary" type="button">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+        <div class="col-md-6 text-end">
+            <div class="btn-group">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" data-filter="all">All Activities</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="registration">User Registrations</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="event_creation">Event Creation</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="team_creation">Team Creation</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity Timeline -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Activity Timeline</h5>
+            <span class="badge bg-primary"><%= activities ? activities.length : 0 %> Activities</span>
+        </div>
+        <div class="card-body p-0">
+            <% if (activities && activities.length > 0) { %>
+                <div class="activity-timeline p-3">
+                    <% activities.forEach((activity, index) => { %>
+                        <div class="activity-item d-flex mb-3 pb-3 <%= index < activities.length - 1 ? 'border-bottom' : '' %>">
+                            <div class="activity-icon me-3">
+                                <% if (activity.type === 'registration') { %>
+                                    <div class="rounded-circle bg-primary bg-opacity-10 p-2">
+                                        <i class="fas fa-user-plus text-primary"></i>
+                                    </div>
+                                <% } else if (activity.type === 'event_creation') { %>
+                                    <div class="rounded-circle bg-success bg-opacity-10 p-2">
+                                        <i class="fas fa-calendar-plus text-success"></i>
+                                    </div>
+                                <% } else if (activity.type === 'team_creation') { %>
+                                    <div class="rounded-circle bg-info bg-opacity-10 p-2">
+                                        <i class="fas fa-users-cog text-info"></i>
+                                    </div>
+                                <% } else { %>
+                                    <div class="rounded-circle bg-secondary bg-opacity-10 p-2">
+                                        <i class="fas fa-cogs text-secondary"></i>
+                                    </div>
+                                <% } %>
+                            </div>
+                            <div class="activity-content flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                    <h6 class="mb-0 fw-semibold">
+                                        <% if (activity.user && activity.user.name) { %>
+                                            <%= activity.user.name %>
+                                        <% } else if (activity.user && activity.user.id) { %>
+                                            User ID: <%= activity.user.id %>
+                                        <% } else { %>
+                                            System
+                                        <% } %>
+                                    </h6>
+                                    <small class="text-muted">
+                                        <%= new Date(activity.timestamp).toLocaleString('en-US', { 
+                                            month: 'short', 
+                                            day: 'numeric', 
+                                            year: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        }) %>
+                                    </small>
+                                </div>
+                                <p class="mb-0"><%= activity.description %></p>
+                                <% if (activity.user && activity.user.role) { %>
+                                    <small class="text-muted">Role: <%= activity.user.role.charAt(0).toUpperCase() + activity.user.role.slice(1) %></small>
+                                <% } %>
+                                <% if (activity.route) { %>
+                                    <div class="mt-2">
+                                        <a href="<%= activity.route %>" class="btn btn-sm btn-outline-primary">View Details</a>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            <% } else { %>
+                <div class="text-center py-5">
+                    <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                    <h5>No activities found</h5>
+                    <p class="text-muted">There are no recent activities to display.</p>
+                </div>
+            <% } %>
+        </div>
+        <div class="card-footer bg-white">
+            <nav aria-label="Activity pagination">
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1">Previous</a>
+                    </li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+    
+    <!-- Activity Summary -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Activity Summary</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <canvas id="activityTypeChart" height="200"></canvas>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="border-bottom pb-2 mb-3">Most Active Users</h6>
+                    <div id="most-active-users">
+                        <% 
+                        // Count activities by user
+                        const userActivityCounts = {};
+                        if (activities && activities.length > 0) {
+                            activities.forEach(activity => {
+                                if (activity.user && activity.user.id) {
+                                    const userId = activity.user.id.toString();
+                                    if (!userActivityCounts[userId]) {
+                                        userActivityCounts[userId] = {
+                                            name: activity.user.name,
+                                            role: activity.user.role,
+                                            count: 0
+                                        };
+                                    }
+                                    userActivityCounts[userId].count++;
+                                }
+                            });
+                        }
+                        
+                        // Convert to array and sort by count
+                        const topUsers = Object.values(userActivityCounts)
+                            .sort((a, b) => b.count - a.count)
+                            .slice(0, 4);
+                            
+                        // If no real data, use some defaults
+                        if (topUsers.length === 0) {
+                            topUsers.push(
+                                { name: "John Manager", role: "manager", count: 8 },
+                                { name: "Sarah Organizer", role: "organizer", count: 6 },
+                                { name: "Michael Admin", role: "admin", count: 5 },
+                                { name: "Emma Player", role: "player", count: 4 }
+                            );
+                        }
+                        %>
+                        
+                        <% topUsers.forEach((user, index) => { %>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <i class="fas fa-user me-2 text-primary"></i>
+                                    <%= user.name %> 
+                                    <small class="text-muted">(<%= user.role %>)</small>
+                                </div>
+                                <span class="badge bg-light text-dark"><%= user.count %> activities</span>
+                            </div>
+                        <% }); %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Search functionality
+        const searchInput = document.getElementById('activitySearchInput');
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function() {
+                const searchTerm = this.value.toLowerCase();
+                const activityItems = document.querySelectorAll('.activity-item');
+                
+                activityItems.forEach(item => {
+                    const content = item.querySelector('.activity-content').textContent.toLowerCase();
+                    if (content.includes(searchTerm)) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        }
+        
+        // Filter functionality
+        document.querySelectorAll('[data-filter]').forEach(filter => {
+            filter.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const filterValue = this.getAttribute('data-filter');
+                const activityItems = document.querySelectorAll('.activity-item');
+                
+                activityItems.forEach(item => {
+                    const iconDiv = item.querySelector('.activity-icon > div');
+                    
+                    if (filterValue === 'all') {
+                        item.style.display = '';
+                    } else if (filterValue === 'registration' && iconDiv.querySelector('.fa-user-plus')) {
+                        item.style.display = '';
+                    } else if (filterValue === 'event_creation' && iconDiv.querySelector('.fa-calendar-plus')) {
+                        item.style.display = '';
+                    } else if (filterValue === 'team_creation' && iconDiv.querySelector('.fa-users-cog')) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        });
+        
+        // Prepare data for activity type chart
+        let registrationCount = 0;
+        let eventCreationCount = 0;
+        let teamCreationCount = 0;
+        let otherCount = 0;
+        
+        // Count by activity type
+        document.querySelectorAll('.activity-item').forEach(item => {
+            const iconDiv = item.querySelector('.activity-icon > div');
+            if (iconDiv.querySelector('.fa-user-plus')) {
+                registrationCount++;
+            } else if (iconDiv.querySelector('.fa-calendar-plus')) {
+                eventCreationCount++;
+            } else if (iconDiv.querySelector('.fa-users-cog')) {
+                teamCreationCount++;
+            } else {
+                otherCount++;
+            }
+        });
+        
+        // If no data, use some defaults
+        if (registrationCount + eventCreationCount + teamCreationCount + otherCount === 0) {
+            registrationCount = 5;
+            eventCreationCount = 3;
+            teamCreationCount = 2;
+            otherCount = 1;
+        }
+        
+        // Activity Type Chart
+        const activityCtx = document.getElementById('activityTypeChart').getContext('2d');
+        const activityTypeChart = new Chart(activityCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['User Registrations', 'Event Creations', 'Team Creations', 'Other'],
+                datasets: [{
+                    data: [registrationCount, eventCreationCount, teamCreationCount, otherCount],
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(153, 102, 255, 0.7)',
+                        'rgba(201, 203, 207, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(201, 203, 207, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Activity Types'
+                    }
+                }
+            }
+        });
+    });
+</script> 

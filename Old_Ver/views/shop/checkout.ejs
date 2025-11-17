@@ -1,0 +1,428 @@
+<%- include('../partials/header') %>
+
+<section class="header shop-header">
+    <nav>
+        <a href="/"><img src="/images/sports-amigo-logo.png" alt="SportsAmigo Association Logo"></a>
+        <div class="nav-links" id="navLinks">
+            <i class="fa fa-times" onclick="hideMenu()"></i>
+            <ul>
+                <li><a href="/">HOME</a></li>
+                <li><a href="/about">ABOUT</a></li>
+                <li class="dropdown">
+                    <a href="/events">EVENTS</a>
+                    <div class="dropdown-content">
+                        <a href="/events/football">Football</a>
+                        <a href="/events/cricket">Cricket</a>
+                        <a href="/events/basketball">Basketball</a>
+                    </div>
+                </li>
+                <li><a href="/shop" class="active">SHOP</a></li>
+                <li><a href="/contact">CONTACT</a></li>
+                <li><a href="/cart">🛒 Cart (<span id="cartCount"><%= cart.itemCount || 0 %></span>)</a></li>
+                <% if (shopUser) { %>
+                    <li class="dropdown">
+                        <a href="#"><%= shopUser.firstName %></a>
+                        <div class="dropdown-content">
+                            <% if (shopUser.role === 'player') { %>
+                                <a href="/wallet">💰 My Wallet</a>
+                            <% } %>
+                            <a href="/shop/orders">My Orders</a>
+                            <a href="#" onclick="shopLogout()">Logout</a>
+                        </div>
+                    </li>
+                <% } else { %>
+                    <li><a href="/shop-login">LOGIN</a></li>
+                <% } %>
+            </ul>
+        </div>
+        <i class="fa fa-bars" onclick="showMenu()"></i>
+    </nav>
+
+    <div class="text-box">
+        <h1>Secure Checkout</h1>
+        <p>Complete your order with confidence - Your information is protected</p>
+    </div>
+</section>
+
+<!-- Checkout Section -->
+<section class="checkout-section">
+    <div class="container">
+        <div class="checkout-content">
+            <!-- Order Summary -->
+            <div class="order-summary">
+                <h2>Order Summary</h2>
+                
+                <div class="order-items">
+                    <% cart.items.forEach(item => { %>
+                        <div class="checkout-item">
+                            <div class="item-image">
+                                <img src="<%= item.imageUrl || '/images/shop/default-product.jpg' %>" alt="<%= item.name %>" />
+                            </div>
+                            <div class="item-details">
+                                <h3><%= item.name %></h3>
+                                <p>Quantity: <%= item.quantity %></p>
+                                <p class="item-price">$<%= item.price.toFixed(2) %> each</p>
+                            </div>
+                            <div class="item-total">
+                                $<%= (item.price * item.quantity).toFixed(2) %>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+
+                <div class="order-totals">
+                    <div class="total-row">
+                        <span>Items (<%= cart.itemCount %>):</span>
+                        <span>$<%= cart.totalAmount.toFixed(2) %></span>
+                    </div>
+                    <div class="total-row">
+                        <span>Shipping:</span>
+                        <span class="free-shipping">FREE</span>
+                    </div>
+                    <div class="total-row grand-total">
+                        <strong>
+                            <span>Total Amount:</span>
+                            <span id="grandTotal">$<%= cart.totalAmount.toFixed(2) %></span>
+                        </strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Checkout Form -->
+            <div class="checkout-form">
+                <form id="checkoutForm" method="POST" action="/checkout">
+                    <!-- Customer Information -->
+                    <div class="form-section customer-info">
+                        <div class="section-header">
+                            <h3><i class="fas fa-user-circle"></i> Customer Information</h3>
+                            <p class="section-description">Please provide your contact details</p>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="fullName">Full Name *</label>
+                                <input type="text" id="fullName" name="fullName" 
+                                       value="<%= shopUser.firstName %> <%= shopUser.lastName %>" 
+                                       placeholder="Enter your full name" required />
+                                <span class="field-icon"><i class="fas fa-user"></i></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="phone">Phone Number *</label>
+                                <input type="tel" id="phone" name="phone" 
+                                       placeholder="+91 98765 43210" required />
+                                <span class="field-icon"><i class="fas fa-phone"></i></span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" name="email" 
+                                   value="<%= shopUser.email %>" readonly />
+                            <span class="field-icon"><i class="fas fa-envelope"></i></span>
+                        </div>
+                    </div>
+
+                    <!-- Delivery Address -->
+                    <div class="form-section delivery-address">
+                        <div class="section-header">
+                            <h3><i class="fas fa-map-marker-alt"></i> Delivery Address</h3>
+                            <p class="section-description">Where should we deliver your order?</p>
+                        </div>
+                        <div class="form-group">
+                            <label for="street">Street Address / House No. *</label>
+                            <input type="text" id="street" name="street" 
+                                   placeholder="House/Flat No., Building Name, Street" required />
+                            <span class="field-icon"><i class="fas fa-home"></i></span>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="city">City *</label>
+                                <input type="text" id="city" name="city" 
+                                       placeholder="Enter city" required />
+                                <span class="field-icon"><i class="fas fa-city"></i></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="state">State *</label>
+                                <select id="state" name="state" required>
+                                    <option value="">Select State</option>
+                                    <option value="Andhra Pradesh">Andhra Pradesh</option>
+                                    <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                                    <option value="Assam">Assam</option>
+                                    <option value="Bihar">Bihar</option>
+                                    <option value="Chhattisgarh">Chhattisgarh</option>
+                                    <option value="Delhi">Delhi</option>
+                                    <option value="Goa">Goa</option>
+                                    <option value="Gujarat">Gujarat</option>
+                                    <option value="Haryana">Haryana</option>
+                                    <option value="Himachal Pradesh">Himachal Pradesh</option>
+                                    <option value="Jharkhand">Jharkhand</option>
+                                    <option value="Karnataka">Karnataka</option>
+                                    <option value="Kerala">Kerala</option>
+                                    <option value="Madhya Pradesh">Madhya Pradesh</option>
+                                    <option value="Maharashtra">Maharashtra</option>
+                                    <option value="Manipur">Manipur</option>
+                                    <option value="Meghalaya">Meghalaya</option>
+                                    <option value="Mizoram">Mizoram</option>
+                                    <option value="Nagaland">Nagaland</option>
+                                    <option value="Odisha">Odisha</option>
+                                    <option value="Punjab">Punjab</option>
+                                    <option value="Rajasthan">Rajasthan</option>
+                                    <option value="Sikkim">Sikkim</option>
+                                    <option value="Tamil Nadu">Tamil Nadu</option>
+                                    <option value="Telangana">Telangana</option>
+                                    <option value="Tripura">Tripura</option>
+                                    <option value="Uttar Pradesh">Uttar Pradesh</option>
+                                    <option value="Uttarakhand">Uttarakhand</option>
+                                    <option value="West Bengal">West Bengal</option>
+                                </select>
+                                <span class="field-icon"><i class="fas fa-map"></i></span>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="area">Area / Locality *</label>
+                                <input type="text" id="area" name="area" 
+                                       placeholder="Enter your area or locality" required />
+                                <span class="field-icon"><i class="fas fa-map-signs"></i></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="landmark">Landmark (Optional)</label>
+                                <input type="text" id="landmark" name="landmark" 
+                                       placeholder="Near bus stop, mall, etc." />
+                                <span class="field-icon"><i class="fas fa-location-arrow"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Payment Method -->
+                    <div class="form-section payment-section">
+                        <div class="section-header">
+                            <h3><i class="fas fa-credit-card"></i> Payment Method</h3>
+                            <p class="section-description">Choose your preferred payment option</p>
+                        </div>
+                        <div class="payment-options">
+                            <% if (canUseWallet && walletBalance >= cart.totalAmount) { %>
+                                <label class="payment-option wallet-option">
+                                    <input type="radio" name="paymentMethod" value="Wallet" checked />
+                                    <div class="payment-card">
+                                        <div class="payment-header">
+                                            <div class="payment-icon wallet-icon">
+                                                <i class="fas fa-wallet"></i>
+                                            </div>
+                                            <div class="payment-info">
+                                                <h4>SportsAmigo Wallet</h4>
+                                                <p>Instant & Secure Payment</p>
+                                            </div>
+                                            <div class="payment-status">
+                                                <span class="balance-badge">$<%= walletBalance.toFixed(2) %></span>
+                                            </div>
+                                        </div>
+                                        <div class="payment-details">
+                                            <div class="savings-info">
+                                                <i class="fas fa-gift"></i>
+                                                <span>Save $25 on delivery charges</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="payment-checkmark">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                </label>
+                            <% } %>
+
+                            <label class="payment-option cod-option">
+                                <input type="radio" name="paymentMethod" value="COD" 
+                                       <%= !canUseWallet || walletBalance < cart.totalAmount ? 'checked' : '' %> />
+                                <div class="payment-card">
+                                    <div class="payment-header">
+                                        <div class="payment-icon cod-icon">
+                                            <i class="fas fa-hand-holding-usd"></i>
+                                        </div>
+                                        <div class="payment-info">
+                                            <h4>Cash on Delivery</h4>
+                                            <p>Pay when you receive</p>
+                                        </div>
+                                        <div class="payment-status">
+                                            <span class="cod-badge">Available</span>
+                                        </div>
+                                    </div>
+                                    <div class="payment-details">
+                                        <div class="cod-info">
+                                            <i class="fas fa-truck"></i>
+                                            <span>$25 delivery charges applicable</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="payment-checkmark">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Wallet Payment Notice -->
+                    <% if (canUseWallet) { %>
+                        <div id="walletNotice" class="wallet-notice" style="display: none;">
+                            <div class="notice-content">
+                                <h4>💰 Paying with Wallet</h4>
+                                <p>$<span id="paymentAmount"><%= cart.totalAmount.toFixed(2) %></span> will be deducted from your wallet balance.</p>
+                                <p class="remaining-balance">
+                                    Remaining balance after payment: 
+                                    $<span id="remainingBalance"><%= Math.max(0, walletBalance - cart.totalAmount).toFixed(2) %></span>
+                                </p>
+                                <% if (walletBalance < cart.totalAmount) { %>
+                                    <div class="insufficient-funds-notice">
+                                        <p class="warning">⚠️ Insufficient wallet balance!</p>
+                                        <a href="/wallet" class="add-funds-link">Add funds to wallet</a>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    <% } %>
+
+                    <!-- Order Actions -->
+                    <div class="checkout-actions">
+                        <a href="/shop/cart" class="back-to-cart">
+                            <i class="fas fa-arrow-left"></i>
+                            <span>Back to Cart</span>
+                        </a>
+                        <button type="submit" class="place-order-btn" id="placeOrderBtn">
+                            <div class="btn-content">
+                                <i class="fas fa-lock"></i>
+                                <span class="btn-text">Place Secure Order</span>
+                            </div>
+                            <div class="btn-loader" style="display: none;">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <span>Processing...</span>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="checkout-security">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>SSL Encrypted & Secure Checkout</span>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="col-md-4">
+                <div class="order-summary">
+                    <div class="summary-header">
+                        <h3><i class="fas fa-receipt"></i> Order Summary</h3>
+                        <span class="item-count"><%= cart.items.length %> item<%= cart.items.length > 1 ? 's' : '' %></span>
+                    </div>
+                    
+                    <div class="summary-content">
+                        <div class="summary-items">
+                            <% cart.items.forEach(item => { %>
+                                <div class="summary-item">
+                                    <div class="item-image-container">
+                                        <img src="<%= item.imageUrl || '/images/shop/default-product.jpg' %>" alt="<%= item.name %>" class="item-image" />
+                                        <span class="item-quantity"><%= item.quantity %></span>
+                                    </div>
+                                    <div class="item-details">
+                                        <h4><%= item.name %></h4>
+                                        <div class="item-specs">
+                                            <span class="size-info">Quantity: <%= item.quantity %></span>
+                                        </div>
+                                        <div class="item-pricing">
+                                            <span class="unit-price">$<%= item.price %> × <%= item.quantity %></span>
+                                            <span class="item-total">$<%= (item.price * item.quantity).toFixed(2) %></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                        
+                        <div class="summary-calculations">
+                            <div class="calc-row">
+                                <span>Subtotal (<%= cart.items.length %> item<%= cart.items.length > 1 ? 's' : '' %>):</span>
+                                <span>$<%= cart.totalAmount.toFixed(2) %></span>
+                            </div>
+                            <div class="calc-row">
+                                <span>Delivery Charges:</span>
+                                <span class="delivery-fee">$25.00</span>
+                            </div>
+                            <div class="calc-row discount-row" id="walletDiscount" style="display: none;">
+                                <span>Wallet Discount:</span>
+                                <span class="discount-amount">-$25.00</span>
+                            </div>
+                            <hr class="calc-divider">
+                            <div class="calc-row total-row">
+                                <span class="total-label">Total Amount:</span>
+                                <span class="total-amount" id="finalTotal">$<%= (cart.totalAmount + 25).toFixed(2) %></span>
+                            </div>
+                        </div>
+                        
+                        <div class="delivery-info">
+                            <div class="delivery-promise">
+                                <i class="fas fa-shipping-fast"></i>
+                                <span>Delivery in 2-5 days</span>
+                            </div>
+                            <div class="security-badge">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>100% Secure Payment</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Information -->
+        <div class="security-info">
+            <h4>🔒 Secure Checkout</h4>
+            <p>Your payment information is encrypted and secure. We never store your payment details.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Success Modal -->
+<div id="successModal" class="modal" style="display: none;">
+    <div class="modal-content success">
+        <span class="close" onclick="closeModal('successModal')">&times;</span>
+        <div class="modal-body">
+            <div class="success-icon">🎉</div>
+            <h2>Order Placed Successfully!</h2>
+            <p id="successMessage">Your order has been confirmed and is being processed.</p>
+            <div class="order-details" id="orderDetailsDisplay">
+                <!-- Order details will be populated by JavaScript -->
+            </div>
+            <div class="modal-actions">
+                <a href="/shop" class="continue-shopping-btn">Continue Shopping</a>
+                <button onclick="viewOrderDetails()" class="view-order-btn">View Order</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Error Modal -->
+<div id="errorModal" class="modal" style="display: none;">
+    <div class="modal-content error">
+        <span class="close" onclick="closeModal('errorModal')">&times;</span>
+        <div class="modal-body">
+            <div class="error-icon">❌</div>
+            <h2>Order Failed</h2>
+            <p id="errorMessage">Something went wrong with your order!</p>
+            <div class="modal-actions">
+                <button onclick="closeModal('errorModal')" class="try-again-btn">Try Again</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Load CSS and JS -->
+<link rel="stylesheet" href="/css/checkout.css">
+<!-- Pass server data to JavaScript -->
+<script type="application/json" id="checkout-data">
+<%- JSON.stringify({
+    cartTotal: cart && cart.totalAmount ? cart.totalAmount : 0,
+    walletBalance: typeof walletBalance !== 'undefined' ? walletBalance : 0,
+    canUseWallet: typeof canUseWallet !== 'undefined' && canUseWallet,
+    userId: user && user.id ? user.id : ""
+}) %>
+</script>
+<script>
+    // Parse server data
+    window.checkoutData = JSON.parse(document.getElementById('checkout-data').textContent);
+</script>
+<script src="/js/checkout.js"></script>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,233 @@
+<%- include('../partials/header') %>
+
+<section class="header shop-header">
+    <nav>
+        <a href="/"><img src="/images/sports-amigo-logo.png" alt="SportsAmigo Association Logo"></a>
+        <div class="nav-links" id="navLinks">
+            <i class="fa fa-times" onclick="hideMenu()"></i>
+            <ul>
+                <li><a href="/">HOME</a></li>
+                <li><a href="/about">ABOUT</a></li>
+                <li><a href="/shop">SHOP</a></li>
+                <li><a href="/contact">CONTACT</a></li>
+                <li><a href="/cart" class="cart-link">
+                    🛒 Cart (<span id="cartCount"><%= cart.itemCount || 0 %></span>)
+                </a></li>
+            </ul>
+        </div>
+        <i class="fa fa-bars" onclick="showMenu()"></i>
+    </nav>
+
+    <div class="text-box">
+        <h1>Login to Complete Purchase</h1>
+        <p>Secure checkout with your SportsAmigo account</p>
+    </div>
+</section>
+
+<!-- Login Section -->
+<section class="login-section">
+    <div class="container">
+        <div class="login-content">
+            <!-- Cart Summary Sidebar -->
+            <div class="cart-summary-sidebar">
+                <h2>🛒 Your Order</h2>
+                
+                <% if (cart && cart.items && cart.items.length > 0) { %>
+                    <div class="cart-items">
+                        <% cart.items.forEach(item => { %>
+                            <div class="cart-item-mini">
+                                <img src="<%= item.imageUrl || '/images/shop/default-product.jpg' %>" 
+                                     alt="<%= item.name %>" class="item-image-mini" />
+                                <div class="item-details-mini">
+                                    <h4><%= item.name %></h4>
+                                    <p>Qty: <%= item.quantity %> × $<%= item.price.toFixed(2) %></p>
+                                    <p class="item-total">$<%= (item.price * item.quantity).toFixed(2) %></p>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+                    
+                    <div class="order-total">
+                        <div class="total-row">
+                            <span>Items (<%= cart.itemCount %>):</span>
+                            <span>$<%= cart.totalAmount.toFixed(2) %></span>
+                        </div>
+                        <div class="total-row">
+                            <span>Shipping:</span>
+                            <span class="free-shipping">FREE</span>
+                        </div>
+                        <div class="total-row grand-total">
+                            <strong>
+                                <span>Total:</span>
+                                <span>$<%= cart.totalAmount.toFixed(2) %></span>
+                            </strong>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <div class="empty-cart-mini">
+                        <p>Your cart is empty</p>
+                        <a href="/shop" class="continue-shopping-btn">Continue Shopping</a>
+                    </div>
+                <% } %>
+            </div>
+
+            <!-- Login Form -->
+            <div class="login-form-container">
+                <div class="login-form">
+                    <h2>🔐 Login to Your Account</h2>
+                    <p class="login-subtitle">Enter your SportsAmigo credentials to continue</p>
+                    
+                    <% if (error) { %>
+                        <div class="error-message">
+                            <i class="fa fa-exclamation-circle"></i>
+                            <%= error %>
+                        </div>
+                    <% } %>
+                    
+                    <form method="POST" action="/shop-login" id="shopLoginForm">
+                        <input type="hidden" name="returnUrl" value="<%= returnUrl %>" />
+                        
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <div class="input-group">
+                                <i class="fa fa-envelope input-icon"></i>
+                                <input type="email" id="email" name="email" 
+                                       placeholder="Enter your email" required />
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <div class="input-group">
+                                <i class="fa fa-lock input-icon"></i>
+                                <input type="password" id="password" name="password" 
+                                       placeholder="Enter your password" required />
+                                <button type="button" class="toggle-password" onclick="togglePassword()">
+                                    <i class="fa fa-eye" id="toggleIcon"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="login-btn">
+                                <i class="fa fa-sign-in"></i>
+                                Continue to Checkout
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="login-options">
+                        <div class="divider">
+                            <span>OR</span>
+                        </div>
+                        
+                        <a href="/shop-login/register" class="register-link">
+                            <i class="fa fa-user-plus"></i>
+                            Create New Account
+                        </a>
+                        
+                        <div class="back-options">
+                            <a href="/cart" class="back-to-cart">
+                                <i class="fa fa-arrow-left"></i>
+                                Back to Cart
+                            </a>
+                            <a href="/shop" class="continue-shopping">
+                                <i class="fa fa-shopping-bag"></i>
+                                Continue Shopping
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Security Notice -->
+                <div class="security-notice">
+                    <h3>🔒 Secure Checkout</h3>
+                    <p>Your personal and payment information is protected with industry-standard security measures. We never store your credit card details.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Load CSS -->
+<link rel="stylesheet" href="/css/shop-login.css">
+
+<!-- JavaScript -->
+<script>
+    // Toggle password visibility
+    function togglePassword() {
+        const passwordInput = document.getElementById('password');
+        const toggleIcon = document.getElementById('toggleIcon');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleIcon.classList.remove('fa-eye');
+            toggleIcon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            toggleIcon.classList.remove('fa-eye-slash');
+            toggleIcon.classList.add('fa-eye');
+        }
+    }
+    
+    // Form validation
+    document.getElementById('shopLoginForm').addEventListener('submit', function(e) {
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value.trim();
+        
+        if (!email || !password) {
+            e.preventDefault();
+            showError('Please fill in all fields');
+            return;
+        }
+        
+        if (!isValidEmail(email)) {
+            e.preventDefault();
+            showError('Please enter a valid email address');
+            return;
+        }
+        
+        // Show loading state
+        const submitBtn = document.querySelector('.login-btn');
+        submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Signing In...';
+        submitBtn.disabled = true;
+    });
+    
+    // Email validation
+    function isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+    
+    // Show error message
+    function showError(message) {
+        // Remove existing error
+        const existingError = document.querySelector('.dynamic-error');
+        if (existingError) {
+            existingError.remove();
+        }
+        
+        // Create new error
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message dynamic-error';
+        errorDiv.innerHTML = `<i class="fa fa-exclamation-circle"></i> ${message}`;
+        
+        // Insert before form
+        const form = document.getElementById('shopLoginForm');
+        form.parentNode.insertBefore(errorDiv, form);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (errorDiv.parentNode) {
+                errorDiv.remove();
+            }
+        }, 5000);
+    }
+    
+    // Focus on first input
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('email').focus();
+    });
+</script>
+
+<%- include('../partials/footer') %>
