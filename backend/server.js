@@ -80,6 +80,7 @@ const walletRoutes = require('./routes/wallet');
 const shopLoginRoutes = require('./routes/shopLogin');
 const checkoutRoutes = require('./routes/checkout');
 const cartRoutes = require('./routes/cart');
+const matchRoutes = require('./routes/matches');
 
 // Admin routes with error handling
 let adminRoutes;
@@ -112,6 +113,7 @@ app.use('/api/wallet', walletRoutes);
 app.use('/api/shop-login', shopLoginRoutes);
 app.use('/api/checkout', checkoutRoutes);
 app.use('/api/cart', cartRoutes);
+app.use('/api/matches', matchRoutes);
 
 if (adminRoutes) {
     app.use('/api/admin', adminRoutes);
