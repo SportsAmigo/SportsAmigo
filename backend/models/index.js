@@ -10,5 +10,6 @@ module.exports = {
     Profile: require('./profile'),
     PlayerProfile: require('./playerProfile'),
     Registration: require('./registration'),
-    Template: require('./template')
+    Template: require('./template'),
+    Match: require('./match')
 }; 

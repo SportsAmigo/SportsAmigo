@@ -1855,5 +1855,61 @@ router.get('/events', async (req, res) => {
     }
 });
 
+// POST /api/organizer/event/:eventId/registration/:teamId/approve
+router.post('/event/:eventId/registration/:teamId/approve', async (req, res) => {
+    try {
+        const { eventId, teamId } = req.params;
+        const organizerId = req.session.user._id;
+        
+        const Event = require('../models/event');
+        const event = await Event.getEventById(eventId);
+        
+        if (!event) {
+            return res.status(404).json({ success: false, message: 'Event not found' });
+        }
+        
+        // Verify organizer owns this event
+        if (event.organizer_id.toString() !== organizerId.toString()) {
+            return res.status(403).json({ success: false, message: 'You do not have permission to manage this event' });
+        }
+        
+        // Update the registration status
+        await Event.updateRegistrationStatus(eventId, teamId, 'approved');
+        
+        res.json({ success: true, message: 'Registration approved successfully' });
+    } catch (error) {
+        console.error('Error approving registration:', error);
+        res.status(500).json({ success: false, message: 'Failed to approve registration' });
+    }
+});
+
+// POST /api/organizer/event/:eventId/registration/:teamId/reject
+router.post('/event/:eventId/registration/:teamId/reject', async (req, res) => {
+    try {
+        const { eventId, teamId } = req.params;
+        const organizerId = req.session.user._id;
+        
+        const Event = require('../models/event');
+        const event = await Event.getEventById(eventId);
+        
+        if (!event) {
+            return res.status(404).json({ success: false, message: 'Event not found' });
+        }
+        
+        // Verify organizer owns this event
+        if (event.organizer_id.toString() !== organizerId.toString()) {
+            return res.status(403).json({ success: false, message: 'You do not have permission to manage this event' });
+        }
+        
+        // Update the registration status
+        await Event.updateRegistrationStatus(eventId, teamId, 'rejected');
+        
+        res.json({ success: true, message: 'Registration rejected' });
+    } catch (error) {
+        console.error('Error rejecting registration:', error);
+        res.status(500).json({ success: false, message: 'Failed to reject registration' });
+    }
+});
+
 // Make sure to export the router
 module.exports = router; 

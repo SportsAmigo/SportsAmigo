@@ -61,8 +61,16 @@ router.get('/', async (req, res) => {
         
         // Count total players across all teams
         let playerCount = 0;
+        // Calculate total wins, losses, and draws
+        let totalWins = 0;
+        let totalLosses = 0;
+        let totalDraws = 0;
+        
         teams.forEach(team => {
             playerCount += team.members ? team.members.length : 0;
+            totalWins += team.wins || 0;
+            totalLosses += team.losses || 0;
+            totalDraws += team.draws || 0;
         });
         
         // Count pending join requests across all teams
@@ -139,7 +147,9 @@ router.get('/', async (req, res) => {
             teamCount: teams.length,
             playerCount: playerCount,
             eventCount: registeredEvents.length,
-            wins: 0, // Calculate from match results
+            wins: totalWins,
+            losses: totalLosses,
+            draws: totalDraws,
             pendingRequestCount: pendingRequestCount,
             registeredEvents: registeredEvents || [],
             upcomingEvent: upcomingEvent,
@@ -156,9 +166,126 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.get('/dashboard', (req, res) => {
-                res.redirect('/manager/');
+router.get('/dashboard', async (req, res) => {
+    try {
+        // Get teams managed by this user
+        const teams = await Team.getTeamsByManager(req.session.user._id);
+        
+        // Calculate stats
+        let playerCount = 0;
+        let totalWins = 0;
+        let totalLosses = 0;
+        let totalDraws = 0;
+        
+        teams.forEach(team => {
+            playerCount += team.members ? team.members.length : 0;
+            totalWins += team.wins || 0;
+            totalLosses += team.losses || 0;
+            totalDraws += team.draws || 0;
+        });
+        
+        // Get registered events
+        let registeredEvents = [];
+        try {
+            const Event = require('../models/event');
+            registeredEvents = await Event.getManagerEvents(req.session.user._id);
+        } catch (error) {
+            console.error('Error fetching registered events:', error);
+        }
+        
+        // Return JSON for React frontend
+        res.json({
+            success: true,
+            teams: teams,
+            teamCount: teams.length,
+            playerCount: playerCount,
+            eventCount: registeredEvents.length,
+            wins: totalWins,
+            losses: totalLosses,
+            draws: totalDraws,
+            registeredEvents: registeredEvents || []
+        });
+    } catch (err) {
+        console.error('Error loading manager dashboard:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to load dashboard: ' + err.message
+        });
+    }
+});
+
+// Update profile (API endpoint for React)
+router.put('/profile', upload.single('profile_image'), async (req, res) => {
+    try {
+        const userId = req.session.user._id;
+        
+        console.log('Received profile update:', req.body);
+        console.log('Received file:', req.file);
+        
+        // Create the updated profile object
+        const updatedProfile = {
+            first_name: req.body.first_name || '',
+            last_name: req.body.last_name || '',
+            email: req.body.email || req.session.user.email,
+            phone: req.body.phone || '',
+            bio: req.body.bio || ''
+        };
+        
+        // If a new image was uploaded, add the path
+        if (req.file) {
+            updatedProfile.profile_image = '/uploads/profile/' + req.file.filename;
+        }
+        
+        console.log('Updating profile with data:', updatedProfile);
+        
+        // Update the user in the database
+        const updatedUser = await User.updateUser(userId, updatedProfile);
+        
+        if (!updatedUser) {
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to update user in database'
             });
+        }
+        
+        // Fetch fresh user data
+        const freshUserData = await User.getUserById(userId);
+        
+        if (!freshUserData) {
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to retrieve updated user data'
+            });
+        }
+        
+        // Create complete user object for session
+        const sessionUser = freshUserData.toObject ? freshUserData.toObject() : freshUserData;
+        sessionUser.name = sessionUser.first_name + (sessionUser.last_name ? ' ' + sessionUser.last_name : '');
+        
+        // Update the session
+        req.session.user = sessionUser;
+        
+        // Save session
+        await new Promise((resolve, reject) => {
+            req.session.save(err => {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
+        
+        return res.json({
+            success: true,
+            message: 'Profile updated successfully!',
+            user: sessionUser
+        });
+    } catch (err) {
+        console.error('Error updating profile:', err);
+        return res.status(500).json({
+            success: false,
+            message: `Error updating profile: ${err.message}`
+        });
+    }
+});
 
 // Matches page (renamed to Events)
 router.get('/matches', async (req, res) => {
@@ -280,34 +407,30 @@ router.get('/my-teams', async (req, res) => {
         const teams = await Team.getManagerTeams(req.session.user._id);
         console.log('Manager teams:', teams);
         
-        res.render('manager/my-teams', { 
-            title: 'My Teams',
-            user: req.session.user,
+        res.json({
+            success: true,
             teams: teams || [],
-            messages: req.session.messages || {},
-            layout: 'layouts/sidebar-dashboard',
-            path: '/manager/my-teams'
+            messages: req.session.messages || {}
         });
         
         // Clear flash messages
         delete req.session.messages;
     } catch (err) {
         console.error('Error retrieving manager teams:', err);
-        res.status(500).render('error', { 
-            message: 'Failed to retrieve your teams', 
-            error: err 
+        res.status(500).json({ 
+            success: false,
+            message: 'Failed to retrieve your teams',
+            error: err.message
         });
     }
 });
 
 // Create Team Form
 router.get('/create-team', (req, res) => {
-    res.render('manager/create-team', { 
-        title: 'Create Team',
+    res.json({
+        success: true,
         user: req.session.user,
-        messages: req.session.messages || {},
-        layout: 'layouts/sidebar-dashboard',
-        path: '/manager/create-team'
+        messages: req.session.messages || {}
     });
     
     // Clear flash messages
@@ -414,27 +537,36 @@ router.get('/team/:id', async (req, res) => {
     const teamId = req.params.id;
         const team = await Team.getTeamById(teamId);
         
-        // Make sure the manager owns this team
-        if (team.manager_id !== req.session.user._id) {
-            req.session.messages = { error: 'You do not have permission to manage this team' };
-            return res.redirect('/manager/my-teams');
+        if (!team) {
+            return res.status(404).json({
+                success: false,
+                message: 'Team not found'
+            });
         }
         
-        res.render('manager/team-details', { 
-            title: team.name,
-            user: req.session.user,
-            team,
-            messages: req.session.messages || {},
-            layout: 'layouts/sidebar-dashboard',
-            path: '/manager/team-details'
+        // Make sure the manager owns this team (convert to string for comparison)
+        if (team.manager_id.toString() !== req.session.user._id.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'You do not have permission to manage this team'
+            });
+        }
+        
+        res.json({
+            success: true,
+            team: team,
+            messages: req.session.messages || {}
         });
         
         // Clear flash messages
         delete req.session.messages;
     } catch (err) {
         console.error('Error retrieving team details:', err);
-        req.session.messages = { error: 'Failed to retrieve team details' };
-        res.redirect('/manager/my-teams');
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve team details',
+            error: err.message
+        });
     }
 });
 
@@ -560,21 +692,21 @@ router.get('/join-requests', async (req, res) => {
         const requests = await Team.getManagerJoinRequests(req.session.user._id);
         console.log('Join requests:', requests);
         
-        res.render('manager/join-requests', {
-            title: 'Team Join Requests',
-            user: req.session.user,
+        res.json({
+            success: true,
             requests: requests || [],
-            messages: req.session.messages || {},
-            layout: 'layouts/dashboard',
-            path: '/manager/join-requests'
+            messages: req.session.messages || {}
         });
         
         // Clear flash messages
         delete req.session.messages;
     } catch (err) {
         console.error('Error retrieving join requests:', err);
-        req.session.messages = { error: 'Failed to retrieve join requests' };
-        res.redirect('/manager');
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve join requests',
+            error: err.message
+        });
     }
 });
 
@@ -895,30 +1027,25 @@ router.get('/browse-events', async (req, res) => {
                 delete req.session.message;
             }
             
-            res.render('manager/browse-events', {
-                title: 'Browse Events',
-                user: req.session.user,
+            res.json({
+                success: true,
                 events: formattedEvents,
                 pastEvents: registeredEvents || [],
                 teams: teams,
-                layout: 'layouts/sidebar-dashboard',
-                path: '/manager/browse-events',
                 message: message
             });
         } catch (err) {
             console.error('Error fetching event data:', err);
-            return res.status(500).render('error', {
-                title: '500 - Server Error',
-                message: 'An error occurred while fetching event data: ' + err.message,
-                layout: 'layouts/main'
+            return res.status(500).json({
+                success: false,
+                message: 'An error occurred while fetching event data: ' + err.message
             });
         }
     } catch (error) {
         console.error('Error loading browse events page:', error);
-        res.status(500).render('error', {
-            title: '500 - Server Error',
-            message: error.message || 'An error occurred while loading the browse events page.',
-            layout: 'layouts/main'
+        res.status(500).json({
+            success: false,
+            message: error.message || 'An error occurred while loading the browse events page.'
         });
     }
 });
@@ -987,27 +1114,25 @@ router.post('/event/:id/register', async (req, res) => {
         // Register the team for the event
         const registerData = {
             team_id: teamId,
+            manager_id: managerId,
             notes: notes,
-            status: 'confirmed' // Default to confirmed for manager registrations
+            status: 'pending', // Requires organizer approval
+            registration_date: new Date()
         };
         
         console.log('Calling registerTeamForEvent with data:', registerData);
         await Event.registerTeamForEvent(eventId, registerData);
         
-        // Set success message and redirect to my events page
-        req.session.message = {
-            type: 'success',
-            text: 'Team successfully registered for the event!'
-        };
-        
-        return res.redirect('/manager/my-events');
+        return res.json({
+            success: true,
+            message: 'Registration submitted successfully! Waiting for organizer approval.'
+        });
     } catch (error) {
         console.error('Error registering for event:', error);
-        req.session.message = {
-            type: 'danger',
-            text: error.message || 'An unexpected error occurred while registering for the event'
-        };
-        return res.redirect(`/manager/event/${req.params.id}/details`);
+        return res.status(500).json({
+            success: false,
+            message: error.message || 'An unexpected error occurred while registering for the event'
+        });
     }
 });
 
@@ -1124,25 +1249,22 @@ router.get('/my-events', async (req, res) => {
         
         console.log(`Found ${upcomingEvents.length} upcoming events and ${pastEvents.length} past events`);
         
-        res.render('manager/my-events', {
-            title: 'My Events',
-            user: req.session.user,
+        res.json({
+            success: true,
             upcomingEvents,
             pastEvents,
-            message: req.session.message || null,
-            layout: 'layouts/sidebar-dashboard',
-            path: '/manager/my-events'
+            message: req.session.message || null
         });
         
         // Clear flash message
         delete req.session.message;
     } catch (err) {
         console.error('Error in my-events route:', err);
-        req.session.message = {
-            type: 'danger',
-            text: 'Failed to load your registered events. Please try again later.'
-        };
-        res.redirect('/manager');
+        res.status(500).json({
+            success: false,
+            message: 'Failed to load your registered events. Please try again later.',
+            error: err.message
+        });
     }
 });
 
@@ -1208,13 +1330,10 @@ router.get('/event/:id/details', async (req, res) => {
         // Add registration status to the formatted event
         formattedEvent.isRegistered = isRegistered;
     
-        res.render('manager/event-details', {
-            title: 'Event Details',
-            user: req.session.user,
+        res.json({
+            success: true,
             event: formattedEvent,
             teams: teams || [],
-            layout: 'layouts/sidebar-dashboard',
-            path: '/manager/event-details',
             message: req.session.message
         });
         
@@ -1222,11 +1341,10 @@ router.get('/event/:id/details', async (req, res) => {
         delete req.session.message;
     } catch (err) {
         console.error('Error fetching event details:', err);
-        req.session.message = {
-            type: 'danger',
-            text: 'Failed to retrieve event details: ' + err.message
-        };
-        res.redirect('/manager/browse-events');
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve event details: ' + err.message
+        });
     }
 });
 
@@ -1422,22 +1540,17 @@ router.post('/event/:id/withdraw', async (req, res) => {
         
         console.log('Withdrawal completed successfully');
         
-        // Set success message and redirect
-        req.session.message = {
-            type: 'success',
-            text: `Successfully withdrew ${teamName} from the event.`
-        };
-        
-        return res.redirect('/manager/my-events');
+        return res.json({
+            success: true,
+            message: `Successfully withdrew ${teamName} from the event.`
+        });
     } catch (error) {
         console.error('ERROR during withdrawal process:', error);
         
-        req.session.message = {
-            type: 'danger',
-            text: `An error occurred during withdrawal: ${error.message}`
-        };
-        
-        return res.redirect('/manager/my-events');
+        return res.status(500).json({
+            success: false,
+            message: `An error occurred during withdrawal: ${error.message}`
+        });
     }
 });
 

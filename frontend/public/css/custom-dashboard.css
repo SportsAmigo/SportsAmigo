@@ -1,0 +1,118 @@
+/* Custom Dashboard Enhancements */
+
+.performance-summary {
+    padding: 20px 0;
+}
+
+.stat-circle {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+}
+
+.inner-circle {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-enhanced {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    padding: 12px 30px;
+    border-radius: 30px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-enhanced:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    color: white;
+}
+
+.quick-access-card {
+    display: block;
+    padding: 30px 20px;
+    background: #fff;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    text-align: center;
+    text-decoration: none;
+    color: #333;
+}
+
+.quick-access-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    text-decoration: none;
+    color: #667eea;
+}
+
+.quick-access-card i {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    color: #667eea;
+    transition: all 0.3s ease;
+}
+
+.quick-access-card:hover i {
+    transform: scale(1.1);
+}
+
+.quick-access-card h5 {
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.quick-access-card p {
+    color: #666;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* Card Icon Styling */
+.dashboard-stat-card .card-icon i {
+    font-size: 3.5rem;
+    opacity: 0.3;
+}
+
+/* Floating Effect */
+.floating-effect {
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+/* Glow Effect */
+.glow-effect {
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.glow-effect:hover {
+    box-shadow: 0 0 30px rgba(0,0,0,0.2);
+    transform: translateY(-5px);
+}

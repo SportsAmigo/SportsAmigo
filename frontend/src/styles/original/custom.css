@@ -1,0 +1,81 @@
+/* Timeline styling for event management */
+.timeline-container {
+    position: relative;
+    padding: 1rem 0;
+}
+
+.timeline {
+    position: relative;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 15px 0;
+}
+
+.timeline::after {
+    content: '';
+    position: absolute;
+    width: 4px;
+    background-color: #e0e0e0;
+    top: 0;
+    bottom: 0;
+    left: 10%;
+    margin-left: -2px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 30px;
+    padding-left: 30px;
+    margin-left: 10%;
+}
+
+.timeline-dot {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    left: -10px;
+    top: 0;
+    border-radius: 50%;
+    z-index: 1;
+}
+
+.timeline-date {
+    font-weight: bold;
+    color: #555;
+    margin-bottom: 10px;
+}
+
+.timeline-content {
+    padding: 10px 15px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border-left: 4px solid #0d6efd;
+}
+
+.timeline-event {
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed #dee2e6;
+}
+
+.timeline-event:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+/* Responsive timeline */
+@media (max-width: 767.98px) {
+    .timeline::after {
+        left: 20px;
+    }
+    
+    .timeline-item {
+        margin-left: 0;
+        padding-left: 50px;
+    }
+    
+    .timeline-dot {
+        left: 12px;
+    }
+} 

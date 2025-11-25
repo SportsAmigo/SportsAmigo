@@ -902,5 +902,39 @@ module.exports = {
             console.error('Error removing team member:', err);
             throw err;
         }
+    },
+
+    /**
+     * Update team statistics (wins, losses, draws)
+     * @param {string} teamId - Team ID
+     * @param {string} resultType - 'win', 'loss', or 'draw'
+     * @returns {Promise<object>} - Promise resolving to updated team
+     */
+    updateTeamStats: async function(teamId, resultType) {
+        try {
+            if (!teamId || !resultType) {
+                throw new Error('Team ID and result type are required');
+            }
+
+            const updateField = {};
+            if (resultType === 'win') {
+                updateField.wins = 1;
+            } else if (resultType === 'loss') {
+                updateField.losses = 1;
+            } else if (resultType === 'draw') {
+                updateField.draws = 1;
+            } else {
+                throw new Error('Invalid result type. Must be win, loss, or draw');
+            }
+
+            return await Team.findByIdAndUpdate(
+                teamId,
+                { $inc: updateField },
+                { new: true }
+            ).exec();
+        } catch (err) {
+            console.error('Error updating team stats:', err);
+            throw err;
+        }
     }
 }; 

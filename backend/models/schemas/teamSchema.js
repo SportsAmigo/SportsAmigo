@@ -18,6 +18,18 @@ const teamSchema = new Schema({
   },
   description: String,
   max_members: Number,
+  wins: {
+    type: Number,
+    default: 0
+  },
+  losses: {
+    type: Number,
+    default: 0
+  },
+  draws: {
+    type: Number,
+    default: 0
+  },
   created_at: { 
     type: Date, 
     default: Date.now 
