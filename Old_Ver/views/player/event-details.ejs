@@ -1,0 +1,120 @@
+<%- include('../partials/header', {headerType: typeof headerType !== 'undefined' ? headerType : 'events' }) %>
+
+    <nav>
+        <a href="/"><img src="/images/sports-amigo-logo.png" alt="South African Sports Association Logo"></a>
+        <div class="nav-links" id="navLinks">
+            <i class="fa fa-times" onclick="hideMenu()"></i>
+            <ul>
+                <li><a href="/">HOME</a></li>
+                <li><a href="/about">ABOUT</a></li>
+                <li class="dropdown">
+                    <a href="/events">EVENTS</a>
+                    <div class="dropdown-content">
+                        <a href="/events/football">Football</a>
+                        <a href="/events/cricket">Cricket</a>
+                        <a href="/events/basketball">Basketball</a>
+                    </div>
+                </li>
+                <li><a href="/contact">CONTACT</a></li>
+                <li><a href="/login">LOGIN</a></li>
+            </ul>
+        </div>
+        <i class="fa fa-bars" onclick="showMenu()"></i>
+    </nav>
+
+    <h1><%= event.title || event.name %></h1>
+
+</section>
+
+<!-- Event Overview -->
+<section class="about-us">
+    <div class="row">   
+        <div class="about-col">
+            <h2>Event Description</h2>
+            <p><%= event.description %></p>
+            
+            <h3>Event Details</h3>
+            <ul>
+                <li><strong>Date:</strong> <%= event.date || event.event_date %></li>
+                <li><strong>Location:</strong> <%= event.location %></li>
+                <li><strong>Sport:</strong> <%= event.sport || event.sport_type %></li>
+                <li><strong>Status:</strong> <%= event.status %></li>
+                <% if (event.max_teams) { %>
+                <li><strong>Maximum Teams:</strong> <%= event.max_teams %></li>
+                <% } %>
+                <li><strong>Organizer:</strong> <%= event.organizer %></li>
+                <% if (event.registration_deadline) { %>
+                <li><strong>Registration Deadline:</strong> <%= event.registration_deadline %></li>
+                <% } %>
+            </ul>
+            
+            <a href="/signup" class="hero-btn red-btn">Register Now</a>
+            <a href="/events" class="hero-btn">Back to Events</a>
+        </div>
+        <div class="about-col">
+            <% if (event.sport === 'football' || event.sport_type === 'football') { %>
+                <img src="/images/football-training-equipment-7-1024x664.jpg" alt="<%= event.title || event.name %>">
+            <% } else if (event.sport === 'cricket' || event.sport_type === 'cricket') { %>
+                <img src="/images/GettyImages-963573944_1.webp" alt="<%= event.title || event.name %>">
+            <% } else if (event.sport === 'basketball' || event.sport_type === 'basketball') { %>
+                <img src="/images/03olympics-basketball1-articleLarge.webp" alt="<%= event.title || event.name %>">
+            <% } else { %>
+                <img src="/images/banner2.jpg" alt="<%= event.title || event.name %>">
+            <% } %>
+        </div>
+    </div>
+</section>
+
+<!-- Event Requirements -->
+<section class="facilities">
+    <h1>Event Requirements</h1>
+    <p>Everything you need to know before participating</p>
+
+    <div class="row">
+        <div class="facilities-col">
+            <img src="/images/team-management.jpg" alt="Team Registration">
+            <h3>Team Registration</h3>
+            <p>All teams must register before the deadline. Complete team rosters and player details are required during registration.</p>
+        </div>
+        <div class="facilities-col">
+            <img src="/images/schedule.jpg" alt="Equipment">
+            <h3>Equipment & Rules</h3>
+            <p>Teams must bring their own equipment according to official regulations. All matches will follow standard international rules.</p>
+        </div>
+        <div class="facilities-col">
+            <img src="/images/leaderboard.jpeg" alt="Fair Play">
+            <h3>Fair Play</h3>
+            <p>We promote fair play and sportsmanship. All participants must adhere to our code of conduct and respect fellow competitors.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Event Timeline -->
+<section class="upcoming-events">
+    <h1>Event Timeline</h1>
+    <p>Important dates and milestones for this event</p>
+
+    <div class="row">
+        <div class="event-col">
+            <h3>Registration Phase</h3>
+            <p>Teams can register for the event during this period. Early registration is encouraged to secure your spot.</p>
+        </div>
+        <div class="event-col">
+            <h3>Preparation Phase</h3>
+            <p>Teams receive schedules, venue details, and final instructions. Time for teams to prepare and strategize.</p>
+        </div>
+        <div class="event-col">
+            <h3>Competition Phase</h3>
+            <p>The main event takes place with matches, tournaments, and competitions. Let the games begin!</p>
+        </div>
+    </div>
+</section>
+
+<!-- Registration Call to Action -->
+<section class="cta">
+    <h1>Ready to Join the Competition?</h1>
+    <p>Don't miss out on this exciting sporting event. Register your team now!</p>
+    <a href="/signup" class="hero-btn">Register Your Team</a>
+</section>
+
+<%- include('../partials/footer') %>

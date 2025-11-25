@@ -1,0 +1,371 @@
+<!-- Events/Tournaments Management Page -->
+<div class="container-fluid mt-4">
+    <!-- Event Actions Row -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="Search events..." id="eventSearchInput">
+                <button class="btn btn-primary" type="button">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+        <div class="col-md-6 text-end">
+            <div class="btn-group">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" data-filter="all">All Events</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="upcoming">Upcoming</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="in_progress">In Progress</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="completed">Completed</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="canceled">Canceled</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Events List -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Events</h5>
+            <span class="badge bg-primary"><%= events ? events.length : 0 %> Total</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 22%;">Event Name</th>
+                            <th style="width: 12%;">Date</th>
+                            <th style="width: 12%;">Location</th>
+                            <th style="width: 15%;">Organizer</th>
+                            <th style="width: 10%;">Teams</th>
+                            <th style="width: 11%;">Status</th>
+                            <th style="width: 8%; min-width: 100px; white-space: nowrap;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (events && events.length > 0) { %>
+                            <% events.forEach(event => { %>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="event-icon me-3">
+                                                <i class="fas fa-trophy fa-2x text-primary"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="fw-semibold mb-0"><%= event.title || event.name || 'Unnamed Event' %></h6>
+                                                <small class="text-muted"><%= event.sport_type || 'Unspecified' %></small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><%= event.eventDate || (event.event_date ? new Date(event.event_date).toLocaleDateString() : 'TBD') %></td>
+                                    <td><%= event.location || 'TBD' %></td>
+                                    <td>
+                                        <% if (event.organizer_name) { %>
+                                            <%= event.organizer_name %>
+                                        <% } else { %>
+                                            <span class="text-muted">Unknown</span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <% const teamCount = event.team_registrations ? event.team_registrations.length : 0; %>
+                                        <% const maxTeams = event.max_teams || 'Unlimited'; %>
+                                        <%= teamCount %>/<%= maxTeams %>
+                                    </td>
+                                    <td>
+                                        <% if (event.status === 'upcoming') { %>
+                                            <span class="badge bg-primary">Upcoming</span>
+                                        <% } else if (event.status === 'in_progress') { %>
+                                            <span class="badge bg-success">In Progress</span>
+                                        <% } else if (event.status === 'completed') { %>
+                                            <span class="badge bg-secondary">Completed</span>
+                                        <% } else if (event.status === 'canceled') { %>
+                                            <span class="badge bg-danger">Canceled</span>
+                                        <% } else { %>
+                                            <span class="badge bg-info">Unknown</span>
+                                        <% } %>
+                                    </td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-danger delete-event" 
+                                                data-event-id="<%= event._id %>"
+                                                title="Delete event">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <div class="py-5">
+                                        <i class="fas fa-calendar-alt fa-3x text-muted mb-3"></i>
+                                        <h5>No events found</h5>
+                                        <p class="text-muted">There are no events registered in the system.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-white">
+            <nav aria-label="Event pagination">
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1">Previous</a>
+                    </li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Search functionality
+        const searchInput = document.getElementById('eventSearchInput');
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function() {
+                const searchTerm = this.value.toLowerCase();
+                const tableRows = document.querySelectorAll('tbody tr');
+                
+                tableRows.forEach(row => {
+                    const eventName = row.querySelector('h6')?.textContent.toLowerCase();
+                    if (eventName && eventName.includes(searchTerm)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        }
+        
+        // Filter functionality
+        document.querySelectorAll('[data-filter]').forEach(filter => {
+            filter.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const filterValue = this.getAttribute('data-filter');
+                const tableRows = document.querySelectorAll('tbody tr');
+                
+                tableRows.forEach(row => {
+                    if (filterValue === 'all') {
+                        row.style.display = '';
+                    } else {
+                        const statusBadge = row.querySelector('.badge');
+                        if (statusBadge) {
+                            const statusText = statusBadge.textContent.toLowerCase();
+                            
+                            if (filterValue === 'upcoming' && statusText === 'upcoming') {
+                                row.style.display = '';
+                            } else if (filterValue === 'in_progress' && statusText === 'in progress') {
+                                row.style.display = '';
+                            } else if (filterValue === 'completed' && statusText === 'completed') {
+                                row.style.display = '';
+                            } else if (filterValue === 'canceled' && statusText === 'canceled') {
+                                row.style.display = '';
+                            } else {
+                                row.style.display = 'none';
+                            }
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    }
+                });
+            });
+        });
+        
+        // Improved delete event functionality
+        document.querySelectorAll('.delete-event').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const eventId = this.getAttribute('data-event-id');
+                const eventRow = this.closest('tr');
+                const eventName = eventRow.querySelector('h6').textContent;
+                
+                if (confirm(`Are you sure you want to delete the event "${eventName}"? This action cannot be undone.`)) {
+                    // Display loading state
+                    const originalContent = this.innerHTML;
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    this.disabled = true;
+                    
+                    // Send delete request
+                    fetch(`/admin/events/${eventId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'same-origin' // Include cookies for session-based CSRF protection
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Server returned ${response.status} ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            // Create success notification
+                            const notification = document.createElement('div');
+                            notification.className = 'alert alert-success alert-dismissible fade show';
+                            notification.innerHTML = `
+                                <strong>Success!</strong> Event "${eventName}" was deleted successfully.
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            `;
+                            
+                            // Insert notification at the top of the card
+                            const card = document.querySelector('.card');
+                            card.parentNode.insertBefore(notification, card);
+                            
+                            // Remove the event row with animation
+                            eventRow.style.backgroundColor = '#ffdddd';
+                            setTimeout(() => {
+                                eventRow.style.transition = 'opacity 0.5s ease';
+                                eventRow.style.opacity = 0;
+                                setTimeout(() => {
+                                    eventRow.remove();
+                            
+                            // Update the count in the badge
+                            const countBadge = document.querySelector('.card-header .badge');
+                            if (countBadge) {
+                                const currentCount = parseInt(countBadge.textContent);
+                                if (!isNaN(currentCount)) {
+                                    countBadge.textContent = (currentCount - 1) + ' Total';
+                                }
+                            }
+                                    
+                                    // Check if we need to show the "No events found" row
+                                    const remainingRows = document.querySelectorAll('tbody tr').length;
+                                    if (remainingRows === 0) {
+                                        const tbody = document.querySelector('tbody');
+                                        tbody.innerHTML = `
+                                            <tr>
+                                                <td colspan="7" class="text-center py-4">
+                                                    <div class="py-5">
+                                                        <i class="fas fa-calendar-alt fa-3x text-muted mb-3"></i>
+                                                        <h5>No events found</h5>
+                                                        <p class="text-muted">There are no events registered in the system.</p>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        `;
+                                    }
+                                }, 500);
+                            }, 100);
+                            
+                            // Auto-dismiss notification after 5 seconds
+                            setTimeout(() => {
+                                notification.classList.remove('show');
+                                setTimeout(() => {
+                                    notification.remove();
+                                }, 500);
+                            }, 5000);
+                        } else {
+                            // Restore button and show error
+                            this.innerHTML = originalContent;
+                            this.disabled = false;
+                            alert(data.message || 'Failed to delete event');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error deleting event:', error);
+                        // Restore button and show error
+                        this.innerHTML = originalContent;
+                        this.disabled = false;
+                        
+                        // Create error notification
+                        const notification = document.createElement('div');
+                        notification.className = 'alert alert-danger alert-dismissible fade show';
+                        notification.innerHTML = `
+                            <strong>Error!</strong> Failed to delete event: ${error.message}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        `;
+                        
+                        // Insert notification at the top of the card
+                        const card = document.querySelector('.card');
+                        card.parentNode.insertBefore(notification, card);
+                    });
+                }
+            });
+        });
+    });
+</script>
+
+<style>
+    .tournament-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        font-size: 1.5rem;
+    }
+    .tournament-name {
+        font-weight: 600;
+    }
+    .status-badge {
+        padding: 0.5rem 0.75rem;
+    }
+    
+    /* Adding alternating row colors for better readability */
+    .table tbody tr:nth-of-type(odd) {
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+    
+    /* Improved hover state */
+    .table tbody tr:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+    
+    /* Delete button styling */
+    .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+    }
+    
+    .btn-danger:hover {
+        background-color: #bb2d3b;
+        border-color: #b02a37;
+    }
+    
+    /* Header cell styling to prevent wrapping */
+    th {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    /* Ensure the action column is always visible */
+    .table th:last-child, 
+    .table td:last-child {
+        position: sticky;
+        right: 0;
+        background-color: inherit;
+        z-index: 1;
+    }
+    
+    /* Fix for alternating row colors */
+    .table tbody tr:nth-of-type(odd) td:last-child {
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+    
+    .table tbody tr:nth-of-type(even) td:last-child {
+        background-color: #fff;
+    }
+    
+    .table tbody tr:hover td:last-child {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+</style> 

@@ -1,0 +1,325 @@
+<!-- Teams Management Page -->
+<div class="container-fluid mt-4">
+    <!-- Team Actions Row -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="Search teams..." id="teamSearchInput">
+                <button class="btn btn-primary" type="button">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+        <div class="col-md-6 text-end">
+            <div class="btn-group">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" data-filter="all">All Teams</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="football">Football</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="cricket">Cricket</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="rugby">Rugby</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="netball">Netball</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Teams List -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Teams</h5>
+            <span class="badge bg-primary"><%= teams.length %> Total</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 22%;">Team Name</th>
+                            <th style="width: 15%;">Sport Type</th>
+                            <th style="width: 15%;">Manager</th>
+                            <th style="width: 10%;">Members</th>
+                            <th style="width: 15%;">Created</th>
+                            <th style="width: 15%;">Status</th>
+                            <th style="width: 8%; min-width: 100px; white-space: nowrap;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (teams && teams.length > 0) { %>
+                            <% teams.forEach(team => { %>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div>
+                                                <h6 class="fw-semibold mb-0"><%= team.name %></h6>
+                                                <small class="text-muted"><%= team.location || 'No location' %></small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><%= team.sport_type || 'Unspecified' %></td>
+                                    <td>
+                                        <% if (team.manager_id) { %>
+                                            <%= team.manager_name || 'Unknown' %>
+                                        <% } else { %>
+                                            <span class="text-muted">No Manager</span>
+                                        <% } %>
+                                    </td>
+                                    <td><%= team.members ? team.members.length : 0 %> players</td>
+                                    <td><%= new Date(team.created_at).toLocaleDateString() %></td>
+                                    <td>
+                                        <span class="badge bg-success">Active</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-danger delete-team" 
+                                                data-team-id="<%= team._id %>"
+                                                title="Delete team">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <div class="py-5">
+                                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                                        <h5>No teams found</h5>
+                                        <p class="text-muted">There are no teams registered in the system.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-white">
+            <nav aria-label="Team pagination">
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1">Previous</a>
+                    </li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Adding alternating row colors for better readability */
+    .table tbody tr:nth-of-type(odd) {
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+    
+    /* Improved hover state */
+    .table tbody tr:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+    
+    /* Delete button styling */
+    .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+    }
+    
+    .btn-danger:hover {
+        background-color: #bb2d3b;
+        border-color: #b02a37;
+    }
+    
+    /* Header cell styling to prevent wrapping */
+    th {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    /* Ensure the action column is always visible */
+    .table th:last-child, 
+    .table td:last-child {
+        position: sticky;
+        right: 0;
+        background-color: inherit;
+        z-index: 1;
+    }
+    
+    /* Fix for alternating row colors */
+    .table tbody tr:nth-of-type(odd) td:last-child {
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+    
+    .table tbody tr:nth-of-type(even) td:last-child {
+        background-color: #fff;
+    }
+    
+    .table tbody tr:hover td:last-child {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Search functionality
+        const searchInput = document.getElementById('teamSearchInput');
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function() {
+                const searchTerm = this.value.toLowerCase();
+                const tableRows = document.querySelectorAll('tbody tr');
+                
+                tableRows.forEach(row => {
+                    const teamName = row.querySelector('h6').textContent.toLowerCase();
+                    if (teamName.includes(searchTerm)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        }
+        
+        // Filter functionality
+        document.querySelectorAll('[data-filter]').forEach(filter => {
+            filter.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const filterValue = this.getAttribute('data-filter');
+                const tableRows = document.querySelectorAll('tbody tr');
+                
+                tableRows.forEach(row => {
+                    if (filterValue === 'all') {
+                        row.style.display = '';
+                    } else {
+                        const sportType = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                        if (sportType.includes(filterValue.toLowerCase())) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    }
+                });
+            });
+        });
+        
+        // Improved delete team functionality
+        document.querySelectorAll('.delete-team').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const teamId = this.getAttribute('data-team-id');
+                const teamRow = this.closest('tr');
+                const teamName = teamRow.querySelector('h6').textContent;
+                
+                if (confirm(`Are you sure you want to delete the team "${teamName}"? This action cannot be undone.`)) {
+                    // Display loading state
+                    const originalContent = this.innerHTML;
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    this.disabled = true;
+                    
+                    // Send delete request
+                    fetch(`/admin/teams/${teamId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'same-origin' // Include cookies for session-based CSRF protection
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Server returned ${response.status} ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            // Create success notification
+                            const notification = document.createElement('div');
+                            notification.className = 'alert alert-success alert-dismissible fade show';
+                            notification.innerHTML = `
+                                <strong>Success!</strong> Team "${teamName}" was deleted successfully.
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            `;
+                            
+                            // Insert notification at the top of the card
+                            const card = document.querySelector('.card');
+                            card.parentNode.insertBefore(notification, card);
+                            
+                            // Remove the team row with animation
+                            teamRow.style.backgroundColor = '#ffdddd';
+                            setTimeout(() => {
+                                teamRow.style.transition = 'opacity 0.5s ease';
+                                teamRow.style.opacity = 0;
+                                setTimeout(() => {
+                                    teamRow.remove();
+                            
+                            // Update the count in the badge
+                            const countBadge = document.querySelector('.card-header .badge');
+                            if (countBadge) {
+                                const currentCount = parseInt(countBadge.textContent);
+                                if (!isNaN(currentCount)) {
+                                    countBadge.textContent = (currentCount - 1) + ' Total';
+                                }
+                            }
+                                    
+                                    // Check if we need to show the "No teams found" row
+                                    const remainingRows = document.querySelectorAll('tbody tr').length;
+                                    if (remainingRows === 0) {
+                                        const tbody = document.querySelector('tbody');
+                                        tbody.innerHTML = `
+                                            <tr>
+                                                <td colspan="7" class="text-center py-4">
+                                                    <div class="py-5">
+                                                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                                                        <h5>No teams found</h5>
+                                                        <p class="text-muted">There are no teams registered in the system.</p>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        `;
+                                    }
+                                }, 500);
+                            }, 100);
+                            
+                            // Auto-dismiss notification after 5 seconds
+                            setTimeout(() => {
+                                notification.classList.remove('show');
+                                setTimeout(() => {
+                                    notification.remove();
+                                }, 500);
+                            }, 5000);
+                        } else {
+                            // Restore button and show error
+                            this.innerHTML = originalContent;
+                            this.disabled = false;
+                            alert(data.message || 'Failed to delete team');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error deleting team:', error);
+                        // Restore button and show error
+                        this.innerHTML = originalContent;
+                        this.disabled = false;
+                        
+                        // Create error notification
+                        const notification = document.createElement('div');
+                        notification.className = 'alert alert-danger alert-dismissible fade show';
+                        notification.innerHTML = `
+                            <strong>Error!</strong> Failed to delete team: ${error.message}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        `;
+                        
+                        // Insert notification at the top of the card
+                        const card = document.querySelector('.card');
+                        card.parentNode.insertBefore(notification, card);
+                    });
+                }
+            });
+        });
+    });
+</script> 
