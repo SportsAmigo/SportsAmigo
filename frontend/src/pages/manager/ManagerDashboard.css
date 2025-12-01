@@ -27,7 +27,7 @@
 /* ===== MAIN DASHBOARD WITH BACKGROUND IMAGE ===== */
 .manager-dashboard {
   min-height: 100vh;
-  background-image: url('D:/FIRST/SportsAmigo/frontend/public/images/fancy-crave-qowyMze7jqg-unsplash.jpg');
+  background-image: url('../../../public/images/fancy-crave-qowyMze7jqg-unsplash.jpg');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;

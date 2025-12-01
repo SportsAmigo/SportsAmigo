@@ -27,7 +27,7 @@
 /* ===== MAIN DASHBOARD WITH BACKGROUND IMAGE ===== */
 .organizer-dashboard {
   min-height: 100vh;
-  background-image: url('D:/FIRST/SportsAmigo/frontend/public/images/581A3451.webp');
+  background-image: url('../../../public/images/581A3451.webp');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;

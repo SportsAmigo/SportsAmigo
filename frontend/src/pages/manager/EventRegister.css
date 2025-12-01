@@ -2,7 +2,7 @@
 .event-register-container {
     min-height: 100vh;
     padding: 2rem;
-    background-image: url('D:/FIRST/SportsAmigo/frontend/public/images/fancy-crave-qowyMze7jqg-unsplash.jpg');
+    background-image: url('../../../public/images/fancy-crave-qowyMze7jqg-unsplash.jpg');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
