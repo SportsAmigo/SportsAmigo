@@ -758,24 +758,21 @@ router.get('/event/:id', async (req, res) => {
         
         console.log(`Formatted event with ${registeredTeams.length} registered teams`);
         
-        res.render('organizer/event-details', {
-            title: 'Event Details',
-            user: req.session.user,
+        // Return JSON for React API calls
+        res.json({
+            success: true,
             event: formattedEvent,
-            messages: req.session.flashMessage || {},
-            layout: 'layouts/sidebar-dashboard',
-            path: '/organizer/manage-events'
+            message: req.session.flashMessage || null
         });
         
         // Clear flash messages
         delete req.session.flashMessage;
     } catch (err) {
         console.error('Error viewing event:', err);
-        req.session.flashMessage = {
-            type: 'error',
-            text: 'Error loading event details: ' + err.message
-        };
-        res.redirect('/organizer/manage-events');
+        res.status(500).json({
+            success: false,
+            message: 'Error loading event details: ' + err.message
+        });
     }
 });
 

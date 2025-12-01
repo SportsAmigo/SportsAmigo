@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { selectUser } from '../../store/slices/authSlice';
+import PlayerLayout from '../../components/layout/PlayerLayout';
 import axios from 'axios';
+import './MyEvents.css';
 
 const MyEvents = () => {
     const user = useSelector(selectUser);
@@ -27,71 +29,77 @@ const MyEvents = () => {
     };
 
     return (
-        <div className="dashboard-container">
-            <div className="row mb-4">
-                <div className="col">
-                    <div className="card">
-                        <div className="card-header bg-success text-white d-flex justify-content-between align-items-center">
-                            <h3 className="mb-0">My Events</h3>
-                            <Link to="/player/browse-events" className="btn btn-light">Browse Events</Link>
+        <PlayerLayout>
+            <div className="browse-wrapper">
+                <div className="my-events-header">
+                    <div className="my-events-header-content">
+                        <div className="header-title-section">
+                            <h1>
+                                <i className="fa fa-calendar-check"></i> My Events
+                            </h1>
+                            <p>Events you have joined through your teams</p>
                         </div>
-                        <div className="card-body">
-                            <p className="lead mb-4">Here are the events you have joined through your teams:</p>
-                            
-                            <div className="row row-cols-1 row-cols-md-2 g-4">
-                                {events && events.length > 0 ? (
-                                    events.map(event => (
-                                        <div key={event.id} className="col">
-                                            <div className="card h-100 border-0 shadow-sm">
-                                                <div className="card-body">
-                                                    <div className="d-flex justify-content-between align-items-center mb-3">
-                                                        <h4 className="card-title mb-0">{event.name}</h4>
-                                                        <span className="badge bg-primary">{event.sport}</span>
-                                                    </div>
-                                                    <p className="text-muted mb-2">
-                                                        <i className="fa fa-calendar me-1"></i> 
-                                                        {new Date(event.event_date).toLocaleDateString()}
-                                                    </p>
-                                                    <p className="text-muted mb-2">
-                                                        <i className="fa fa-map-marker me-1"></i> {event.location}
-                                                    </p>
-                                                    <p className="text-muted mb-3">
-                                                        <i className="fa fa-users me-1"></i> Team: 
-                                                        <strong className="text-success"> {event.team_name || 'Unknown Team'}</strong>
-                                                    </p>
-                                                    <div className="d-flex justify-content-between">
-                                                        <Link to={`/player/event/${event.id}`} className="btn btn-sm btn-primary">
-                                                            View Details
-                                                        </Link>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="col-12 text-center">
-                                        <div className="alert alert-info">
-                                            <p className="mb-0">
-                                                <i className="fa fa-info-circle me-2"></i>
-                                                You haven't joined any events through your teams yet.
-                                            </p>
-                                            <p className="mt-3 mb-0">
-                                                <Link to="/player/browse-teams" className="btn btn-sm btn-outline-primary me-2">
-                                                    Join a Team
-                                                </Link>
-                                                <Link to="/player/browse-events" className="btn btn-sm btn-outline-success">
-                                                    Browse Events
-                                                </Link>
-                                            </p>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                        <Link to="/player/events" className="header-action-btn">
+                            <i className="fa fa-search"></i> Browse Events
+                        </Link>
                     </div>
                 </div>
+
+                {loading ? (
+                    <div className="loading-container">
+                        <div className="loading-spinner"></div>
+                        <p className="loading-text">Loading events...</p>
+                    </div>
+                ) : events && events.length > 0 ? (
+                    <div className="my-events-grid">
+                        {events.map(event => (
+                            <div key={event.id} className="my-event-card">
+                                <div className="my-event-header">
+                                    <h3 className="my-event-title">{event.name}</h3>
+                                    <span className="my-event-sport-badge">{event.sport}</span>
+                                </div>
+                                
+                                <div className="my-event-info">
+                                    <div className="my-event-info-item">
+                                        <i className="fa fa-calendar"></i>
+                                        <span>{new Date(event.event_date).toLocaleDateString()}</span>
+                                    </div>
+                                    <div className="my-event-info-item">
+                                        <i className="fa fa-map-marker-alt"></i>
+                                        <span>{event.location}</span>
+                                    </div>
+                                </div>
+
+                                <div className="my-event-team-info">
+                                    <i className="fa fa-users"></i>
+                                    <span>Team: <strong>{event.team_name || 'Unknown Team'}</strong></span>
+                                </div>
+
+                                <div className="my-event-footer">
+                                    <Link to={`/player/event/${event.id}`} className="my-event-view-btn">
+                                        <i className="fa fa-info-circle"></i> View Details
+                                    </Link>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="my-events-empty">
+                        <i className="fa fa-info-circle"></i>
+                        <h3>No Events Yet</h3>
+                        <p>You haven't joined any events through your teams yet.</p>
+                        <div className="empty-actions">
+                            <Link to="/player/browse-teams" className="empty-action-btn primary">
+                                <i className="fa fa-search"></i> Join a Team
+                            </Link>
+                            <Link to="/player/events" className="empty-action-btn secondary">
+                                <i className="fa fa-calendar-alt"></i> Browse Events
+                            </Link>
+                        </div>
+                    </div>
+                )}
             </div>
-        </div>
+        </PlayerLayout>
     );
 };
 

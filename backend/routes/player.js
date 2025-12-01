@@ -79,19 +79,35 @@ router.get('/dashboard', async (req, res) => {
         // Get player's teams
         const teams = await Team.getPlayerTeams(playerId);
         
-        res.render('player/dashboard-new', {
-            title: 'Player Dashboard',
-            user: req.session.user,
-            events: playerEvents,
-            teams: teams,
-            layout: 'layouts/sidebar-dashboard',
-            path: '/player/dashboard'
+        console.log(`Player dashboard: ${teams.length} teams, ${playerEvents.length} events`);
+        
+        // Return JSON for API calls
+        res.json({
+            success: true,
+            teamCount: teams.length,
+            eventCount: playerEvents.length,
+            teams: teams.map(team => ({
+                id: team._id,
+                name: team.name || 'Unnamed Team',
+                sport: team.sport_type || 'General',
+                manager_name: team.manager_name || 'Team Manager',
+                current_members: team.members ? team.members.length : 0,
+                max_members: team.max_members || 20
+            })),
+            events: playerEvents.map(event => ({
+                id: event._id || event.event_id,
+                name: event.title || event.name || 'Unnamed Event',
+                date: event.event_date || event.date,
+                location: event.location || 'TBD',
+                sport: event.sport_type || event.sport || 'General'
+            }))
         });
     } catch (err) {
         console.error('Error rendering player dashboard:', err);
-        res.status(500).render('error', { 
-            message: 'Failed to load player dashboard', 
-            error: err 
+        res.status(500).json({
+            success: false,
+            message: 'Failed to load player dashboard',
+            error: err.message
         });
     }
 });
@@ -103,22 +119,36 @@ router.get('/my-events', async (req, res) => {
         const playerId = req.session.user._id;
         const playerEvents = await Event.getPlayerEventsViaTeams(playerId);
         
-        res.render('player/my-events', {
-            title: 'My Events',
-            user: req.session.user,
-            events: playerEvents,
-            messages: req.session.flashMessage || {},
-            layout: 'layouts/sidebar-dashboard',
-            path: '/player/my-events'
-        });
+        console.log(`Player my-events: Found ${playerEvents.length} events`);
         
-        // Clear flash messages
-        delete req.session.flashMessage;
+        // Format events consistently
+        const formattedEvents = playerEvents.map(event => ({
+            id: event._id || event.event_id,
+            name: event.title || event.name || 'Unnamed Event',
+            title: event.title || event.name || 'Unnamed Event',
+            description: event.description || '',
+            date: event.event_date || event.date,
+            event_date: event.event_date || event.date,
+            location: event.location || 'TBD',
+            sport: event.sport_type || event.sport || 'General',
+            sport_type: event.sport_type || event.sport || 'General',
+            status: event.status || 'upcoming',
+            team_name: event.team_name || '',
+            team_id: event.team_id || '',
+            registration_date: event.registration_date || event.joined_date
+        }));
+        
+        // Return JSON for API calls
+        res.json({
+            success: true,
+            events: formattedEvents
+        });
     } catch (err) {
         console.error('Error in my-events route:', err);
-        res.status(500).render('error', { 
-            message: 'Failed to retrieve player events', 
-            error: err 
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve player events',
+            error: err.message
         });
     }
 });
@@ -129,43 +159,41 @@ router.get('/browse-events', async (req, res) => {
         // Get all upcoming events
         const events = await Event.getAllEvents();
         
-        // Filter events
-        const upcomingEvents = events.filter(event => 
-            event.status === 'upcoming' && 
-            new Date(event.event_date) > new Date()
-        );
+        console.log(`Player browse-events: Found ${events.length} total events`);
         
-        // Format events for display
-        const formattedEvents = upcomingEvents.map(event => ({
+        // Format events for display (don't filter by status on backend, let frontend handle it)
+        const formattedEvents = events.map(event => ({
             id: event._id,
-            name: event.title,
-            description: event.description,
+            name: event.title || 'Unnamed Event',
+            title: event.title || 'Unnamed Event',
+            description: event.description || '',
             date: event.event_date,
-            location: event.location,
-            sport: event.sport_type,
-            status: 'Open',
+            event_date: event.event_date,
+            location: event.location || 'TBD',
+            sport: event.sport_type || 'General',
+            sport_type: event.sport_type || 'General',
+            status: event.status || 'upcoming',
             registration_deadline: event.registration_deadline,
-            max_participants: event.max_teams * 10, // Approximate
+            max_teams: event.max_teams || 10,
+            max_participants: event.max_teams ? event.max_teams * 10 : 100,
             current_participants: event.team_registrations ? event.team_registrations.length : 0,
-            organizer: event.organizer_name || ''
+            organizer: event.organizer_name || `${event.organizer_first_name || ''} ${event.organizer_last_name || ''}`.trim() || 'Unknown',
+            team_registrations: event.team_registrations || []
         }));
         
-        res.render('player/browse-events', {
-            title: 'Browse Events',
-            user: req.session.user,
-            events: formattedEvents,
-            messages: req.session.flashMessage || {},
-            layout: 'layouts/sidebar-dashboard',
-            path: '/player/browse-events'
-        });
+        console.log(`Formatted ${formattedEvents.length} events for player`);
         
-        // Clear flash messages
-        delete req.session.flashMessage;
+        // Return JSON for API calls
+        res.json({
+            success: true,
+            events: formattedEvents
+        });
     } catch (err) {
         console.error('Error in browse-events route:', err);
-        res.status(500).render('error', { 
-            message: 'Failed to retrieve events', 
-            error: err 
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve events',
+            error: err.message
         });
     }
 });
@@ -218,38 +246,35 @@ router.get('/my-teams', async (req, res) => {
         const playerId = req.session.user._id;
         const teams = await Team.getPlayerTeams(playerId);
         
+        console.log(`Player my-teams: Found ${teams.length} teams for player ${playerId}`);
+        
         // Format teams for display - don't override team_members!
         const formattedTeams = teams.map(team => ({
             id: team._id,
-            name: team.name,
-            sport: team.sport_type,
+            name: team.name || 'Unnamed Team',
+            sport: team.sport_type || 'General',
+            sport_type: team.sport_type || 'General',
             manager_name: team.manager_name || 'Team Manager',
             manager_email: team.manager_email || '',
             current_members: team.members ? team.members.length : 0,
             members: team.max_members || 20,
+            max_members: team.max_members || 20,
             status: 'Active',
             role: 'Player',
             team_members: team.team_members || [] // Use the populated team_members from the model
         }));
         
-        res.render('player/my-teams', {
-            title: 'My Teams',
-            user: req.session.user,
-            teams: formattedTeams,
-            messages: req.session.flashMessage || {},
-            layout: 'layouts/sidebar-dashboard',
-            path: '/player/my-teams'
+        // Return JSON for API calls
+        res.json({
+            success: true,
+            teams: formattedTeams
         });
-        
-        // Clear flash messages
-        delete req.session.flashMessage;
     } catch (err) {
         console.error('Error fetching player teams:', err);
-        res.status(500).render('error', { 
-            title: 'Error',
-            message: 'Failed to retrieve your teams', 
-            error: err,
-            layout: 'layouts/main'
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve your teams',
+            error: err.message
         });
     }
 });
@@ -273,36 +298,29 @@ router.get('/browse-teams', async (req, res) => {
             id: team._id,
             name: team.name || 'Unnamed Team',
             sport_type: team.sport_type || 'General',
+            sport: team.sport_type || 'General',
             manager_name: team.manager_name || 'Team Manager',
             manager_email: team.manager_email || '',
             current_members: team.members ? team.members.length : 0,
             max_members: team.max_members || 20,
+            members: team.max_members || 20,
             description: team.description || '',
             already_joined: membershipMap[team._id.toString()] === true
         }));
         
-        // Get request statuses from session
-        const requestStatusMap = req.session.teamRequestStatuses || {};
+        console.log(`Player browse-teams: Found ${formattedTeams.length} teams`);
         
-        res.render('player/browse-teams', {
-            title: 'Browse Teams',
-            user: req.session.user,
-            availableTeams: formattedTeams,
-            requestStatusMap: requestStatusMap,
-            messages: req.session.flashMessage || {},
-            layout: 'layouts/sidebar-dashboard',
-            path: '/player/browse-teams'
+        // Return JSON for API calls
+        res.json({
+            success: true,
+            teams: formattedTeams
         });
-        
-        // Clear flash messages after sending
-        delete req.session.flashMessage;
     } catch (err) {
         console.error('Error fetching teams:', err);
-        res.status(500).render('error', { 
-            title: 'Error',
-            message: 'Failed to retrieve teams', 
-            error: err,
-            layout: 'layouts/main'
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve teams',
+            error: err.message
         });
     }
 });
@@ -370,45 +388,43 @@ router.post('/teams/:id/join', async (req, res) => {
         const teamId = req.params.id;
         const playerId = req.session.user._id;
         
+        console.log(`Player ${playerId} requesting to join team ${teamId}`);
+        
         await Team.addJoinRequest(teamId, playerId);
         
-        req.session.flashMessage = {
-            type: 'success',
-            text: 'Join request sent successfully!'
-        };
-        
-        res.redirect(`/player/teams/${teamId}`);
+        res.json({
+            success: true,
+            message: 'Join request sent successfully!'
+        });
     } catch (err) {
         console.error('Error sending join request:', err);
-        req.session.flashMessage = {
-            type: 'error',
-            text: `Error sending join request: ${err.message}`
-        };
-        res.redirect(`/player/teams/${req.params.id}`);
+        res.status(500).json({
+            success: false,
+            message: err.message || 'Error sending join request'
+        });
     }
 });
 
 // Leave a team
-router.post('/teams/:id/leave', async (req, res) => {
+router.post('/teams/leave/:id', async (req, res) => {
     try {
         const teamId = req.params.id;
         const playerId = req.session.user._id;
         
+        console.log(`Player ${playerId} leaving team ${teamId}`);
+        
         await Team.removePlayerFromTeam(teamId, playerId);
         
-        req.session.flashMessage = {
-            type: 'success',
-            text: 'You have left the team'
-        };
-        
-        res.redirect('/player/teams');
+        res.json({
+            success: true,
+            message: 'You have left the team successfully'
+        });
     } catch (err) {
         console.error('Error leaving team:', err);
-        req.session.flashMessage = {
-            type: 'error',
-            text: `Error leaving team: ${err.message}`
-        };
-        res.redirect(`/player/teams/${req.params.id}`);
+        res.status(500).json({
+            success: false,
+            message: err.message || 'Error leaving team'
+        });
     }
 });
 
@@ -495,6 +511,83 @@ router.get('/performance', playerProfileController.getPlayerPerformance);
 router.get('/profile', playerProfileController.renderPlayerProfile);
 router.get('/profile/edit', playerProfileController.renderPlayerProfileEdit);
 router.post('/profile/update', upload.single('profile_image'), playerProfileController.updatePlayerProfile);
+
+// Update profile (API endpoint for React)
+router.put('/profile', upload.single('profile_image'), async (req, res) => {
+    try {
+        // Check if user session exists
+        if (!req.session.user || !req.session.user._id) {
+            return res.status(401).json({
+                success: false,
+                message: 'User not authenticated'
+            });
+        }
+        
+        const userId = req.session.user._id;
+        
+        console.log('Player Profile Update - Session User:', req.session.user);
+        console.log('Received profile update:', req.body);
+        console.log('Received file:', req.file);
+        
+        // Create the updated profile object
+        const updatedProfile = {
+            first_name: req.body.first_name || '',
+            last_name: req.body.last_name || '',
+            email: req.body.email || req.session.user.email,
+            phone: req.body.phone || '',
+            bio: req.body.bio || ''
+        };
+        
+        // If a new image was uploaded, add the path
+        if (req.file) {
+            updatedProfile.profile_image = '/uploads/profile/' + req.file.filename;
+        }
+        
+        console.log('Updating profile with data:', updatedProfile);
+        
+        // Update the user in the database
+        const updatedUser = await User.updateUser(userId, updatedProfile);
+        
+        if (!updatedUser) {
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to update user in database'
+            });
+        }
+        
+        // Fetch fresh user data
+        const freshUserData = await User.getUserById(userId);
+        
+        if (!freshUserData) {
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to retrieve updated user data'
+            });
+        }
+        
+        // Create complete user object for session
+        const sessionUser = freshUserData.toObject ? freshUserData.toObject() : freshUserData;
+        sessionUser.name = sessionUser.first_name + (sessionUser.last_name ? ' ' + sessionUser.last_name : '');
+        
+        // Update the session
+        req.session.user = sessionUser;
+        
+        console.log('Profile updated successfully:', sessionUser);
+        
+        // Return success with updated user data
+        res.json({
+            success: true,
+            message: 'Profile updated successfully',
+            user: sessionUser
+        });
+    } catch (err) {
+        console.error('Error updating profile:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Error updating profile: ' + err.message
+        });
+    }
+});
 
 // View event details
 router.get('/event/:id', async (req, res) => {

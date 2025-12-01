@@ -2,20 +2,21 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectUser, logoutUser } from '../../store/slices/authSlice';
+import PlayerLayout from '../../components/layout/PlayerLayout';
 import axios from 'axios';
-import './PlayerDashboard.css';
+import './Dashboard.css';
 
 const PlayerDashboard = () => {
     const user = useSelector(selectUser);
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const [stats, setStats] = useState({
-        totalEvents: 0,
-        activeTeams: 0,
-        achievements: 0,
-        performance: 85
+    const [dashboardData, setDashboardData] = useState({
+        teamCount: 0,
+        eventCount: 0,
+        upcomingEvents: [],
+        teams: []
     });
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         fetchDashboardData();
@@ -23,15 +24,20 @@ const PlayerDashboard = () => {
 
     const fetchDashboardData = async () => {
         try {
-            // TODO: Implement API calls to fetch actual player data
-            setStats({
-                totalEvents: 0,
-                activeTeams: 0,
-                achievements: 0,
-                performance: 85
-            });
+            setLoading(true);
+            const response = await axios.get('http://localhost:5000/api/player/dashboard', { withCredentials: true });
+            if (response.data.success) {
+                setDashboardData({
+                    teamCount: response.data.teamCount || 0,
+                    eventCount: response.data.eventCount || 0,
+                    upcomingEvents: response.data.upcomingEvents || [],
+                    teams: response.data.teams || []
+                });
+            }
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -41,129 +47,124 @@ const PlayerDashboard = () => {
     };
 
     return (
-        <div className="player-dashboard">
-            <div className="player-dashboard-content">
-                {/* Sidebar */}
-                <div className={`player-sidebar ${sidebarOpen ? '' : 'collapsed'}`}>
-                    <div className="sidebar-header">
-                        <Link to="/" className="sidebar-logo">
-                            <div className="sidebar-logo-icon">
-                                <i className="fa fa-trophy"></i>
-                            </div>
-                            <span>SportsAmigo</span>
-                        </Link>
-                    </div>
-
-                    <div className="sidebar-user-profile">
-                        <div className="sidebar-user-avatar">
-                            {user?.profile_image ? (
-                                <img src={`http://localhost:5000${user.profile_image}`} alt="Profile" />
-                            ) : (
-                                <i className="fa fa-user"></i>
-                            )}
+        <PlayerLayout>
+            <div className="dashboard-page-wrapper">
+                {/* Header Section with Overlay */}
+                <div className="dashboard-header-section">
+                    <div className="dashboard-welcome-card">
+                        <div className="welcome-text">
+                            <h1>Welcome back, {user?.first_name || 'Player'}!</h1>
+                            <p>Track your teams and participate in exciting events</p>
                         </div>
-                        <div className="sidebar-user-name">{user?.first_name || user?.name || '222 Nor'}</div>
-                        <div className="sidebar-user-role">PLAYER</div>
+                        <Link to="/player/browse-teams" className="create-team-btn">
+                            <i className="fa fa-user-plus"></i>
+                            Join a Team
+                        </Link>
+                    </div>
+                </div>
+
+                {/* Stats Grid */}
+                <div className="stats-grid">
+                        <div className="stat-card">
+                            <div className="stat-card-content">
+                                <div className="stat-icon blue">
+                                    <i className="fa fa-users"></i>
+                                </div>
+                                <div className="stat-info">
+                                    <div className="stat-label">My Teams</div>
+                                    <div className="stat-value">{dashboardData.teamCount}</div>
+                                </div>
+                            </div>
+                            <Link to="/player/my-teams" className="stat-link">
+                                View teams <i className="fa fa-arrow-right"></i>
+                            </Link>
+                        </div>
+
+                        <div className="stat-card">
+                            <div className="stat-card-content">
+                                <div className="stat-icon green">
+                                    <i className="fa fa-calendar-alt"></i>
+                                </div>
+                                <div className="stat-info">
+                                    <div className="stat-label">My Events</div>
+                                    <div className="stat-value">{dashboardData.eventCount}</div>
+                                </div>
+                            </div>
+                            <Link to="/player/my-events" className="stat-link">
+                                View events <i className="fa fa-arrow-right"></i>
+                            </Link>
+                        </div>
+
+                        <div className="stat-card">
+                            <div className="stat-card-content">
+                                <div className="stat-icon yellow">
+                                    <i className="fa fa-trophy"></i>
+                                </div>
+                                <div className="stat-info">
+                                    <div className="stat-label">Achievements</div>
+                                    <div className="stat-value">0</div>
+                                </div>
+                            </div>
+                            <div className="stat-link" style={{cursor: 'default'}}>
+                                Coming soon
+                            </div>
+                        </div>
+
+                        <div className="stat-card">
+                            <div className="stat-card-content">
+                                <div className="stat-icon purple">
+                                    <i className="fa fa-chart-line"></i>
+                                </div>
+                                <div className="stat-info">
+                                    <div className="stat-label">Performance</div>
+                                    <div className="stat-value">--</div>
+                                </div>
+                            </div>
+                            <div className="stat-link" style={{cursor: 'default'}}>
+                                Coming soon
+                            </div>
+                        </div>
                     </div>
 
-                    <nav className="sidebar-nav">
-                        <Link to="/player/dashboard" className="sidebar-nav-item active">
-                            <i className="fa fa-tachometer-alt"></i>
-                            Dashboard
-                        </Link>
-                        <Link to="/player/my-events" className="sidebar-nav-item">
-                            <i className="fa fa-calendar-alt"></i>
-                            My Events
-                        </Link>
-                        <Link to="/player/my-teams" className="sidebar-nav-item">
+                    {/* Teams Section */}
+                    {dashboardData.teams && dashboardData.teams.length > 0 ? (
+                        <div className="teams-section">
+                            <div className="section-header">
+                                <h2><i className="fa fa-users"></i> My Teams</h2>
+                                <Link to="/player/my-teams" className="view-all-link">View all</Link>
+                            </div>
+                            <div className="teams-list">
+                                {dashboardData.teams.map((team) => (
+                                    <div key={team._id} className="team-item">
+                                        <div className="team-icon">
+                                            <i className="fa fa-users"></i>
+                                        </div>
+                                        <div className="team-details">
+                                            <h3>{team.name}</h3>
+                                            <p>{team.sport_type} • {team.current_members || 0} players</p>
+                                        </div>
+                                        <div className="team-actions">
+                                            <Link to={`/player/team/${team._id}`} className="team-action-btn">
+                                                View Details
+                                            </Link>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="no-teams-section">
                             <i className="fa fa-users"></i>
-                            My Teams
-                        </Link>
-                        <Link to="/player/events" className="sidebar-nav-item">
-                            <i className="fa fa-search"></i>
-                            Browse Events
-                        </Link>
-                        <Link to="/player/browse-teams" className="sidebar-nav-item">
-                            <i className="fa fa-user-friends"></i>
-                            Browse Teams
-                        </Link>
-                        <Link to="/player/profile" className="sidebar-nav-item">
-                            <i className="fa fa-user"></i>
-                            Profile
-                        </Link>
-                    </nav>
-
-                    <div className="sidebar-footer">
-                        <button onClick={handleLogout} className="sidebar-logout-btn">
-                            <i className="fa fa-sign-out-alt"></i>
-                            Logout
-                        </button>
-                    </div>
-                </div>
-
-                {/* Main Content */}
-                <div className="main-content">
-                    {/* Stats Cards */}
-                    <div className="stats-grid">
-                        <div className="stat-card">
-                            <div className="stat-icon-container" style={{ backgroundColor: '#EF4444' }}>
-                                <i className="fa fa-calendar-check"></i>
-                            </div>
-                            <div className="stat-info">
-                                <div className="stat-label">MY EVENTS</div>
-                                <div className="stat-value">{stats.totalEvents}</div>
-                            </div>
-                        </div>
-
-                        <div className="stat-card">
-                            <div className="stat-icon-container" style={{ backgroundColor: '#10B981' }}>
-                                <i className="fa fa-users"></i>
-                            </div>
-                            <div className="stat-info">
-                                <div className="stat-label">MY TEAMS</div>
-                                <div className="stat-value">{stats.activeTeams}</div>
-                            </div>
-                        </div>
-
-                        <div className="stat-card">
-                            <div className="stat-icon-container" style={{ backgroundColor: '#06B6D4' }}>
-                                <i className="fa fa-trophy"></i>
-                            </div>
-                            <div className="stat-info">
-                                <div className="stat-label">ACHIEVEMENTS</div>
-                                <div className="stat-value">{stats.achievements}</div>
-                            </div>
-                        </div>
-
-                        <div className="stat-card">
-                            <div className="stat-icon-container" style={{ backgroundColor: '#F59E0B' }}>
-                                <i className="fa fa-chart-line"></i>
-                            </div>
-                            <div className="stat-info">
-                                <div className="stat-label">PERFORMANCE</div>
-                                <div className="stat-value">{stats.performance}%</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Welcome Section */}
-                    <div className="welcome-section">
-                        <h2 className="welcome-title">Welcome back, {user?.first_name || user?.name || '222'}!</h2>
-                        <p className="welcome-subtitle">
-                            You don't have any upcoming events. Browse available events or join a team to participate!
-                        </p>
-                        <div className="welcome-actions">
-                            <Link to="/player/events" className="btn-primary">
-                                Browse Events
-                            </Link>
-                            <Link to="/player/browse-teams" className="btn-secondary">
-                                Join a Team
+                            <h3>No Teams Yet</h3>
+                            <p>Join a team to start competing in events</p>
+                            <Link to="/player/browse-teams" className="create-first-team-btn">
+                                <i className="fa fa-search"></i>
+                                Browse Teams
                             </Link>
                         </div>
-                    </div>
-                </div>
+                    )}
             </div>
-        </div>
+        </PlayerLayout>
     );
 };
 

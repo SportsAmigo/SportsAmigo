@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { selectUser } from '../../store/slices/authSlice';
+import PlayerLayout from '../../components/layout/PlayerLayout';
 import axios from 'axios';
+import './Wallet.css';
 
 const Wallet = () => {
     const user = useSelector(selectUser);
@@ -15,6 +17,7 @@ const Wallet = () => {
     });
     const [showAddFundsModal, setShowAddFundsModal] = useState(false);
     const [fundAmount, setFundAmount] = useState('');
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchWalletData();
@@ -28,6 +31,8 @@ const Wallet = () => {
             }
         } catch (error) {
             console.error('Error fetching wallet data:', error);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -50,133 +55,139 @@ const Wallet = () => {
     };
 
     return (
-        <div>
-            <section className="header shop-header">
-                <nav>
-                    <Link to="/"><img src="/images/sports-amigo-logo.png" alt="SportsAmigo Logo" /></Link>
-                    <div className="nav-links">
-                        <ul>
-                            <li><Link to="/">HOME</Link></li>
-                            <li><Link to="/about">ABOUT</Link></li>
-                            <li><Link to="/shop">SHOP</Link></li>
-                            <li><Link to="/contact">CONTACT</Link></li>
-                            <li><Link to="/shop/cart">🛒 Cart</Link></li>
-                            <li className="dropdown">
-                                <a href="#">{user?.first_name}</a>
-                                <div className="dropdown-content">
-                                    <Link to="/wallet" className="active">💰 My Wallet</Link>
-                                    <Link to="/shop/orders">My Orders</Link>
-                                    <Link to="/player/dashboard">Dashboard</Link>
-                                    <Link to="/logout">Logout</Link>
-                                </div>
-                            </li>
-                        </ul>
+        <PlayerLayout>
+            <div className="browse-wrapper">
+                <div className="wallet-header">
+                    <div className="wallet-header-content">
+                        <div className="header-title-section">
+                            <h1><i className="fa fa-wallet"></i> My Wallet</h1>
+                            <p>Manage your wallet balance and view transaction history</p>
+                        </div>
                     </div>
-                </nav>
-                <div className="text-box">
-                    <h1>My Wallet</h1>
-                    <p>Manage your wallet balance and view transaction history.</p>
                 </div>
-            </section>
 
-            <section className="wallet-section">
-                <div className="container">
-                    <div className="wallet-balance-card">
-                        <div className="balance-header">
-                            <h2>My Wallet Balance</h2>
-                            <div className="balance-amount">
-                                ₹<span>{walletData.balance.toFixed(2)}</span>
-                            </div>
-                            <p className="balance-status">
-                                <span className="status-indicator active"></span>
-                                Wallet Active
-                            </p>
-                        </div>
-                        
-                        <div className="quick-actions">
-                            <button className="add-funds-btn" onClick={() => setShowAddFundsModal(true)}>
-                                + Add Funds
-                            </button>
-                            <Link to="/shop" className="shop-now-btn">Shop Now</Link>
-                        </div>
+                {loading ? (
+                    <div className="loading-container">
+                        <div className="loading-spinner"></div>
+                        <p className="loading-text">Loading wallet...</p>
                     </div>
-
-                    <div className="wallet-stats">
-                        <div className="stat-card">
-                            <div className="stat-icon">+</div>
-                            <div className="stat-info">
-                                <h3>Total Credits</h3>
-                                <p>₹{walletData.totalCredits.toFixed(2)}</p>
-                            </div>
-                        </div>
-                        <div className="stat-card">
-                            <div className="stat-icon">-</div>
-                            <div className="stat-info">
-                                <h3>Total Debits</h3>
-                                <p>₹{walletData.totalDebits.toFixed(2)}</p>
-                            </div>
-                        </div>
-                        <div className="stat-card">
-                            <div className="stat-icon">#</div>
-                            <div className="stat-info">
-                                <h3>Transactions</h3>
-                                <p>{walletData.transactionCount}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="transaction-history">
-                        <div className="history-header">
-                            <h2>Recent Transactions</h2>
-                        </div>
-                        <div className="transactions-list">
-                            {walletData.recentTransactions && walletData.recentTransactions.length > 0 ? (
-                                walletData.recentTransactions.map((transaction, index) => (
-                                    <div key={index} className={`transaction-item ${transaction.transactionType.toLowerCase()}`}>
-                                        <div className="transaction-icon">
-                                            {transaction.transactionType === 'Credit' ? '💰' : '🛍️'}
-                                        </div>
-                                        <div className="transaction-details">
-                                            <h4>{transaction.description}</h4>
-                                            <p className="transaction-time">
-                                                {new Date(transaction.timestamp).toLocaleDateString('en-IN', {
-                                                    year: 'numeric',
-                                                    month: 'short',
-                                                    day: 'numeric',
-                                                    hour: '2-digit',
-                                                    minute: '2-digit'
-                                                })}
-                                            </p>
-                                        </div>
-                                        <div className={`transaction-amount ${transaction.transactionType.toLowerCase()}`}>
-                                            {transaction.transactionType === 'Credit' ? '+' : '-'}₹{transaction.amount.toFixed(2)}
+                ) : (
+                    <>
+                        <div className="wallet-overview">
+                            <div className="wallet-balance-card">
+                                <div className="balance-header">
+                                    <div className="balance-icon">
+                                        <i className="fa fa-wallet"></i>
+                                    </div>
+                                    <div className="balance-info">
+                                        <h2>Current Balance</h2>
+                                        <div className="balance-amount">
+                                            ₹{walletData.balance.toFixed(2)}
                                         </div>
                                     </div>
-                                ))
-                            ) : (
-                                <div className="no-transactions">
-                                    <div className="no-transactions-icon">💳</div>
-                                    <h3>No transactions yet</h3>
-                                    <p>Your transaction history will appear here once you start using your wallet.</p>
                                 </div>
-                            )}
+                                
+                                <div className="balance-actions">
+                                    <button className="add-funds-btn" onClick={() => setShowAddFundsModal(true)}>
+                                        <i className="fa fa-plus"></i> Add Funds
+                                    </button>
+                                    <Link to="/shop" className="shop-btn">
+                                        <i className="fa fa-shopping-bag"></i> Shop Now
+                                    </Link>
+                                </div>
+                            </div>
+
+                            <div className="wallet-stats-grid">
+                                <div className="wallet-stat-card credit">
+                                    <div className="stat-icon">
+                                        <i className="fa fa-arrow-up"></i>
+                                    </div>
+                                    <div className="stat-content">
+                                        <span className="stat-label">Total Credits</span>
+                                        <span className="stat-value">₹{walletData.totalCredits.toFixed(2)}</span>
+                                    </div>
+                                </div>
+                                <div className="wallet-stat-card debit">
+                                    <div className="stat-icon">
+                                        <i className="fa fa-arrow-down"></i>
+                                    </div>
+                                    <div className="stat-content">
+                                        <span className="stat-label">Total Debits</span>
+                                        <span className="stat-value">₹{walletData.totalDebits.toFixed(2)}</span>
+                                    </div>
+                                </div>
+                                <div className="wallet-stat-card transactions">
+                                    <div className="stat-icon">
+                                        <i className="fa fa-exchange-alt"></i>
+                                    </div>
+                                    <div className="stat-content">
+                                        <span className="stat-label">Transactions</span>
+                                        <span className="stat-value">{walletData.transactionCount}</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-            </section>
+
+                        <div className="transactions-section">
+                            <div className="transactions-header">
+                                <h2><i className="fa fa-history"></i> Recent Transactions</h2>
+                            </div>
+                            <div className="transactions-container">
+                                {walletData.recentTransactions && walletData.recentTransactions.length > 0 ? (
+                                    walletData.recentTransactions.map((transaction, index) => (
+                                        <div key={index} className={`transaction-item ${transaction.transactionType.toLowerCase()}`}>
+                                            <div className="transaction-icon-wrapper">
+                                                <i className={`fa ${transaction.transactionType === 'Credit' ? 'fa-plus-circle' : 'fa-minus-circle'}`}></i>
+                                            </div>
+                                            <div className="transaction-info">
+                                                <h4 className="transaction-desc">{transaction.description}</h4>
+                                                <p className="transaction-date">
+                                                    {new Date(transaction.timestamp).toLocaleDateString('en-IN', {
+                                                        year: 'numeric',
+                                                        month: 'short',
+                                                        day: 'numeric',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit'
+                                                    })}
+                                                </p>
+                                            </div>
+                                            <div className={`transaction-amount-display ${transaction.transactionType.toLowerCase()}`}>
+                                                {transaction.transactionType === 'Credit' ? '+' : '-'}₹{transaction.amount.toFixed(2)}
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="empty-transactions">
+                                        <div className="empty-icon">
+                                            <i className="fa fa-receipt"></i>
+                                        </div>
+                                        <h3>No Transactions Yet</h3>
+                                        <p>Your transaction history will appear here once you start using your wallet.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </>
+                )}
+            </div>
 
             {showAddFundsModal && (
-                <div className="modal" style={{ display: 'block' }}>
-                    <div className="modal-content">
-                        <span className="close" onClick={() => setShowAddFundsModal(false)}>&times;</span>
+                <div className="modal-overlay" onClick={() => setShowAddFundsModal(false)}>
+                    <div className="funds-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2><i className="fa fa-plus-circle"></i> Add Funds to Wallet</h2>
+                            <button className="modal-close-btn" onClick={() => setShowAddFundsModal(false)}>
+                                <i className="fa fa-times"></i>
+                            </button>
+                        </div>
                         <div className="modal-body">
-                            <h2>Add Funds to Wallet</h2>
-                            <form onSubmit={handleAddFunds}>
+                            <form onSubmit={handleAddFunds} className="funds-form">
                                 <div className="form-group">
                                     <label htmlFor="fundAmount">Amount (₹)</label>
                                     <input
                                         type="number"
                                         id="fundAmount"
+                                        className="form-input"
                                         value={fundAmount}
                                         onChange={(e) => setFundAmount(e.target.value)}
                                         min="1"
@@ -184,14 +195,14 @@ const Wallet = () => {
                                         placeholder="Enter amount to add"
                                         required
                                     />
-                                    <small className="form-help">Minimum: ₹1 | Maximum: ₹50,000</small>
+                                    <small className="form-hint">Minimum: ₹1 | Maximum: ₹50,000</small>
                                 </div>
-                                <div className="modal-actions">
-                                    <button type="button" onClick={() => setShowAddFundsModal(false)} className="cancel-btn">
+                                <div className="form-actions">
+                                    <button type="button" onClick={() => setShowAddFundsModal(false)} className="btn-cancel">
                                         Cancel
                                     </button>
-                                    <button type="submit" className="add-funds-submit-btn">
-                                        Add Funds
+                                    <button type="submit" className="btn-submit">
+                                        <i className="fa fa-check"></i> Add Funds
                                     </button>
                                 </div>
                             </form>
@@ -199,7 +210,7 @@ const Wallet = () => {
                     </div>
                 </div>
             )}
-        </div>
+        </PlayerLayout>
     );
 };
 

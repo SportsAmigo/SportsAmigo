@@ -16,7 +16,7 @@ import Contact from './pages/Contact';
 
 // Player Pages
 import PlayerDashboard from './pages/player/Dashboard';
-import PlayerProfile from './pages/player/Profile';
+import Profile from './pages/player/Profile';
 import PlayerEvents from './pages/player/BrowseEvents';
 import BrowseTeams from './pages/player/BrowseTeams';
 import Wallet from './pages/player/Wallet';
@@ -109,7 +109,7 @@ const AppContent = () => {
           path="/player/profile"
           element={
             <ProtectedRoute allowedRoles={['player']}>
-              <PlayerProfile />
+              <Profile />
             </ProtectedRoute>
           }
         />

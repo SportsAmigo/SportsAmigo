@@ -744,6 +744,88 @@ router.post('/process-request', async (req, res) => {
     }
 });
 
+// Approve Join Request (API for React)
+router.post('/team/:teamId/approve-request', async (req, res) => {
+    console.log('=== APPROVE REQUEST ROUTE HIT ===');
+    console.log('Params:', req.params);
+    console.log('Body:', req.body);
+    console.log('User:', req.session?.user);
+    
+    try {
+        const { teamId } = req.params;
+        const { requestId, playerId } = req.body;
+        
+        if (!requestId || !playerId) {
+            console.log('Missing requestId or playerId');
+            return res.status(400).json({
+                success: false,
+                message: 'Request ID and Player ID are required'
+            });
+        }
+        
+        console.log(`Approving join request ${requestId} for team ${teamId}, player ${playerId}`);
+        
+        // Process the request as approved
+        const result = await Team.processJoinRequest(requestId, 'approved');
+        
+        if (result) {
+            res.json({
+                success: true,
+                message: 'Join request approved successfully!'
+            });
+        } else {
+            res.status(500).json({
+                success: false,
+                message: 'Failed to approve request'
+            });
+        }
+    } catch (err) {
+        console.error('Error approving join request:', err);
+        res.status(500).json({
+            success: false,
+            message: err.message || 'Failed to approve request'
+        });
+    }
+});
+
+// Reject Join Request (API for React)
+router.post('/team/:teamId/reject-request', async (req, res) => {
+    try {
+        const { teamId } = req.params;
+        const { requestId } = req.body;
+        
+        if (!requestId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Request ID is required'
+            });
+        }
+        
+        console.log(`Rejecting join request ${requestId} for team ${teamId}`);
+        
+        // Process the request as rejected
+        const result = await Team.processJoinRequest(requestId, 'rejected');
+        
+        if (result) {
+            res.json({
+                success: true,
+                message: 'Join request rejected'
+            });
+        } else {
+            res.status(500).json({
+                success: false,
+                message: 'Failed to reject request'
+            });
+        }
+    } catch (err) {
+        console.error('Error rejecting join request:', err);
+        res.status(500).json({
+            success: false,
+            message: err.message || 'Failed to reject request'
+        });
+    }
+});
+
 // Add route for profile updates
 router.post('/update-profile', isManager, async (req, res) => {
     try {
@@ -1000,6 +1082,17 @@ router.get('/browse-events', async (req, res) => {
                 // Check if this event is already registered by any team of this manager
                 const isRegistered = registeredEventIds.has(event._id.toString());
                 
+                // Find registration status if registered
+                let registrationStatus = null;
+                if (isRegistered && event.team_registrations) {
+                    const managerRegistration = event.team_registrations.find(reg => 
+                        teamIds.includes(reg.team_id.toString())
+                    );
+                    if (managerRegistration) {
+                        registrationStatus = managerRegistration.status;
+                    }
+                }
+                
                 // Ensure all required fields exist with fallbacks
                 return {
                     id: event._id,
@@ -1013,6 +1106,7 @@ router.get('/browse-events', async (req, res) => {
                     max_participants: event.max_teams ? event.max_teams * 10 : 100,
                     current_participants: 0,
                     isRegistered: isRegistered,
+                    registrationStatus: registrationStatus,
                     // Format organizer information
                     organizer: event.organizer_first_name && event.organizer_last_name ? 
                         `${event.organizer_first_name} ${event.organizer_last_name}` : 
@@ -1272,28 +1366,30 @@ router.get('/my-events', async (req, res) => {
 router.get('/event/:id/details', async (req, res) => {
     try {
         const eventId = req.params.id;
-        console.log('Viewing event details for event ID:', eventId);
+        console.log('=== EVENT DETAILS REQUEST ===');
+        console.log('Event ID:', eventId);
+        console.log('User:', req.session.user);
         
         if (!req.session.user || !req.session.user._id) {
-            console.error('No user ID found in session:', req.session);
-            return res.status(401).render('error', {
-                message: 'User not authenticated',
-                error: { status: 401, stack: 'Missing user ID in session' }
+            console.error('No user ID found in session');
+            return res.status(401).json({
+                success: false,
+                message: 'User not authenticated'
             });
         }
 
         // Get event from database
         const event = await Event.getEventById(eventId);
+        console.log('Retrieved event:', event ? 'Found' : 'Not found');
         
         if (!event) {
-            req.session.message = {
-                type: 'danger',
-                text: 'Event not found'
-            };
-            return res.redirect('/manager/browse-events');
+            return res.status(404).json({
+                success: false,
+                message: 'Event not found'
+            });
         }
         
-        console.log('Retrieved event details:', event);
+        console.log('Event details:', JSON.stringify(event, null, 2));
         
         // Format the event data for the template
         const formattedEvent = {
