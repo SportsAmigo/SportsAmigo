@@ -18,6 +18,7 @@ import Contact from './pages/Contact';
 import PlayerDashboard from './pages/player/Dashboard';
 import PlayerProfile from './pages/player/Profile';
 import PlayerEvents from './pages/player/BrowseEvents';
+import BrowseTeams from './pages/player/BrowseTeams';
 import Wallet from './pages/player/Wallet';
 import MyEvents from './pages/player/MyEvents';
 import MyTeams from './pages/player/MyTeams';
@@ -141,6 +142,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute allowedRoles={['player']}>
               <MyTeams />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/player/browse-teams"
+          element={
+            <ProtectedRoute allowedRoles={['player']}>
+              <BrowseTeams />
             </ProtectedRoute>
           }
         />
