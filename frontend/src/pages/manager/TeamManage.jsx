@@ -179,6 +179,13 @@ const TeamManage = () => {
 
                     {/* Team Info Card */}
                     <div className="info-card">
+                        {team.description && (
+                            <div className="description-section">
+                                <h3>Description</h3>
+                                <p>{team.description}</p>
+                            </div>
+                        )}
+
                         <div className="info-grid">
                             <div className="info-item">
                                 <i className="fa fa-futbol"></i>
@@ -215,13 +222,6 @@ const TeamManage = () => {
                                 </div>
                             </div>
                         </div>
-
-                        {team.description && (
-                            <div className="description-section">
-                                <h3>Description</h3>
-                                <p>{team.description}</p>
-                            </div>
-                        )}
                     </div>
 
                     {/* Members Section */}

@@ -222,12 +222,48 @@ router.put('/profile', upload.single('profile_image'), async (req, res) => {
         console.log('Received profile update:', req.body);
         console.log('Received file:', req.file);
         
+        // Validate required fields
+        const errors = [];
+        
+        if (!req.body.first_name || !req.body.first_name.trim()) {
+            errors.push('First name is required');
+        } else if (!/^[A-Za-z\s]{2,50}$/.test(req.body.first_name.trim())) {
+            errors.push('First name must be 2-50 letters only');
+        }
+        
+        if (!req.body.last_name || !req.body.last_name.trim()) {
+            errors.push('Last name is required');
+        } else if (!/^[A-Za-z\s]{1,50}$/.test(req.body.last_name.trim())) {
+            errors.push('Last name must be 1-50 letters only');
+        }
+        
+        if (!req.body.email || !req.body.email.trim()) {
+            errors.push('Email is required');
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(req.body.email)) {
+            errors.push('Invalid email format');
+        }
+        
+        if (req.body.phone && req.body.phone.trim() && !/^[6-9]\d{9}$/.test(req.body.phone.trim())) {
+            errors.push('Phone must be 10 digits starting with 6-9');
+        }
+        
+        if (req.body.bio && req.body.bio.length > 500) {
+            errors.push('Bio must not exceed 500 characters');
+        }
+        
+        if (errors.length > 0) {
+            return res.status(400).json({
+                success: false,
+                message: errors.join(', ')
+            });
+        }
+        
         // Create the updated profile object
         const updatedProfile = {
-            first_name: req.body.first_name || '',
-            last_name: req.body.last_name || '',
-            email: req.body.email || req.session.user.email,
-            phone: req.body.phone || '',
+            first_name: req.body.first_name.trim(),
+            last_name: req.body.last_name.trim(),
+            email: req.body.email.trim(),
+            phone: req.body.phone ? req.body.phone.trim() : '',
             bio: req.body.bio || ''
         };
         
@@ -662,27 +698,6 @@ router.get('/team/:id/edit', (req, res) => {
             team: team,
             layout: 'layouts/dashboard',
         path: '/manager/my-team'
-    });
-});
-
-// Update Team Handler
-router.post('/team/:id/edit', (req, res) => {
-    const teamId = parseInt(req.params.id);
-    
-    const teamData = {
-        name: req.body.name,
-        sport: req.body.sport,
-        members: parseInt(req.body.members),
-        status: req.body.status
-    };
-    
-    Team.updateTeam(teamId, teamData, (err, success) => {
-        if (err) {
-            console.error('Error updating team:', err);
-            return res.status(500).send('An error occurred while updating the team');
-        }
-        
-        res.redirect('/manager/my-teams');
     });
 });
 

@@ -90,6 +90,32 @@ module.exports = {
                 });
             }
             
+            // Get user information for join requests
+            if (team.join_requests && team.join_requests.length > 0) {
+                const requestPlayerIds = team.join_requests.map(request => request.player_id);
+                const requestUsers = await User.find({ _id: { $in: requestPlayerIds } })
+                    .select('first_name last_name email')
+                    .exec();
+                
+                // Create a map of user info by ID
+                const requestUsersMap = requestUsers.reduce((map, user) => {
+                    map[user._id.toString()] = user;
+                    return map;
+                }, {});
+                
+                // Add user info to join requests
+                teamWithManager.join_requests = team.join_requests.map(request => {
+                    const user = requestUsersMap[request.player_id.toString()];
+                    return {
+                        ...request.toObject(),
+                        player_name: user ? `${user.first_name} ${user.last_name}` : 'Unknown',
+                        player_email: user ? user.email : '',
+                        player_first_name: user ? user.first_name : '',
+                        player_last_name: user ? user.last_name : ''
+                    };
+                });
+            }
+            
             return teamWithManager;
         } catch (err) {
             console.error('Error getting team by ID:', err);

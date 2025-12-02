@@ -99,19 +99,34 @@ module.exports = {
             .select('name sport_type manager_id')
             .exec();
         
+        // Get manager information for all teams
+        const managerIds = teams.map(team => team.manager_id);
+        const managers = await User.find({ _id: { $in: managerIds } })
+            .select('first_name last_name email')
+            .exec();
+        
+        // Create a map of manager info by ID
+        const managersMap = managers.reduce((map, manager) => {
+          map[manager._id.toString()] = manager;
+          return map;
+        }, {});
+        
         // Create a map of team info by ID
         const teamsMap = teams.reduce((map, team) => {
           map[team._id.toString()] = team;
           return map;
         }, {});
         
-        // Add team info to registrations
+        // Add team and manager info to registrations
         result.team_registrations = event.team_registrations.map(reg => {
           const team = teamsMap[reg.team_id.toString()];
+          const manager = team ? managersMap[team.manager_id.toString()] : null;
           return {
             ...reg.toObject(),
-            team_name: team ? team.name : '',
-            team_sport: team ? team.sport_type : ''
+            team_name: team ? team.name : 'Unknown Team',
+            team_sport: team ? team.sport_type : '',
+            manager_name: manager ? `${manager.first_name} ${manager.last_name}` : 'Unknown',
+            manager_email: manager ? manager.email : ''
           };
         });
       }

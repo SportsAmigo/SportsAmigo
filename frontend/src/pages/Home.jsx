@@ -25,7 +25,6 @@ const Home = () => {
                             <li><Link to="/">HOME</Link></li>
                             <li><Link to="/about">ABOUT</Link></li>
                             <li><Link to="/events">EVENTS</Link></li>
-                            <li><Link to="/shop">SHOP</Link></li>
                             <li><Link to="/contact">CONTACT</Link></li>
                             {authenticated ? (
                                 <>
@@ -33,8 +32,6 @@ const Home = () => {
                                         <a href="#">{user.first_name || user.email} ▼</a>
                                         <div className="dropdown-content">
                                             <Link to={`/${user.role}/dashboard`}>Dashboard</Link>
-                                            {user.role === 'player' && <Link to="/player/wallet">💰 Wallet</Link>}
-                                            <Link to="/shop/orders">My Orders</Link>
                                             <a href="#" onClick={handleLogout}>Logout</a>
                                         </div>
                                     </li>

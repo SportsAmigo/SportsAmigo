@@ -86,13 +86,6 @@ const PlayerLayout = ({ children }) => {
                             My Events
                         </Link>
                         <Link 
-                            to="/wallet" 
-                            className={`sidebar-nav-item ${isActive('/wallet') ? 'active' : ''}`}
-                        >
-                            <i className="fa fa-wallet"></i>
-                            Wallet
-                        </Link>
-                        <Link 
                             to="/player/profile" 
                             className={`sidebar-nav-item ${isActive('/player/profile') ? 'active' : ''}`}
                         >

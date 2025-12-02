@@ -10,7 +10,6 @@ import './App.css';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
-import Shop from './pages/Shop';
 import About from './pages/About';
 import Contact from './pages/Contact';
 
@@ -19,9 +18,10 @@ import PlayerDashboard from './pages/player/Dashboard';
 import Profile from './pages/player/Profile';
 import PlayerEvents from './pages/player/BrowseEvents';
 import BrowseTeams from './pages/player/BrowseTeams';
-import Wallet from './pages/player/Wallet';
 import MyEvents from './pages/player/MyEvents';
 import MyTeams from './pages/player/MyTeams';
+import TeamDetails from './pages/player/TeamDetails';
+import PlayerEventDetails from './pages/player/EventDetails';
 
 // Manager Pages
 import ManagerDashboard from './pages/manager/Dashboard';
@@ -94,7 +94,6 @@ const AppContent = () => {
         <Route path="/signup/:role" element={<Signup />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
-        <Route path="/shop" element={<Shop />} />
 
         {/* Player Routes */}
         <Route
@@ -122,14 +121,6 @@ const AppContent = () => {
           }
         />
         <Route
-          path="/wallet"
-          element={
-            <ProtectedRoute allowedRoles={['player']}>
-              <Wallet />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/player/my-events"
           element={
             <ProtectedRoute allowedRoles={['player']}>
@@ -150,6 +141,22 @@ const AppContent = () => {
           element={
             <ProtectedRoute allowedRoles={['player']}>
               <BrowseTeams />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/player/team/:id"
+          element={
+            <ProtectedRoute allowedRoles={['player']}>
+              <TeamDetails />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/player/event/:id"
+          element={
+            <ProtectedRoute allowedRoles={['player']}>
+              <PlayerEventDetails />
             </ProtectedRoute>
           }
         />

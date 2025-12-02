@@ -19,6 +19,7 @@ const ManagerProfile = () => {
     const [imagePreview, setImagePreview] = useState(null);
     const [message, setMessage] = useState({ type: '', text: '' });
     const [loading, setLoading] = useState(false);
+    const [errors, setErrors] = useState({});
 
     useEffect(() => {
         if (user) {
@@ -36,11 +37,90 @@ const ManagerProfile = () => {
         }
     }, [user]);
 
+    const validateField = (name, value) => {
+        const newErrors = { ...errors };
+
+        switch (name) {
+            case 'first_name':
+                if (!value.trim()) {
+                    newErrors.first_name = 'First name is required';
+                } else if (!/^[a-zA-Z\s]+$/.test(value)) {
+                    newErrors.first_name = 'Only letters and spaces allowed';
+                } else if (value.trim().length < 2 || value.length > 50) {
+                    newErrors.first_name = 'Must be 2-50 characters';
+                } else {
+                    delete newErrors.first_name;
+                }
+                break;
+
+            case 'last_name':
+                if (!value.trim()) {
+                    newErrors.last_name = 'Last name is required';
+                } else if (!/^[a-zA-Z\s]+$/.test(value)) {
+                    newErrors.last_name = 'Only letters and spaces allowed';
+                } else if (value.trim().length < 1 || value.length > 50) {
+                    newErrors.last_name = 'Must be 1-50 characters';
+                } else {
+                    delete newErrors.last_name;
+                }
+                break;
+
+            case 'email':
+                if (!value.trim()) {
+                    newErrors.email = 'Email is required';
+                } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                    newErrors.email = 'Invalid email format';
+                } else {
+                    delete newErrors.email;
+                }
+                break;
+
+            case 'phone':
+                if (value && !/^[6-9]\d{9}$/.test(value)) {
+                    newErrors.phone = 'Phone must be 10 digits starting with 6-9';
+                } else {
+                    delete newErrors.phone;
+                }
+                break;
+
+            case 'bio':
+                if (value && value.length > 500) {
+                    newErrors.bio = 'Bio must not exceed 500 characters';
+                } else {
+                    delete newErrors.bio;
+                }
+                break;
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
     const handleChange = (e) => {
+        const { name, value } = e.target;
+        
+        // Prevent non-digit input and limit length for phone
+        if (name === 'phone' && value && (!/^\d*$/.test(value) || value.length > 10)) {
+            return;
+        }
+
         setFormData({
             ...formData,
-            [e.target.name]: e.target.value
+            [name]: value
         });
+        
+        // Clear error when user starts typing
+        if (errors[name]) {
+            setErrors({
+                ...errors,
+                [name]: undefined
+            });
+        }
+    };
+
+    const handleBlur = (e) => {
+        const { name, value } = e.target;
+        validateField(name, value);
     };
 
     const handleImageChange = (e) => {
@@ -71,6 +151,20 @@ const ManagerProfile = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        // Validate all fields
+        let isValid = true;
+        ['first_name', 'last_name', 'email', 'phone', 'bio'].forEach(field => {
+            if (!validateField(field, formData[field])) {
+                isValid = false;
+            }
+        });
+
+        if (!isValid) {
+            setMessage({ type: 'error', text: 'Please fix all validation errors' });
+            return;
+        }
+        
         setLoading(true);
         setMessage({ type: '', text: '' });
 
@@ -193,11 +287,19 @@ const ManagerProfile = () => {
                                             type="text"
                                             id="first_name"
                                             name="first_name"
-                                            className="form-input"
+                                            className={`form-input ${errors.first_name ? 'error' : ''}`}
                                             value={formData.first_name}
                                             onChange={handleChange}
+                                            onBlur={handleBlur}
                                             required
+                                            maxLength="50"
                                         />
+                                        {errors.first_name && (
+                                            <span className="error-message">
+                                                <i className="fa fa-exclamation-circle"></i>
+                                                {errors.first_name}
+                                            </span>
+                                        )}
                                     </div>
 
                                     <div className="form-group">
@@ -208,11 +310,19 @@ const ManagerProfile = () => {
                                             type="text"
                                             id="last_name"
                                             name="last_name"
-                                            className="form-input"
+                                            className={`form-input ${errors.last_name ? 'error' : ''}`}
                                             value={formData.last_name}
                                             onChange={handleChange}
+                                            onBlur={handleBlur}
                                             required
+                                            maxLength="50"
                                         />
+                                        {errors.last_name && (
+                                            <span className="error-message">
+                                                <i className="fa fa-exclamation-circle"></i>
+                                                {errors.last_name}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
 
@@ -225,11 +335,18 @@ const ManagerProfile = () => {
                                             type="email"
                                             id="email"
                                             name="email"
-                                            className="form-input"
+                                            className={`form-input ${errors.email ? 'error' : ''}`}
                                             value={formData.email}
                                             onChange={handleChange}
+                                            onBlur={handleBlur}
                                             required
                                         />
+                                        {errors.email && (
+                                            <span className="error-message">
+                                                <i className="fa fa-exclamation-circle"></i>
+                                                {errors.email}
+                                            </span>
+                                        )}
                                     </div>
 
                                     <div className="form-group">
@@ -240,11 +357,19 @@ const ManagerProfile = () => {
                                             type="tel"
                                             id="phone"
                                             name="phone"
-                                            className="form-input"
+                                            className={`form-input ${errors.phone ? 'error' : ''}`}
                                             value={formData.phone}
                                             onChange={handleChange}
-                                            placeholder="+1234567890"
+                                            onBlur={handleBlur}
+                                            placeholder="10-digit Indian number"
+                                            maxLength="10"
                                         />
+                                        {errors.phone && (
+                                            <span className="error-message">
+                                                <i className="fa fa-exclamation-circle"></i>
+                                                {errors.phone}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
 
@@ -255,12 +380,23 @@ const ManagerProfile = () => {
                                     <textarea
                                         id="bio"
                                         name="bio"
-                                        className="form-textarea"
+                                        className={`form-textarea ${errors.bio ? 'error' : ''}`}
                                         rows="4"
                                         value={formData.bio}
                                         onChange={handleChange}
+                                        onBlur={handleBlur}
                                         placeholder="Tell us about yourself..."
+                                        maxLength="500"
                                     ></textarea>
+                                    {errors.bio && (
+                                        <span className="error-message">
+                                            <i className="fa fa-exclamation-circle"></i>
+                                            {errors.bio}
+                                        </span>
+                                    )}
+                                    <small className="form-hint">
+                                        {formData.bio.length}/500 characters
+                                    </small>
                                 </div>
 
                                 <div className="form-actions">

@@ -104,7 +104,7 @@ const OrganizerProfile = () => {
                 if (!value.trim()) {
                     newErrors.phone = 'Phone number is required';
                 } else if (!/^[6-9]\d{9}$/.test(value)) {
-                    newErrors.phone = 'Phone number must be 10 digits starting with 6, 7, 8, or 9';
+                    newErrors.phone = 'Phone must be 10 digits starting with 6-9';
                 } else {
                     delete newErrors.phone;
                 }
