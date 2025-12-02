@@ -99,6 +99,14 @@ const EditEvent = () => {
 
         if (!formData.start_date) {
             newErrors.start_date = 'Start date is required';
+        } else {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const startDate = new Date(formData.start_date);
+
+            if (startDate < today) {
+                newErrors.start_date = 'Start date cannot be in the past';
+            }
         }
 
         if (!formData.end_date) {
@@ -115,10 +123,14 @@ const EditEvent = () => {
         if (!formData.registration_deadline) {
             newErrors.registration_deadline = 'Registration deadline is required';
         } else if (formData.start_date) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
             const regDeadline = new Date(formData.registration_deadline);
             const startDate = new Date(formData.start_date);
 
-            if (regDeadline >= startDate) {
+            if (regDeadline < today) {
+                newErrors.registration_deadline = 'Registration deadline must be in the future';
+            } else if (regDeadline >= startDate) {
                 newErrors.registration_deadline = 'Registration deadline must be before start date';
             }
         }

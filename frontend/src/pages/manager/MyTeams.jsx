@@ -121,7 +121,15 @@ const MyTeams = () => {
                                             View
                                         </Link>
                                         <Link 
-                                            to={`/manager/team/${team._id}/edit`}
+                                            to={`/manager/team/${team._id}/matches`}
+                                            className="btn-matches"
+                                            style={{ textDecoration: 'none' }}
+                                        >
+                                            <i className="fa fa-futbol"></i>
+                                            Matches
+                                        </Link>
+                                        <Link 
+                                            to={`/manager/edit-team/${team._id}`}
                                             className="btn-edit"
                                             style={{ textDecoration: 'none' }}
                                         >

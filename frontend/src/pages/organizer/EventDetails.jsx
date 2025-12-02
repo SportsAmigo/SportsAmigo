@@ -18,6 +18,15 @@ const EventDetails = () => {
         fetchEventDetails();
     }, [id]);
 
+    // Refresh data when returning to page
+    useEffect(() => {
+        const handleFocus = () => {
+            fetchEventDetails();
+        };
+        window.addEventListener('focus', handleFocus);
+        return () => window.removeEventListener('focus', handleFocus);
+    }, [id]);
+
     const fetchEventDetails = async () => {
         try {
             const response = await axios.get(`http://localhost:5000/api/organizer/event/${id}`, {
@@ -165,6 +174,18 @@ const EventDetails = () => {
                                 </div>
                             </div>
                             <div className="flex gap-3">
+                                <Link
+                                    to={`/organizer/event/${event._id}/matches`}
+                                    className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all duration-200 shadow-lg"
+                                >
+                                    <i className="fa fa-futbol mr-2"></i>Manage Matches
+                                </Link>
+                                <Link
+                                    to={`/organizer/event/${event._id}/leaderboard`}
+                                    className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-all duration-200 shadow-lg"
+                                >
+                                    <i className="fa fa-trophy mr-2"></i>Leaderboard
+                                </Link>
                                 <Link
                                     to={`/organizer/edit-event/${event._id}`}
                                     className="bg-white text-orange-600 px-6 py-3 rounded-lg font-semibold hover:bg-orange-50 transition-all duration-200 shadow-lg"

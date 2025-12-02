@@ -22,25 +22,33 @@ const EventRegister = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
+      console.log('Fetching event details for ID:', id);
       const [eventRes, teamsRes] = await Promise.all([
-        axios.get(`/api/manager/event/${id}/details`, { withCredentials: true }),
-        axios.get('/api/manager/my-teams', { withCredentials: true })
+        axios.get(`http://localhost:5000/api/manager/event/${id}/details`, { withCredentials: true }),
+        axios.get('http://localhost:5000/api/manager/my-teams', { withCredentials: true })
       ]);
+      
+      console.log('Event response:', eventRes.data);
+      console.log('Teams response:', teamsRes.data);
 
       if (eventRes.data.success && teamsRes.data.success) {
         setEvent(eventRes.data.event);
         setTeams(teamsRes.data.teams || []);
+        console.log('Event loaded:', eventRes.data.event);
+        console.log('Teams loaded:', teamsRes.data.teams);
         
         // Check if already registered
         if (eventRes.data.event.isRegistered) {
           setError('You are already registered for this event');
         }
       } else {
+        console.error('Failed response:', { eventRes: eventRes.data, teamsRes: teamsRes.data });
         setError('Failed to load event or teams data');
       }
     } catch (err) {
       console.error('Error fetching data:', err);
-      setError(err.response?.data?.message || 'Failed to load data');
+      console.error('Error response:', err.response);
+      setError(err.response?.data?.message || err.message || 'Failed to load data');
     } finally {
       setLoading(false);
     }
@@ -56,14 +64,17 @@ const EventRegister = () => {
 
     try {
       setSubmitting(true);
+      console.log('Registering team:', selectedTeam, 'for event:', id);
       const response = await axios.post(
-        `/api/manager/event/${id}/register`,
+        `http://localhost:5000/api/manager/event/${id}/register`,
         {
           team_id: selectedTeam,
           notes: notes.trim()
         },
         { withCredentials: true }
       );
+      
+      console.log('Registration response:', response.data);
 
       if (response.data.success) {
         alert('Registration submitted successfully! Waiting for organizer approval.');

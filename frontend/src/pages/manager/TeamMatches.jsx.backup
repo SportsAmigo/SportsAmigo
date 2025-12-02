@@ -1,0 +1,399 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import './TeamMatches.css';
+
+const TeamMatches = () => {
+    const { teamId } = useParams();
+    const navigate = useNavigate();
+    const [matches, setMatches] = useState([]);
+    const [team, setTeam] = useState(null);
+    const [analytics, setAnalytics] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [showRecordModal, setShowRecordModal] = useState(false);
+    const [teams, setTeams] = useState([]);
+    const [formData, setFormData] = useState({
+        opponent_team_id: '',
+        your_score: '',
+        opponent_score: '',
+        match_date: new Date().toISOString().split('T')[0],
+        match_type: 'friendly',
+        venue: '',
+        notes: ''
+    });
+
+    useEffect(() => {
+        fetchTeamData();
+        fetchMatches();
+        fetchAnalytics();
+        fetchAllTeams();
+    }, [teamId]);
+
+    const fetchTeamData = async () => {
+        try {
+            const response = await fetch(`http://localhost:5000/api/matches/teams/${teamId}`, {
+                credentials: 'include'
+            });
+            const data = await response.json();
+            if (data.success) {
+                setTeam(data.team);
+            }
+        } catch (error) {
+            console.error('Error fetching team:', error);
+        }
+    };
+
+    const fetchMatches = async () => {
+        try {
+            const response = await fetch(`http://localhost:5000/api/manager/team/${teamId}/matches`, {
+                credentials: 'include'
+            });
+            const data = await response.json();
+            if (data.success) {
+                setMatches(data.matches);
+            }
+        } catch (error) {
+            console.error('Error fetching matches:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchAnalytics = async () => {
+        try {
+            const response = await fetch(`http://localhost:5000/api/manager/team/${teamId}/analytics`, {
+                credentials: 'include'
+            });
+            const data = await response.json();
+            if (data.success) {
+                setAnalytics(data.analytics);
+            }
+        } catch (error) {
+            console.error('Error fetching analytics:', error);
+        }
+    };
+
+    const fetchAllTeams = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/api/matches/teams', {
+                credentials: 'include'
+            });
+            const data = await response.json();
+            if (data.success) {
+                setTeams(data.teams.filter(t => t._id !== teamId));
+            }
+        } catch (error) {
+            console.error('Error fetching teams:', error);
+        }
+    };
+
+    const handleRecordMatch = async (e) => {
+        e.preventDefault();
+        
+        try {
+            const response = await fetch(`http://localhost:5000/api/manager/team/${teamId}/match/record`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(formData)
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                alert(data.message);
+                setShowRecordModal(false);
+                fetchMatches();
+                fetchAnalytics();
+                resetForm();
+            } else {
+                alert(data.message || 'Error recording match');
+            }
+        } catch (error) {
+            console.error('Error recording match:', error);
+            alert('Error recording match');
+        }
+    };
+
+    const handleDeleteMatch = async (matchId) => {
+        if (!window.confirm('Are you sure you want to delete this match?')) return;
+        
+        try {
+            const response = await fetch(`http://localhost:5000/manager/team/${teamId}/match/${matchId}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                alert('Match deleted successfully');
+                fetchMatches();
+                fetchAnalytics();
+            } else {
+                alert(data.message || 'Error deleting match');
+            }
+        } catch (error) {
+            console.error('Error deleting match:', error);
+            alert('Error deleting match');
+        }
+    };
+
+    const resetForm = () => {
+        setFormData({
+            opponent_team_id: '',
+            your_score: '',
+            opponent_score: '',
+            match_date: new Date().toISOString().split('T')[0],
+            match_type: 'friendly',
+            venue: '',
+            notes: ''
+        });
+    };
+
+    const getStatusBadge = (status) => {
+        const badges = {
+            pending: { text: 'Pending', class: 'status-pending' },
+            verified: { text: 'Verified', class: 'status-verified' },
+            disputed: { text: 'Disputed', class: 'status-disputed' }
+        };
+        return badges[status] || badges.pending;
+    };
+
+    const getResultBadge = (match) => {
+        const isTeamA = match.team_a._id === teamId;
+        const myScore = isTeamA ? match.score_a : match.score_b;
+        const opponentScore = isTeamA ? match.score_b : match.score_a;
+        
+        if (myScore > opponentScore) return { text: 'Won', class: 'result-won' };
+        if (myScore < opponentScore) return { text: 'Lost', class: 'result-lost' };
+        return { text: 'Draw', class: 'result-draw' };
+    };
+
+    if (loading) {
+        return (
+            <div className="manager-dashboard">
+                <div className="loading-spinner">Loading...</div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="manager-dashboard">
+            <div className="manager-dashboard-content">
+                <div className="dashboard-main">
+                    <div className="dashboard-header">
+                        <button onClick={() => navigate(-1)} className="back-button">
+                            ← Back
+                        </button>
+                        <h1>Team Matches - {team?.name}</h1>
+                        <button onClick={() => setShowRecordModal(true)} className="btn-primary">
+                            + Record Match
+                        </button>
+                    </div>
+
+                    {/* Analytics Cards */}
+                    {analytics && (
+                        <div className="stats-grid">
+                            <div className="stat-card">
+                                <h3>Total Matches</h3>
+                                <p className="stat-value">{analytics.total_matches}</p>
+                            </div>
+                            <div className="stat-card stat-success">
+                                <h3>Wins</h3>
+                                <p className="stat-value">{analytics.wins}</p>
+                            </div>
+                            <div className="stat-card stat-danger">
+                                <h3>Losses</h3>
+                                <p className="stat-value">{analytics.losses}</p>
+                            </div>
+                            <div className="stat-card">
+                                <h3>Draws</h3>
+                                <p className="stat-value">{analytics.draws}</p>
+                            </div>
+                            <div className="stat-card stat-primary">
+                                <h3>Win Rate</h3>
+                                <p className="stat-value">{analytics.win_rate}%</p>
+                            </div>
+                            <div className="stat-card">
+                                <h3>Recent Form</h3>
+                                <p className="stat-value form-badges">
+                                    {analytics.recent_form.map((result, idx) => (
+                                        <span key={idx} className={`form-badge form-${result}`}>{result}</span>
+                                    ))}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Matches List */}
+                    <div className="content-card">
+                        <h2>Match History</h2>
+                        {matches.length === 0 ? (
+                            <p className="no-data">No matches recorded yet.</p>
+                        ) : (
+                            <div className="matches-list">
+                                {matches.map(match => {
+                                    const status = getStatusBadge(match.status);
+                                    const result = getResultBadge(match);
+                                    const isTeamA = match.team_a._id === teamId;
+                                    
+                                    return (
+                                        <div key={match._id} className="match-card">
+                                            <div className="match-header">
+                                                <span className={`status-badge ${status.class}`}>
+                                                    {status.text}
+                                                </span>
+                                                <span className={`result-badge ${result.class}`}>
+                                                    {result.text}
+                                                </span>
+                                            </div>
+                                            <div className="match-body">
+                                                <div className="match-teams">
+                                                    <div className={`team ${isTeamA ? 'my-team' : ''}`}>
+                                                        <span className="team-name">{match.team_a.name || match.team_a_name}</span>
+                                                        <span className="team-score">{match.score_a}</span>
+                                                    </div>
+                                                    <span className="vs">vs</span>
+                                                    <div className={`team ${!isTeamA ? 'my-team' : ''}`}>
+                                                        <span className="team-name">{match.team_b.name || match.team_b_name}</span>
+                                                        <span className="team-score">{match.score_b}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="match-meta">
+                                                    <span>📅 {new Date(match.match_date).toLocaleDateString()}</span>
+                                                    <span>🏆 {match.match_type}</span>
+                                                    {match.venue && <span>📍 {match.venue}</span>}
+                                                </div>
+                                                {match.notes && (
+                                                    <p className="match-notes">📝 {match.notes}</p>
+                                                )}
+                                            </div>
+                                            {match.status === 'pending' && (
+                                                <div className="match-actions">
+                                                    <button 
+                                                        onClick={() => handleDeleteMatch(match._id)}
+                                                        className="btn-danger-sm"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Record Match Modal */}
+            {showRecordModal && (
+                <div className="modal-overlay" onClick={() => setShowRecordModal(false)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>Record Match Result</h2>
+                            <button onClick={() => setShowRecordModal(false)} className="close-btn">×</button>
+                        </div>
+                        <form onSubmit={handleRecordMatch}>
+                            <div className="form-group">
+                                <label>Your Team</label>
+                                <input type="text" value={team?.name} disabled />
+                            </div>
+                            
+                            <div className="form-group">
+                                <label>Opponent Team *</label>
+                                <select
+                                    value={formData.opponent_team_id}
+                                    onChange={e => setFormData({ ...formData, opponent_team_id: e.target.value })}
+                                    required
+                                >
+                                    <option value="">Select opponent</option>
+                                    {teams.map(t => (
+                                        <option key={t._id} value={t._id}>{t.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Your Score *</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={formData.your_score}
+                                        onChange={e => setFormData({ ...formData, your_score: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Opponent Score *</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={formData.opponent_score}
+                                        onChange={e => setFormData({ ...formData, opponent_score: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Match Date *</label>
+                                <input
+                                    type="date"
+                                    value={formData.match_date}
+                                    onChange={e => setFormData({ ...formData, match_date: e.target.value })}
+                                    required
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Match Type *</label>
+                                <select
+                                    value={formData.match_type}
+                                    onChange={e => setFormData({ ...formData, match_type: e.target.value })}
+                                >
+                                    <option value="friendly">Friendly (Auto-Verified)</option>
+                                    <option value="tournament">Tournament (Needs Verification)</option>
+                                    <option value="league">League</option>
+                                </select>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Venue</label>
+                                <input
+                                    type="text"
+                                    value={formData.venue}
+                                    onChange={e => setFormData({ ...formData, venue: e.target.value })}
+                                    placeholder="Match location"
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Notes</label>
+                                <textarea
+                                    value={formData.notes}
+                                    onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                                    placeholder="Additional match details..."
+                                    rows="3"
+                                />
+                            </div>
+
+                            <div className="modal-actions">
+                                <button type="button" onClick={() => setShowRecordModal(false)} className="btn-secondary">
+                                    Cancel
+                                </button>
+                                <button type="submit" className="btn-primary">
+                                    Record Match
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default TeamMatches;

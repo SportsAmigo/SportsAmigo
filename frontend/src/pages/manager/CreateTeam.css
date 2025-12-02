@@ -1,4 +1,4 @@
-/* Create Team Page */
+/* Create/Edit Team Page */
 .create-team-container {
     min-height: 100vh;
     background-image: url('../../../public/images/fancy-crave-qowyMze7jqg-unsplash.jpg');
@@ -15,105 +15,121 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.25);
-    backdrop-filter: blur(2px);
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
     z-index: 0;
 }
 
 .create-team-wrapper {
     position: relative;
     z-index: 1;
-    padding: 2rem;
-    max-width: 1400px;
+    padding: 3rem 2rem;
+    max-width: 800px;
     margin: 0 auto;
 }
 
-/* Page Header */
-.page-header {
+/* Header */
+.create-team-header {
     background: white;
-    border-radius: 16px;
-    padding: 2rem;
+    border-radius: 20px;
+    padding: 2.5rem;
     margin-bottom: 2rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    margin-top: 2rem;
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.15);
+    text-align: center;
 }
 
-.page-title {
-    font-size: 2rem;
-    font-weight: 700;
+.create-team-header h1 {
+    font-size: 2.25rem;
+    font-weight: 800;
     color: #111827;
-    margin-bottom: 0.5rem;
+    margin: 0 0 0.75rem 0;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    justify-content: center;
+    gap: 1rem;
 }
 
-.page-title i {
+.create-team-header h1 i {
     color: #16a34a;
+    font-size: 2rem;
 }
 
-.page-subtitle {
-    font-size: 1rem;
+.create-team-header p {
+    font-size: 1.125rem;
     color: #6b7280;
     margin: 0;
+    font-weight: 500;
 }
 
-/* Error Alert */
-.error-alert {
-    background: #fee2e2;
-    border-left: 4px solid #dc2626;
-    color: #991b1b;
-    padding: 1rem 1.5rem;
-    border-radius: 8px;
-    margin-bottom: 2rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.error-alert i {
-    font-size: 1.25rem;
-}
-
-/* Form Layout */
-.form-layout {
-    display: grid;
-    grid-template-columns: 1fr 400px;
-    gap: 2rem;
-}
-
-/* Form Card */
-.form-card {
+/* Loading */
+.loading-container {
+    text-align: center;
+    padding: 4rem 0;
     background: white;
-    border-radius: 16px;
-    padding: 2.5rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border-radius: 20px;
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.15);
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #f3f4f6;
+    border-top-color: #16a34a;
+    border-radius: 50%;
+    margin: 0 auto 1rem;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-container p {
+    color: #6b7280;
+    font-weight: 600;
+    font-size: 1.125rem;
+}
+
+/* Form */
+.create-team-form {
+    background: white;
+    border-radius: 20px;
+    padding: 3rem;
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.15);
 }
 
 /* Form Groups */
 .form-group {
-    margin-bottom: 1.75rem;
+    margin-bottom: 2rem;
 }
 
-.form-group label {
-    display: block;
-    font-weight: 600;
-    color: #374151;
-    margin-bottom: 0.625rem;
-    font-size: 0.9375rem;
+.form-label {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 0.75rem;
+    font-size: 1rem;
 }
 
-.required {
-    color: #dc2626;
+.form-label i {
+    color: #16a34a;
+    font-size: 1.125rem;
 }
 
 .form-input,
 .form-select,
 .form-textarea {
     width: 100%;
-    padding: 0.875rem 1rem;
-    border: 2px solid #e5e7eb;
-    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    border: 2px solid #d1d5db;
+    border-radius: 12px;
     font-size: 1rem;
+    font-weight: 500;
+    color: #111827;
+    background: #ffffff;
     transition: all 0.2s ease;
     font-family: inherit;
 }
@@ -123,41 +139,73 @@
 .form-textarea:focus {
     outline: none;
     border-color: #16a34a;
-    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.1);
+    box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.1);
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+    color: #9ca3af;
+    font-weight: 500;
+}
+
+.form-input.error,
+.form-select.error,
+.form-textarea.error {
+    border-color: #dc2626;
+    background: #fef2f2;
 }
 
 .form-textarea {
     resize: vertical;
     min-height: 120px;
+    line-height: 1.6;
 }
 
-.form-help {
+/* Error Message */
+.error-message {
     display: block;
-    margin-top: 0.5rem;
+    margin-top: 0.625rem;
+    color: #dc2626;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+/* Help Text */
+.help-text,
+.char-count {
+    display: block;
+    margin-top: 0.625rem;
     color: #6b7280;
     font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.char-count {
+    text-align: right;
 }
 
 /* Form Actions */
 .form-actions {
     display: flex;
     gap: 1rem;
-    margin-top: 2rem;
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 2px solid #f3f4f6;
 }
 
 .btn-submit {
-    flex: 1;
+    flex: 2;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.625rem;
+    gap: 0.75rem;
     background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
     color: white;
-    padding: 1rem 2rem;
+    padding: 1.125rem 2rem;
     border: none;
     border-radius: 12px;
-    font-weight: 600;
-    font-size: 1rem;
+    font-weight: 700;
+    font-size: 1.0625rem;
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(22, 163, 74, 0.3);
@@ -171,120 +219,73 @@
 .btn-submit:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+    transform: none;
+}
+
+.btn-submit i {
+    font-size: 1.125rem;
 }
 
 .btn-cancel {
+    flex: 1;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.625rem;
+    gap: 0.75rem;
     background: white;
     color: #6b7280;
-    padding: 1rem 2rem;
-    border: 2px solid #e5e7eb;
+    padding: 1.125rem 2rem;
+    border: 2px solid #d1d5db;
     border-radius: 12px;
-    font-weight: 600;
-    font-size: 1rem;
-    text-decoration: none;
+    font-weight: 700;
+    font-size: 1.0625rem;
+    cursor: pointer;
     transition: all 0.2s ease;
 }
 
-.btn-cancel:hover {
+.btn-cancel:hover:not(:disabled) {
     background: #f9fafb;
-    border-color: #d1d5db;
+    border-color: #9ca3af;
+    color: #374151;
 }
 
-/* Info Sidebar */
-.info-sidebar {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-.info-card {
-    background: white;
-    border-radius: 16px;
-    padding: 1.75rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-}
-
-.info-title {
-    font-size: 1.125rem;
-    font-weight: 700;
-    color: #111827;
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.625rem;
-}
-
-.info-title i {
-    color: #16a34a;
-}
-
-.info-card p {
-    color: #6b7280;
-    margin-bottom: 1rem;
-    line-height: 1.6;
-}
-
-.info-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.info-list li {
-    position: relative;
-    padding-left: 1.75rem;
-    margin-bottom: 0.875rem;
-    color: #4b5563;
-    line-height: 1.6;
-}
-
-.info-list li:before {
-    content: '✓';
-    position: absolute;
-    left: 0;
-    color: #16a34a;
-    font-weight: bold;
-    font-size: 1.125rem;
-}
-
-.info-list li:last-child {
-    margin-bottom: 0;
+.btn-cancel:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 /* Responsive */
-@media (max-width: 1024px) {
-    .form-layout {
-        grid-template-columns: 1fr;
-    }
-
-    .info-sidebar {
-        order: -1;
-    }
-}
-
 @media (max-width: 768px) {
     .create-team-wrapper {
-        padding: 1rem;
+        padding: 1.5rem 1rem;
     }
 
-    .page-header {
-        padding: 1.5rem;
+    .create-team-header {
+        padding: 2rem 1.5rem;
+        margin-top: 1rem;
     }
 
-    .page-title {
-        font-size: 1.5rem;
+    .create-team-header h1 {
+        font-size: 1.75rem;
+        flex-direction: column;
+        gap: 0.5rem;
     }
 
-    .form-card {
-        padding: 1.5rem;
+    .create-team-header p {
+        font-size: 1rem;
+    }
+
+    .create-team-form {
+        padding: 2rem 1.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
     }
 
     .form-actions {
         flex-direction: column;
+        gap: 0.75rem;
     }
 
     .btn-submit,
@@ -293,3 +294,19 @@
     }
 }
 
+@media (max-width: 480px) {
+    .create-team-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .create-team-form {
+        padding: 1.5rem;
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+        padding: 0.875rem 1rem;
+        font-size: 0.9375rem;
+    }
+}

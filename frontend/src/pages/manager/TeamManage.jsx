@@ -36,6 +36,58 @@ const TeamManage = () => {
         }
     };
 
+    const handleApproveRequest = async (requestId, playerId) => {
+        try {
+            console.log('Approving request:', { requestId, playerId, teamId: id });
+            const url = `http://localhost:5000/api/manager/team/${id}/approve-request`;
+            console.log('Request URL:', url);
+            
+            const response = await axios.post(
+                url,
+                { requestId, playerId },
+                { withCredentials: true }
+            );
+            
+            console.log('Response:', response.data);
+            
+            if (response.data.success) {
+                alert('Join request approved successfully!');
+                fetchTeamDetails(); // Refresh team data
+            } else {
+                alert(response.data.message || 'Failed to approve request');
+            }
+        } catch (error) {
+            console.error('Error approving request:', error);
+            console.error('Error response:', error.response);
+            console.error('Error message:', error.message);
+            alert(error.response?.data?.message || error.message || 'Error approving request');
+        }
+    };
+
+    const handleRejectRequest = async (requestId) => {
+        if (!window.confirm('Are you sure you want to reject this request?')) {
+            return;
+        }
+
+        try {
+            const response = await axios.post(
+                `http://localhost:5000/api/manager/team/${id}/reject-request`,
+                { requestId },
+                { withCredentials: true }
+            );
+            
+            if (response.data.success) {
+                alert('Join request rejected');
+                fetchTeamDetails(); // Refresh team data
+            } else {
+                alert(response.data.message || 'Failed to reject request');
+            }
+        } catch (error) {
+            console.error('Error rejecting request:', error);
+            alert(error.response?.data?.message || 'Error rejecting request');
+        }
+    };
+
     const handleRemoveMember = async (playerId) => {
         if (!window.confirm('Are you sure you want to remove this member?')) {
             return;
@@ -233,14 +285,23 @@ const TeamManage = () => {
                                         <div key={request._id} className="request-card">
                                             <div className="request-info">
                                                 <h4>New Join Request</h4>
+                                                <p className="request-player">
+                                                    Player: {request.player_name || request.player_email || 'Unknown'}
+                                                </p>
                                                 <p>Requested: {new Date(request.request_date).toLocaleDateString()}</p>
                                             </div>
                                             <div className="request-actions">
-                                                <button className="btn-approve">
+                                                <button 
+                                                    className="btn-approve"
+                                                    onClick={() => handleApproveRequest(request._id, request.player_id)}
+                                                >
                                                     <i className="fa fa-check"></i>
                                                     Approve
                                                 </button>
-                                                <button className="btn-reject">
+                                                <button 
+                                                    className="btn-reject"
+                                                    onClick={() => handleRejectRequest(request._id)}
+                                                >
                                                     <i className="fa fa-times"></i>
                                                     Reject
                                                 </button>
