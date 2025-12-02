@@ -715,7 +715,7 @@ router.get('/event/:id', async (req, res) => {
                     
                     // Get manager details
                     const manager = await User.getUserById(team.manager_id);
-                    const managerName = manager ? `${manager.first_name} ${manager.last_name}` : 'Unknown';
+                    const managerName = manager ? `${manager.first_name || ''} ${manager.last_name || ''}`.trim() || manager.username : 'Unknown Manager';
                     
                     // Add to the list of registered teams
                     registeredTeams.push({
@@ -739,9 +739,12 @@ router.get('/event/:id', async (req, res) => {
         // Format the event for display
         const formattedEvent = {
             id: event._id,
+            _id: event._id,
             name: event.title,
             title: event.title,
             date: new Date(event.event_date).toLocaleDateString(),
+            start_date: event.event_date,
+            end_date: event.end_date,
             time: event.event_time,
             description: event.description,
             location: event.location,
@@ -758,24 +761,21 @@ router.get('/event/:id', async (req, res) => {
         
         console.log(`Formatted event with ${registeredTeams.length} registered teams`);
         
-        res.render('organizer/event-details', {
-            title: 'Event Details',
-            user: req.session.user,
+        // Return JSON for React API calls
+        res.json({
+            success: true,
             event: formattedEvent,
-            messages: req.session.flashMessage || {},
-            layout: 'layouts/sidebar-dashboard',
-            path: '/organizer/manage-events'
+            message: req.session.flashMessage || null
         });
         
         // Clear flash messages
         delete req.session.flashMessage;
     } catch (err) {
         console.error('Error viewing event:', err);
-        req.session.flashMessage = {
-            type: 'error',
-            text: 'Error loading event details: ' + err.message
-        };
-        res.redirect('/organizer/manage-events');
+        res.status(500).json({
+            success: false,
+            message: 'Error loading event details: ' + err.message
+        });
     }
 });
 
@@ -843,7 +843,61 @@ router.get('/event/:id/edit', async (req, res) => {
     }
 });
 
-// Update event (POST)
+// Update event (PUT) - API endpoint
+router.put('/event/:id', async (req, res) => {
+    try {
+        const eventId = req.params.id;
+        
+        // Get the event to check if current user is the organizer
+        const event = await Event.getEventById(eventId);
+        
+        if (!event) {
+            return res.status(404).json({
+                success: false,
+                message: 'Event not found'
+            });
+        }
+        
+        // Check if the current user is the organizer
+        if (event.organizer_id.toString() !== req.session.user._id.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'You do not have permission to update this event'
+            });
+        }
+        
+        // Extract and validate event data
+        const eventData = {
+            title: req.body.title || req.body.name,
+            description: req.body.description,
+            sport_type: req.body.sport_type || req.body.sport,
+            event_date: req.body.event_date || req.body.start_date,
+            event_time: req.body.event_time,
+            location: req.body.location,
+            max_teams: req.body.max_teams ? parseInt(req.body.max_teams) : 0,
+            entry_fee: req.body.entry_fee && !isNaN(parseFloat(req.body.entry_fee)) ? parseFloat(req.body.entry_fee) : 0,
+            registration_deadline: req.body.registration_deadline,
+            status: req.body.status || event.status
+        };
+        
+        // Update the event
+        const updatedEvent = await Event.updateEvent(eventId, eventData);
+        
+        return res.json({
+            success: true,
+            message: 'Event updated successfully',
+            event: updatedEvent
+        });
+    } catch (err) {
+        console.error('Error updating event:', err);
+        return res.status(500).json({
+            success: false,
+            message: err.message || 'Error updating event'
+        });
+    }
+});
+
+// Update event (POST) - for traditional form submission
 router.post('/event/:id/update', async (req, res) => {
     try {
         const eventId = req.params.id;
@@ -1908,6 +1962,441 @@ router.post('/event/:eventId/registration/:teamId/reject', async (req, res) => {
     } catch (error) {
         console.error('Error rejecting registration:', error);
         res.status(500).json({ success: false, message: 'Failed to reject registration' });
+    }
+});
+
+// ==================== MATCH VERIFICATION & LEADERBOARD ROUTES ====================
+
+/**
+ * Get all matches for an event
+ * GET /organizer/event/:eventId/matches
+ */
+router.get('/event/:eventId/matches', async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const organizerId = req.session.user._id;
+        
+        // Verify organizer owns the event
+        const event = await Event.getEventById(eventId);
+        if (event.organizer_id.toString() !== organizerId.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'You are not authorized to view matches for this event'
+            });
+        }
+        
+        const Match = require('../models/match');
+        const matches = await Match.getMatchesByEvent(eventId);
+        
+        // Filter by status
+        const pending = matches.filter(m => m.status === 'pending');
+        const verified = matches.filter(m => m.status === 'verified');
+        const disputed = matches.filter(m => m.status === 'disputed');
+        
+        res.json({
+            success: true,
+            matches: {
+                all: matches,
+                pending,
+                verified,
+                disputed
+            }
+        });
+    } catch (err) {
+        console.error('Error fetching event matches:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching event matches',
+            error: err.message
+        });
+    }
+});
+
+/**
+ * Verify a match
+ * POST /organizer/event/:eventId/match/:matchId/verify
+ */
+router.post('/event/:eventId/match/:matchId/verify', async (req, res) => {
+    try {
+        const { eventId, matchId } = req.params;
+        const organizerId = req.session.user._id;
+        
+        // Verify organizer owns the event
+        const event = await Event.getEventById(eventId);
+        if (event.organizer_id.toString() !== organizerId.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'You are not authorized to verify matches for this event'
+            });
+        }
+        
+        const Match = require('../models/match');
+        const match = await Match.verifyMatch(matchId, organizerId);
+        
+        res.json({
+            success: true,
+            message: 'Match verified successfully',
+            match
+        });
+    } catch (err) {
+        console.error('Error verifying match:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Error verifying match',
+            error: err.message
+        });
+    }
+});
+
+/**
+ * Dispute a match
+ * POST /organizer/event/:eventId/match/:matchId/dispute
+ */
+router.post('/event/:eventId/match/:matchId/dispute', async (req, res) => {
+    try {
+        const { eventId, matchId } = req.params;
+        const organizerId = req.session.user._id;
+        const { reason } = req.body;
+        
+        // Verify organizer owns the event
+        const event = await Event.getEventById(eventId);
+        if (event.organizer_id.toString() !== organizerId.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'You are not authorized to dispute matches for this event'
+            });
+        }
+        
+        const Match = require('../models/match');
+        const match = await Match.disputeMatch(matchId, reason);
+        
+        res.json({
+            success: true,
+            message: 'Match marked as disputed',
+            match
+        });
+    } catch (err) {
+        console.error('Error disputing match:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Error disputing match',
+            error: err.message
+        });
+    }
+});
+
+/**
+ * Get event leaderboard
+ * GET /organizer/event/:eventId/leaderboard
+ */
+router.get('/event/:eventId/leaderboard', async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const organizerId = req.session.user._id;
+        
+        // Verify organizer owns the event
+        const event = await Event.getEventById(eventId);
+        if (event.organizer_id.toString() !== organizerId.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'You are not authorized to view leaderboard for this event'
+            });
+        }
+        
+        const Match = require('../models/match');
+        const leaderboard = await Match.getEventLeaderboard(eventId);
+        
+        res.json({
+            success: true,
+            leaderboard,
+            event: {
+                title: event.title,
+                sport_type: event.sport_type
+            }
+        });
+    } catch (err) {
+        console.error('Error fetching leaderboard:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching leaderboard',
+            error: err.message
+        });
+    }
+});
+
+/**
+ * Get event analytics
+ * GET /organizer/event/:eventId/analytics
+ */
+router.get('/event/:eventId/analytics', async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const organizerId = req.session.user._id;
+        
+        // Verify organizer owns the event
+        const event = await Event.getEventById(eventId);
+        if (event.organizer_id.toString() !== organizerId.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'You are not authorized to view analytics for this event'
+            });
+        }
+        
+        const Match = require('../models/match');
+        const matches = await Match.getMatchesByEvent(eventId);
+        const verifiedMatches = matches.filter(m => m.status === 'verified');
+        
+        let totalGoals = 0;
+        verifiedMatches.forEach(match => {
+            totalGoals += match.score_a + match.score_b;
+        });
+        
+        const analytics = {
+            total_matches: matches.length,
+            verified_matches: verifiedMatches.length,
+            pending_matches: matches.filter(m => m.status === 'pending').length,
+            disputed_matches: matches.filter(m => m.status === 'disputed').length,
+            total_goals: totalGoals,
+            avg_goals_per_match: verifiedMatches.length > 0 
+                ? (totalGoals / verifiedMatches.length).toFixed(1) 
+                : 0,
+            registered_teams: event.team_registrations.length
+        };
+        
+        res.json({
+            success: true,
+            analytics
+        });
+    } catch (err) {
+        console.error('Error fetching event analytics:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching event analytics',
+            error: err.message
+        });
+    }
+});
+
+/**
+ * Schedule matches for an event
+ * POST /organizer/event/:eventId/schedule-matches
+ */
+router.post('/event/:eventId/schedule-matches', async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const { matches } = req.body; // Array of match objects
+        const organizerId = req.session.user._id;
+        
+        // Verify organizer owns the event
+        const event = await Event.getEventById(eventId);
+        if (!event) {
+            return res.status(404).json({
+                success: false,
+                message: 'Event not found'
+            });
+        }
+        
+        if (event.organizer_id.toString() !== organizerId.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'You are not authorized to schedule matches for this event'
+            });
+        }
+        
+        // Validate that all teams are registered for the event
+        const registeredTeamIds = event.team_registrations
+            .filter(reg => reg.status === 'confirmed')
+            .map(reg => reg.team_id.toString());
+        
+        // Create matches
+        const Match = require('../models/match');
+        const createdMatches = [];
+        
+        for (const matchData of matches) {
+            // Validate teams are registered
+            if (!registeredTeamIds.includes(matchData.team_a.toString()) ||
+                !registeredTeamIds.includes(matchData.team_b.toString())) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'One or more teams are not registered for this event'
+                });
+            }
+            
+            // Get team names
+            const teamA = await Team.getTeamById(matchData.team_a);
+            const teamB = await Team.getTeamById(matchData.team_b);
+            
+            const match = await Match.createMatch({
+                event_id: eventId,
+                team_a: matchData.team_a,
+                team_b: matchData.team_b,
+                team_a_name: teamA.name,
+                team_b_name: teamB.name,
+                match_date: matchData.match_date,
+                match_type: 'tournament',
+                status: 'scheduled',
+                round: matchData.round || null,
+                match_number: matchData.match_number || null,
+                venue: matchData.venue || event.location,
+                scheduled_by: organizerId,
+                scheduled_at: new Date()
+            });
+            
+            createdMatches.push(match);
+        }
+        
+        res.json({
+            success: true,
+            message: `Successfully scheduled ${createdMatches.length} matches`,
+            matches: createdMatches
+        });
+    } catch (err) {
+        console.error('Error scheduling matches:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Error scheduling matches',
+            error: err.message
+        });
+    }
+});
+
+/**
+ * Get scheduled matches for an event
+ * GET /organizer/event/:eventId/scheduled-matches
+ */
+router.get('/event/:eventId/scheduled-matches', async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const organizerId = req.session.user._id;
+        
+        // Verify organizer owns the event
+        const event = await Event.getEventById(eventId);
+        if (!event) {
+            return res.status(404).json({
+                success: false,
+                message: 'Event not found'
+            });
+        }
+        
+        if (event.organizer_id.toString() !== organizerId.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'You are not authorized to view matches for this event'
+            });
+        }
+        
+        const Match = require('../models/match');
+        const matches = await Match.getMatchesByEvent(eventId);
+        
+        res.json({
+            success: true,
+            matches
+        });
+    } catch (err) {
+        console.error('Error fetching scheduled matches:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching scheduled matches',
+            error: err.message
+        });
+    }
+});
+
+/**
+ * Verify a match result
+ * POST /organizer/match/:matchId/verify
+ */
+router.post('/match/:matchId/verify', async (req, res) => {
+    try {
+        const { matchId } = req.params;
+        const organizerId = req.session.user._id;
+        
+        const Match = require('../models/match');
+        const match = await Match.getMatchById(matchId);
+        
+        if (!match) {
+            return res.status(404).json({
+                success: false,
+                message: 'Match not found'
+            });
+        }
+        
+        // Verify organizer owns the event
+        const event = await Event.getEventById(match.event_id);
+        if (event.organizer_id.toString() !== organizerId.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'You are not authorized to verify this match'
+            });
+        }
+        
+        // Update match status
+        match.status = 'verified';
+        match.verified_by = organizerId;
+        match.verified_at = new Date();
+        await match.save();
+        
+        res.json({
+            success: true,
+            message: 'Match result verified successfully',
+            match
+        });
+    } catch (err) {
+        console.error('Error verifying match:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Error verifying match',
+            error: err.message
+        });
+    }
+});
+
+/**
+ * Dispute a match result
+ * POST /organizer/match/:matchId/dispute
+ */
+router.post('/match/:matchId/dispute', async (req, res) => {
+    try {
+        const { matchId } = req.params;
+        const { reason } = req.body;
+        const organizerId = req.session.user._id;
+        
+        const Match = require('../models/match');
+        const match = await Match.getMatchById(matchId);
+        
+        if (!match) {
+            return res.status(404).json({
+                success: false,
+                message: 'Match not found'
+            });
+        }
+        
+        // Verify organizer owns the event
+        const event = await Event.getEventById(match.event_id);
+        if (event.organizer_id.toString() !== organizerId.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'You are not authorized to dispute this match'
+            });
+        }
+        
+        // Update match status
+        match.status = 'disputed';
+        match.dispute_reason = reason || '';
+        await match.save();
+        
+        res.json({
+            success: true,
+            message: 'Match result disputed. The manager will be notified.',
+            match
+        });
+    } catch (err) {
+        console.error('Error disputing match:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Error disputing match',
+            error: err.message
+        });
     }
 });
 

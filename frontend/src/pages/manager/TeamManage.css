@@ -2,23 +2,11 @@
 .team-manage-container {
     min-height: 100vh;
     padding: 2rem;
-    background-image: url('D:/FIRST/SportsAmigo/frontend/public/images/fancy-crave-qowyMze7jqg-unsplash.jpg');
+    background-image: url('../../../public/images/fancy-crave-qowyMze7jqg-unsplash.jpg');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
     position: relative;
-}
-
-.team-manage-container::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(2px);
-    z-index: 0;
 }
 
 .manage-wrapper {

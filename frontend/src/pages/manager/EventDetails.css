@@ -2,7 +2,7 @@
 .event-details-container {
     min-height: 100vh;
     padding: 2rem;
-    background-image: url('D:/FIRST/SportsAmigo/frontend/public/images/fancy-crave-qowyMze7jqg-unsplash.jpg');
+    background-image: url('../../../public/images/fancy-crave-qowyMze7jqg-unsplash.jpg');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
@@ -284,6 +284,113 @@
     font-size: 1.0625rem;
     color: #4b5563;
     margin: 0;
+}
+
+/* Teams Registration Section */
+.teams-registration-section {
+    margin-top: 2rem;
+    padding: 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.teams-registration-section h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 0.5rem 0;
+}
+
+.teams-registration-section > p {
+    font-size: 1rem;
+    color: #6b7280;
+    margin: 0 0 1.5rem 0;
+}
+
+.teams-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.team-registration-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem;
+    background: #f9fafb;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    transition: all 0.3s;
+}
+
+.team-registration-card:hover {
+    border-color: #16a34a;
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.15);
+}
+
+.team-registration-card .team-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+}
+
+.team-registration-card .team-info i {
+    font-size: 2rem;
+    color: #16a34a;
+}
+
+.team-registration-card .team-info h4 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 0.25rem 0;
+}
+
+.team-registration-card .team-info p {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+.btn-register-team {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #16a34a, #15803d);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    transition: all 0.3s;
+    box-shadow: 0 2px 8px rgba(22, 163, 74, 0.3);
+    white-space: nowrap;
+}
+
+.btn-register-team:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.4);
+}
+
+.registered-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: #d1fae5;
+    color: #065f46;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    white-space: nowrap;
+}
+
+.registered-badge i {
+    color: #10b981;
 }
 
 /* No Teams Section */

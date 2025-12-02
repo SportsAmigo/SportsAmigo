@@ -20,12 +20,16 @@ const ManagerDashboard = () => {
         teams: []
     });
     const [matchHistory, setMatchHistory] = useState([]);
+    const [upcomingMatches, setUpcomingMatches] = useState([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
+    const [loadingUpcoming, setLoadingUpcoming] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(true);
 
     useEffect(() => {
         fetchDashboardData();
         fetchMatchHistory();
+        // Temporarily disabled until matches are scheduled
+        // fetchUpcomingMatches();
     }, []);
 
     const fetchDashboardData = async () => {
@@ -67,6 +71,42 @@ const ManagerDashboard = () => {
             console.error('Error fetching match history:', error);
         } finally {
             setLoadingHistory(false);
+        }
+    };
+
+    const fetchUpcomingMatches = async () => {
+        try {
+            setLoadingUpcoming(true);
+            const response = await axios.get('http://localhost:5000/api/manager/dashboard', { withCredentials: true });
+            if (response.data.success && response.data.teams && response.data.teams.length > 0) {
+                // Fetch upcoming matches for all teams
+                const allUpcoming = [];
+                for (const team of response.data.teams) {
+                    try {
+                        const upcomingResponse = await axios.get(`http://localhost:5000/api/matches/team/${team._id}/upcoming`, {
+                            withCredentials: true
+                        });
+                        
+                        if (upcomingResponse.data.success && upcomingResponse.data.upcomingMatches) {
+                            // Add team name to each match
+                            const matchesWithTeam = upcomingResponse.data.upcomingMatches.map(match => ({
+                                ...match,
+                                teamName: team.name
+                            }));
+                            allUpcoming.push(...matchesWithTeam);
+                        }
+                    } catch (err) {
+                        console.error(`Error fetching upcoming matches for team ${team._id}:`, err);
+                    }
+                }
+                // Sort by date and take first 5
+                allUpcoming.sort((a, b) => new Date(a.match_date) - new Date(b.match_date));
+                setUpcomingMatches(allUpcoming.slice(0, 5));
+            }
+        } catch (error) {
+            console.error('Error fetching upcoming matches:', error);
+        } finally {
+            setLoadingUpcoming(false);
         }
     };
 
@@ -216,6 +256,59 @@ const ManagerDashboard = () => {
                         </div>
                     </div>
 
+                    {/* Upcoming Matches Section */}
+                    {upcomingMatches && upcomingMatches.length > 0 && (
+                        <div className="upcoming-matches-section">
+                            <div className="section-header">
+                                <h2><i className="fa fa-calendar-check"></i> Upcoming Matches</h2>
+                            </div>
+                            <div className="upcoming-matches-list">
+                                {loadingUpcoming ? (
+                                    <div className="loading-history">Loading upcoming matches...</div>
+                                ) : (
+                                    upcomingMatches.map((match, index) => (
+                                        <div key={index} className="upcoming-match-card">
+                                            <div className="match-date-badge">
+                                                <div className="date-day">
+                                                    {new Date(match.match_date).toLocaleDateString('en-US', { day: 'numeric' })}
+                                                </div>
+                                                <div className="date-month">
+                                                    {new Date(match.match_date).toLocaleDateString('en-US', { month: 'short' })}
+                                                </div>
+                                            </div>
+                                            <div className="match-details-upcoming">
+                                                <div className="match-teams-info">
+                                                    <div className="team-vs-info">
+                                                        <span className="your-team">{match.teamName}</span>
+                                                        <span className="vs-text">vs</span>
+                                                        <span className="opponent-team">{match.opponent}</span>
+                                                    </div>
+                                                    <div className="match-meta">
+                                                        <span className="match-event">
+                                                            <i className="fa fa-trophy"></i> {match.event}
+                                                        </span>
+                                                        {match.venue && match.venue !== 'TBA' && (
+                                                            <span className="match-venue">
+                                                                <i className="fa fa-map-marker-alt"></i> {match.venue}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="match-time">
+                                                    <i className="fa fa-clock"></i>
+                                                    {new Date(match.match_date).toLocaleTimeString('en-US', { 
+                                                        hour: '2-digit', 
+                                                        minute: '2-digit' 
+                                                    })}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Match History Section */}
                     {matchHistory && matchHistory.length > 0 && (
                         <div className="match-history-section">
@@ -268,7 +361,7 @@ const ManagerDashboard = () => {
                                             <p>{team.sport_type} • {team.members?.length || 0} players</p>
                                         </div>
                                         <div className="team-actions">
-                                            <Link to={`/manager/team/${team._id}`} className="team-action-btn">
+                                            <Link to="/manager/my-teams" className="team-action-btn">
                                                 Manage
                                             </Link>
                                         </div>

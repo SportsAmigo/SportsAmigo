@@ -126,14 +126,26 @@ module.exports = {
                 throw new Error('Manager ID is required');
             }
             
+            const RegistrationSchema = require('./schemas/registrationSchema');
             const teams = await Team.find({ manager_id: managerId })
                 .sort({ name: 1 })
                 .exec();
             
-            return teams.map(team => ({
-                ...team.toObject(),
-                current_members: team.members ? team.members.length : 0
+            // Get event count for each team
+            const teamsWithEventCount = await Promise.all(teams.map(async (team) => {
+                const registrationCount = await RegistrationSchema.countDocuments({ 
+                    team_id: team._id,
+                    status: { $in: ['approved', 'confirmed'] }
+                });
+                
+                return {
+                    ...team.toObject(),
+                    current_members: team.members ? team.members.length : 0,
+                    events_participated: registrationCount
+                };
             }));
+            
+            return teamsWithEventCount;
         } catch (err) {
             console.error('Error getting teams by manager:', err);
             throw err;
@@ -934,6 +946,65 @@ module.exports = {
             ).exec();
         } catch (err) {
             console.error('Error updating team stats:', err);
+            throw err;
+        }
+    },
+
+    /**
+     * Update team and player statistics after match verification
+     * @param {string} teamId - Team ID
+     * @param {string} result - Match result ('win', 'loss', 'draw')
+     * @returns {Promise<object>} - Promise resolving to updated team
+     */
+    updateTeamMatchStats: async function(teamId, result) {
+        try {
+            const team = await Team.findById(teamId).exec();
+            
+            if (!team) {
+                throw new Error('Team not found');
+            }
+            
+            // Update team-level stats
+            if (result === 'win') {
+                team.wins = (team.wins || 0) + 1;
+            } else if (result === 'loss') {
+                team.losses = (team.losses || 0) + 1;
+            } else if (result === 'draw') {
+                team.draws = (team.draws || 0) + 1;
+            }
+            
+            // Update all active player stats
+            team.members.forEach(member => {
+                if (member.status === 'active') {
+                    // Initialize stats if doesn't exist
+                    if (!member.stats) {
+                        member.stats = {
+                            matches_played: 0,
+                            matches_won: 0,
+                            matches_lost: 0,
+                            matches_drawn: 0
+                        };
+                    }
+                    
+                    // Update player stats
+                    member.stats.matches_played = (member.stats.matches_played || 0) + 1;
+                    
+                    if (result === 'win') {
+                        member.stats.matches_won = (member.stats.matches_won || 0) + 1;
+                    } else if (result === 'loss') {
+                        member.stats.matches_lost = (member.stats.matches_lost || 0) + 1;
+                    } else if (result === 'draw') {
+                        member.stats.matches_drawn = (member.stats.matches_drawn || 0) + 1;
+                    }
+                    
+                    member.stats.last_updated = new Date();
+                }
+            });
+            
+            await team.save();
+            return team;
+        } catch (err) {
+            console.error('Error updating team match stats:', err);
             throw err;
         }
     }

@@ -4,7 +4,8 @@ const matchSchema = new mongoose.Schema({
     event_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Event',
-        required: true
+        required: false,
+        default: null
     },
     team_a: {
         type: mongoose.Schema.Types.ObjectId,
@@ -36,10 +37,32 @@ const matchSchema = new mongoose.Schema({
         type: Date,
         required: true
     },
+    match_type: {
+        type: String,
+        enum: ['friendly', 'tournament', 'league'],
+        default: 'friendly'
+    },
     status: {
         type: String,
-        enum: ['scheduled', 'in_progress', 'completed', 'cancelled'],
+        enum: ['scheduled', 'live', 'pending', 'verified', 'disputed', 'completed', 'cancelled'],
         default: 'scheduled'
+    },
+    round: {
+        type: String,
+        default: null
+    },
+    match_number: {
+        type: Number,
+        default: null
+    },
+    scheduled_by: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+    },
+    scheduled_at: {
+        type: Date,
+        default: Date.now
     },
     winner: {
         type: String,
@@ -49,6 +72,33 @@ const matchSchema = new mongoose.Schema({
     venue: {
         type: String,
         required: false
+    },
+    recorded_by: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: false,
+        default: null
+    },
+    verified_by: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+    },
+    verified_at: {
+        type: Date,
+        default: null
+    },
+    notes: {
+        type: String,
+        default: ''
+    },
+    dispute_reason: {
+        type: String,
+        default: ''
+    },
+    rejection_reason: {
+        type: String,
+        default: ''
     },
     created_at: {
         type: Date,

@@ -95,9 +95,15 @@ const BrowseEvents = () => {
                                             <i className="fa fa-futbol"></i>
                                             {event.sport || event.sport_type || 'Sport'}
                                         </span>
-                                        <span className={`status-badge ${event.isRegistered ? 'registered' : 'open'}`}>
-                                            {event.isRegistered ? 'Registered' : 'Open'}
-                                        </span>
+                                        {event.isRegistered ? (
+                                            <span className={`status-badge ${event.registrationStatus === 'pending' ? 'pending' : event.registrationStatus === 'approved' ? 'approved' : 'registered'}`}>
+                                                {event.registrationStatus === 'pending' ? 'PENDING' : 
+                                                 event.registrationStatus === 'approved' ? 'APPROVED' : 
+                                                 event.registrationStatus === 'rejected' ? 'REJECTED' : 'REGISTERED'}
+                                            </span>
+                                        ) : (
+                                            <span className="status-badge open">OPEN</span>
+                                        )}
                                     </div>
 
                                     <h3 className="event-title">{event.name || 'Event'}</h3>
@@ -142,8 +148,10 @@ const BrowseEvents = () => {
                                             </Link>
                                         ) : (
                                             <button className="btn-registered" disabled>
-                                                <i className="fa fa-check-circle"></i>
-                                                Registered
+                                                <i className={`fa ${event.registrationStatus === 'pending' ? 'fa-clock' : event.registrationStatus === 'approved' ? 'fa-check-circle' : 'fa-times-circle'}`}></i>
+                                                {event.registrationStatus === 'pending' ? 'Pending Approval' : 
+                                                 event.registrationStatus === 'approved' ? 'Approved' : 
+                                                 event.registrationStatus === 'rejected' ? 'Rejected' : 'Registered'}
                                             </button>
                                         )}
                                         <Link 

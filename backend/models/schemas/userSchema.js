@@ -55,6 +55,26 @@ const userSchema = new Schema({
     type: String,
     enum: ['Active', 'Suspended', 'Closed'],
     default: 'Active'
+  },
+  // OTP for email verification during signup
+  otp: {
+    code: { type: String },
+    expiresAt: { type: Date },
+    attempts: { type: Number, default: 0 }
+  },
+  // Password reset fields
+  passwordReset: {
+    token: { type: String },
+    otp: { type: String },
+    expiresAt: { type: Date }
+  },
+  // Email verification status
+  isEmailVerified: {
+    type: Boolean,
+    default: true // Default true for backward compatibility with existing users
+  },
+  emailVerifiedAt: {
+    type: Date
   }
 });
 

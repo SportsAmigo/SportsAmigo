@@ -70,6 +70,7 @@ app.use((req, res, next) => {
 
 // Import API routes
 const authRoutes = require('./routes/auth');
+const authApiRoutes = require('./routes/auth-api');
 const organizerRoutes = require('./routes/organizer');
 const organizerApiRoutes = require('./routes/organizer-api');
 const playerRoutes = require('./routes/player');
@@ -102,7 +103,8 @@ app.get('/api/health', (req, res) => {
 });
 
 // Mount API routes
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authApiRoutes); // Use auth-api for React frontend
+app.use('/auth', authRoutes); // Keep auth.js for backward compatibility
 app.use('/api/organizer', organizerApiRoutes); // React API routes
 app.use('/organizer', organizerRoutes); // EJS/web routes
 app.use('/api/player', playerRoutes);

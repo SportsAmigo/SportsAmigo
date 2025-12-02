@@ -1,6 +1,8 @@
 const User = require('../models/user');
 const Profile = require('../models/profile');
 const PlayerProfile = require('../models/playerProfile');
+const { generateOTPWithExpiry } = require('../utils/otpGenerator');
+const { sendOTPEmail, sendPasswordResetOTPEmail, sendWelcomeEmail } = require('../utils/emailService');
 
 /**
  * Controller for user-related operations
@@ -333,5 +335,258 @@ module.exports = {
             }
             res.redirect('/login');
         });
+    },
+
+    /**
+     * Send OTP for email verification (signup)
+     * @param {Object} req - Request object
+     * @param {Object} res - Response object
+     */
+    sendOTP: async (req, res) => {
+        const { email, first_name, last_name } = req.body;
+
+        try {
+            // Check if user already exists
+            const existingUser = await User.getUserByEmail(email);
+            
+            if (existingUser) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'Email already registered. Please login instead.' 
+                });
+            }
+
+            // Generate OTP with 10-minute expiry
+            const { otp, expiresAt } = generateOTPWithExpiry(10);
+
+            // Create a temporary user record to store OTP (without password yet)
+            // OR save OTP to a separate collection/field
+            // For now, we'll create a user with a temporary password that will be updated later
+            const tempPassword = Math.random().toString(36).slice(-8);
+            const userData = {
+                email,
+                password: tempPassword,
+                role: req.body.role || 'player',
+                first_name: first_name || 'User',
+                last_name: last_name || '',
+                isEmailVerified: false
+            };
+
+            // Check if temp user already exists (from previous OTP request)
+            let user = await User.getUserByEmail(email);
+            if (!user) {
+                user = await User.createUser(userData);
+            }
+
+            // Save OTP
+            await User.saveOTP(email, otp, expiresAt);
+
+            // Send OTP email
+            const userName = `${first_name || 'User'} ${last_name || ''}`.trim();
+            await sendOTPEmail(email, otp, userName);
+
+            console.log(`OTP sent to ${email}: ${otp}`); // Remove in production
+
+            return res.status(200).json({ 
+                success: true, 
+                message: 'OTP sent successfully to your email. Please check your inbox.',
+                expiresIn: '10 minutes'
+            });
+
+        } catch (err) {
+            console.error('Error sending OTP:', err);
+            return res.status(500).json({ 
+                success: false, 
+                message: 'Failed to send OTP. Please try again.' 
+            });
+        }
+    },
+
+    /**
+     * Verify OTP and complete signup
+     * @param {Object} req - Request object
+     * @param {Object} res - Response object
+     */
+    verifyOTP: async (req, res) => {
+        const { email, otp, password, first_name, last_name, phone, role, preferred_sports, organization_name, team_name } = req.body;
+
+        try {
+            // Verify OTP
+            const verification = await User.verifyOTP(email, otp);
+
+            if (!verification.valid) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: verification.message 
+                });
+            }
+
+            // Update user with actual password and details
+            const user = verification.user;
+            
+            // Hash and update password
+            await User.updatePassword(email, password);
+
+            // Update other user details
+            const updateData = {
+                first_name,
+                last_name,
+                phone: phone || '',
+                role: role || 'player'
+            };
+
+            // Add role-specific profile data
+            if (preferred_sports) updateData.preferred_sports = preferred_sports;
+            if (organization_name) updateData.organization_name = organization_name;
+            if (team_name) updateData.team_name = team_name;
+
+            await User.updateUser(user._id, updateData);
+
+            // Send welcome email
+            const userName = `${first_name} ${last_name}`.trim();
+            await sendWelcomeEmail(email, userName, role);
+
+            // Auto login after successful verification
+            const verifiedUser = await User.getUserByEmail(email);
+            req.session.user = verifiedUser;
+
+            console.log(`User registered and verified successfully: ${email}`);
+
+            return res.status(200).json({ 
+                success: true, 
+                message: 'Email verified successfully! Your account has been created.',
+                user: {
+                    email: verifiedUser.email,
+                    role: verifiedUser.role,
+                    name: `${verifiedUser.first_name} ${verifiedUser.last_name}`
+                },
+                redirectUrl: `/${verifiedUser.role}`
+            });
+
+        } catch (err) {
+            console.error('Error verifying OTP:', err);
+            return res.status(500).json({ 
+                success: false, 
+                message: 'Failed to verify OTP. Please try again.' 
+            });
+        }
+    },
+
+    /**
+     * Initiate forgot password - send reset OTP
+     * @param {Object} req - Request object
+     * @param {Object} res - Response object
+     */
+    forgotPassword: async (req, res) => {
+        const { email } = req.body;
+
+        try {
+            // Check if user exists
+            const user = await User.getUserByEmail(email);
+            
+            if (!user) {
+                return res.status(404).json({ 
+                    success: false, 
+                    message: 'No account found with this email address.' 
+                });
+            }
+
+            // Generate reset OTP with 10-minute expiry
+            const { otp, expiresAt } = generateOTPWithExpiry(10);
+
+            // Save reset OTP
+            await User.savePasswordResetToken(email, otp, expiresAt);
+
+            // Send reset OTP email
+            const userName = `${user.first_name} ${user.last_name}`.trim();
+            await sendPasswordResetOTPEmail(email, otp, userName);
+
+            console.log(`Password reset OTP sent to ${email}: ${otp}`); // Remove in production
+
+            return res.status(200).json({ 
+                success: true, 
+                message: 'Password reset code sent to your email. Please check your inbox.',
+                expiresIn: '10 minutes'
+            });
+
+        } catch (err) {
+            console.error('Error in forgot password:', err);
+            return res.status(500).json({ 
+                success: false, 
+                message: 'Failed to send reset code. Please try again.' 
+            });
+        }
+    },
+
+    /**
+     * Verify reset OTP
+     * @param {Object} req - Request object
+     * @param {Object} res - Response object
+     */
+    verifyResetOTP: async (req, res) => {
+        const { email, otp } = req.body;
+
+        try {
+            // Validate reset OTP
+            const validation = await User.validatePasswordResetToken(email, otp);
+
+            if (!validation.valid) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: validation.message 
+                });
+            }
+
+            return res.status(200).json({ 
+                success: true, 
+                message: 'Reset code verified successfully. You can now set a new password.',
+                resetToken: otp // Send back for password reset verification
+            });
+
+        } catch (err) {
+            console.error('Error verifying reset OTP:', err);
+            return res.status(500).json({ 
+                success: false, 
+                message: 'Failed to verify reset code. Please try again.' 
+            });
+        }
+    },
+
+    /**
+     * Reset password with verified OTP
+     * @param {Object} req - Request object
+     * @param {Object} res - Response object
+     */
+    resetPassword: async (req, res) => {
+        const { email, otp, newPassword } = req.body;
+
+        try {
+            // Validate reset OTP again before password update
+            const validation = await User.validatePasswordResetToken(email, otp);
+
+            if (!validation.valid) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'Invalid or expired reset code. Please request a new one.' 
+                });
+            }
+
+            // Update password
+            await User.updatePassword(email, newPassword);
+
+            console.log(`Password reset successfully for ${email}`);
+
+            return res.status(200).json({ 
+                success: true, 
+                message: 'Password reset successfully! You can now login with your new password.' 
+            });
+
+        } catch (err) {
+            console.error('Error resetting password:', err);
+            return res.status(500).json({ 
+                success: false, 
+                message: 'Failed to reset password. Please try again.' 
+            });
+        }
     }
 }; 

@@ -241,5 +241,192 @@ module.exports = {
             console.error('Error authenticating user:', err);
             throw err;
         }
+    },
+
+    /**
+     * Save OTP for email verification
+     * @param {string} email - User email
+     * @param {string} otp - OTP code
+     * @param {Date} expiresAt - OTP expiry timestamp
+     * @returns {Promise<object>} - Promise resolving to updated user
+     */
+    saveOTP: async function(email, otp, expiresAt) {
+        try {
+            const user = await User.findOneAndUpdate(
+                { email },
+                {
+                    $set: {
+                        'otp.code': otp,
+                        'otp.expiresAt': expiresAt,
+                        'otp.attempts': 0
+                    }
+                },
+                { new: true }
+            );
+            return user;
+        } catch (err) {
+            console.error('Error saving OTP:', err);
+            throw err;
+        }
+    },
+
+    /**
+     * Verify OTP
+     * @param {string} email - User email
+     * @param {string} otp - OTP code to verify
+     * @returns {Promise<object>} - { valid: boolean, message: string, user?: object }
+     */
+    verifyOTP: async function(email, otp) {
+        try {
+            const user = await User.findOne({ email });
+            
+            if (!user) {
+                return { valid: false, message: 'User not found' };
+            }
+
+            if (!user.otp || !user.otp.code) {
+                return { valid: false, message: 'No OTP found. Please request a new one.' };
+            }
+
+            // Check if OTP has expired
+            if (new Date() > user.otp.expiresAt) {
+                return { valid: false, message: 'OTP has expired. Please request a new one.' };
+            }
+
+            // Check if max attempts exceeded
+            if (user.otp.attempts >= 5) {
+                return { valid: false, message: 'Maximum verification attempts exceeded. Please request a new OTP.' };
+            }
+
+            // Verify OTP
+            if (user.otp.code !== otp) {
+                // Increment attempts
+                user.otp.attempts += 1;
+                await user.save();
+                return { valid: false, message: `Invalid OTP. ${5 - user.otp.attempts} attempts remaining.` };
+            }
+
+            // OTP is valid - mark email as verified
+            user.isEmailVerified = true;
+            user.emailVerifiedAt = new Date();
+            user.otp = undefined; // Clear OTP
+            await user.save();
+
+            return { valid: true, message: 'OTP verified successfully', user };
+        } catch (err) {
+            console.error('Error verifying OTP:', err);
+            throw err;
+        }
+    },
+
+    /**
+     * Clear OTP
+     * @param {string} email - User email
+     * @returns {Promise<object>} - Promise resolving to updated user
+     */
+    clearOTP: async function(email) {
+        try {
+            const user = await User.findOneAndUpdate(
+                { email },
+                {
+                    $unset: { otp: 1 }
+                },
+                { new: true }
+            );
+            return user;
+        } catch (err) {
+            console.error('Error clearing OTP:', err);
+            throw err;
+        }
+    },
+
+    /**
+     * Save password reset token/OTP
+     * @param {string} email - User email
+     * @param {string} tokenOrOtp - Reset token or OTP
+     * @param {Date} expiresAt - Token expiry timestamp
+     * @returns {Promise<object>} - Promise resolving to updated user
+     */
+    savePasswordResetToken: async function(email, tokenOrOtp, expiresAt) {
+        try {
+            const user = await User.findOneAndUpdate(
+                { email },
+                {
+                    $set: {
+                        'passwordReset.otp': tokenOrOtp,
+                        'passwordReset.expiresAt': expiresAt
+                    }
+                },
+                { new: true }
+            );
+            return user;
+        } catch (err) {
+            console.error('Error saving password reset token:', err);
+            throw err;
+        }
+    },
+
+    /**
+     * Validate password reset token/OTP
+     * @param {string} email - User email
+     * @param {string} tokenOrOtp - Reset token or OTP to validate
+     * @returns {Promise<object>} - { valid: boolean, message: string }
+     */
+    validatePasswordResetToken: async function(email, tokenOrOtp) {
+        try {
+            const user = await User.findOne({ email });
+            
+            if (!user) {
+                return { valid: false, message: 'User not found' };
+            }
+
+            if (!user.passwordReset || !user.passwordReset.otp) {
+                return { valid: false, message: 'No reset request found. Please request a new password reset.' };
+            }
+
+            // Check if token has expired
+            if (new Date() > user.passwordReset.expiresAt) {
+                return { valid: false, message: 'Reset code has expired. Please request a new one.' };
+            }
+
+            // Verify token/OTP
+            if (user.passwordReset.otp !== tokenOrOtp) {
+                return { valid: false, message: 'Invalid reset code.' };
+            }
+
+            return { valid: true, message: 'Reset code verified successfully' };
+        } catch (err) {
+            console.error('Error validating password reset token:', err);
+            throw err;
+        }
+    },
+
+    /**
+     * Update user password
+     * @param {string} email - User email
+     * @param {string} newPassword - New password (plain text)
+     * @returns {Promise<object>} - Promise resolving to updated user
+     */
+    updatePassword: async function(email, newPassword) {
+        try {
+            // Hash new password
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+            // Update password and clear reset token
+            const user = await User.findOneAndUpdate(
+                { email },
+                {
+                    $set: { password: hashedPassword },
+                    $unset: { passwordReset: 1 }
+                },
+                { new: true }
+            );
+
+            return user;
+        } catch (err) {
+            console.error('Error updating password:', err);
+            throw err;
+        }
     }
 }; 
