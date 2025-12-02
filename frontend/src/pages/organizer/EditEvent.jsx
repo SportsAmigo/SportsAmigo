@@ -35,7 +35,7 @@ const EditEvent = () => {
 
     useEffect(() => {
         fetchEventDetails();
-    }, [id]);
+    }, []);
 
     const fetchEventDetails = async () => {
         try {

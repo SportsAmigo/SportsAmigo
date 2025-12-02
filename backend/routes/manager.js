@@ -455,6 +455,16 @@ router.post('/create-team', async (req, res) => {
             validationErrors.max_members = 'Max members must be a positive number';
         }
         
+        // Check if manager already has a team with this sport type
+        const existingTeam = await Team.find({
+            manager_id: req.session.user._id,
+            sport_type: sport_type
+        });
+        
+        if (existingTeam && existingTeam.length > 0) {
+            validationErrors.sport_type = `You already have a ${sport_type} team. Each manager can only create one team per sport type.`;
+        }
+        
         // If validation fails, return appropriate response
         if (Object.keys(validationErrors).length > 0) {
             if (isAjax) {
@@ -1410,7 +1420,11 @@ router.get('/my-events', async (req, res) => {
                         event_id: event._id,
                         event_name: event.title,
                         event_date: new Date(event.event_date).toLocaleDateString(),
+                        start_date: event.event_date,
                         event_location: event.location,
+                        location: event.location,
+                        sport_type: event.sport_type,
+                        sport: event.sport_type,
                         event_status: event.status,
                         team_id: reg.team_id,
                         team_name: team.name,

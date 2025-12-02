@@ -164,21 +164,6 @@ const ManagerProfile = () => {
                             <h3>{user?.first_name} {user?.last_name}</h3>
                             <p className="user-email">{user?.email}</p>
                             <span className="role-badge">Manager</span>
-                            
-                            <div className="profile-stats">
-                                <div className="stat-item">
-                                    <span className="stat-value">0</span>
-                                    <span className="stat-label">Teams</span>
-                                </div>
-                                <div className="stat-item">
-                                    <span className="stat-value">0</span>
-                                    <span className="stat-label">Events</span>
-                                </div>
-                                <div className="stat-item">
-                                    <span className="stat-value">0</span>
-                                    <span className="stat-label">Wins</span>
-                                </div>
-                            </div>
                         </div>
 
                         <div className="profile-form-card">

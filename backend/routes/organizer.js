@@ -715,18 +715,19 @@ router.get('/event/:id', async (req, res) => {
                     
                     // Get manager details
                     const manager = await User.getUserById(team.manager_id);
-                    const managerName = manager ? `${manager.first_name || ''} ${manager.last_name || ''}`.trim() || manager.username : 'Unknown Manager';
+                    const managerName = manager ? `${manager.first_name || ''} ${manager.last_name || ''}`.trim() || manager.username || 'Unknown Manager' : 'Unknown Manager';
                     
                     // Add to the list of registered teams
                     registeredTeams.push({
-                        id: team._id,
-                        name: team.name,
+                        team_id: team._id,
+                        team_name: team.name || 'Unknown Team',
                         sport: team.sport_type,
                         members: team.members?.length || 0,
-                        manager: managerName,
+                        manager_name: managerName,
                         status: registration.status,
                         registration_date: new Date(registration.registration_date).toLocaleDateString(),
-                        notes: registration.notes || ''
+                        notes: registration.notes || '',
+                        players: team.members || []
                     });
                     
                     console.log(`Added team ${team.name} to registered teams list`);

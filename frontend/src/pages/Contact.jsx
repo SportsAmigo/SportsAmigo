@@ -42,15 +42,12 @@ const Contact = () => {
                                     <Link to="/events/basketball">Basketball</Link>
                                 </div>
                             </li>
-                            <li><Link to="/shop">SHOP</Link></li>
                             <li><Link to="/contact">CONTACT</Link></li>
                             {user ? (
                                 <>
-                                    <li><Link to="/shop/cart">🛒 Cart</Link></li>
                                     <li className="dropdown">
                                         <a href="#">{user.first_name || user.email}</a>
                                         <div className="dropdown-content">
-                                            <Link to="/shop/orders">My Orders</Link>
                                             <Link to={`/${user.role}/dashboard`}>Dashboard</Link>
                                             <Link to="/logout">Logout</Link>
                                         </div>
@@ -151,12 +148,6 @@ const Contact = () => {
                 <h4>About SportsAmigo</h4>
                 <p>Connecting players, teams, and organizers to create the ultimate sports experience.<br />
                     Join us today and be part of the sports revolution!</p>
-                <div className="icons">
-                    <i className="fa fa-facebook"></i>
-                    <i className="fa fa-twitter"></i>
-                    <i className="fa fa-instagram"></i>
-                    <i className="fa fa-linkedin"></i>
-                </div>
                 <p>Made with <i className="fa fa-heart-o"></i> by SportsAmigo Team</p>
             </section>
         </div>
