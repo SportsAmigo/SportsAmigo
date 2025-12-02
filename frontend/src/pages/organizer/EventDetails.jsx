@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { selectUser } from '../../store/slices/authSlice';
+import OrganizerLayout from '../../components/layout/OrganizerLayout';
 import axios from 'axios';
 
 const EventDetails = () => {
@@ -47,8 +48,11 @@ const EventDetails = () => {
 
     const handleApproveRequest = async (teamId) => {
         try {
+            // Ensure teamId is a string, not an object
+            const teamIdString = typeof teamId === 'object' ? teamId._id || teamId.id : teamId;
+            
             const response = await axios.put(
-                `http://localhost:5000/api/organizer/event/${id}/approve-team/${teamId}`,
+                `http://localhost:5000/api/organizer/event/${id}/approve-team/${teamIdString}`,
                 {},
                 { withCredentials: true }
             );
@@ -66,8 +70,11 @@ const EventDetails = () => {
         if (!window.confirm('Are you sure you want to reject this team request?')) return;
 
         try {
+            // Ensure teamId is a string, not an object
+            const teamIdString = typeof teamId === 'object' ? teamId._id || teamId.id : teamId;
+            
             const response = await axios.put(
-                `http://localhost:5000/api/organizer/event/${id}/reject-team/${teamId}`,
+                `http://localhost:5000/api/organizer/event/${id}/reject-team/${teamIdString}`,
                 {},
                 { withCredentials: true }
             );
@@ -141,6 +148,7 @@ const EventDetails = () => {
     const approvedTeams = teamRequests.filter(req => req.status === 'approved' || req.status === 'confirmed');
 
     return (
+        <OrganizerLayout>
         <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-orange-100 py-8">
             <div className="container mx-auto px-4 max-w-7xl">
                 {/* Message Alert */}
@@ -405,13 +413,13 @@ const EventDetails = () => {
                                     {approvedTeams.map((team) => (
                                         <div key={team.team_id} className="border border-green-200 rounded-lg p-6 bg-green-50 hover:shadow-lg transition-all">
                                             <div className="flex items-start justify-between mb-3">
-                                                <h3 className="text-lg font-bold text-gray-800">{team.team_name}</h3>
+                                                <h3 className="text-lg font-bold text-gray-800">{team.team_name || 'Unknown Team'}</h3>
                                                 <span className="px-3 py-1 bg-green-200 text-green-800 rounded-full text-xs font-semibold">
                                                     APPROVED
                                                 </span>
                                             </div>
                                             <p className="text-sm text-gray-600 mb-2">
-                                                <i className="fa fa-user mr-1"></i> {team.manager_name || 'Unknown Manager'}
+                                                <i className="fa fa-user mr-1"></i> Manager: {team.manager_name || 'Unknown Manager'}
                                             </p>
                                             {team.players && team.players.length > 0 && (
                                                 <div className="mt-3 p-3 bg-white rounded-lg">
@@ -443,6 +451,7 @@ const EventDetails = () => {
                 )}
             </div>
         </div>
+        </OrganizerLayout>
     );
 };
 

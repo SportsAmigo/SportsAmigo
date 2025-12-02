@@ -443,12 +443,16 @@
     display: grid;
     grid-template-columns: 1fr 1fr 2fr; /* Date, Time, Venue */
     gap: 1rem;
+    width: 100%;
+    overflow: hidden;
 }
 
 .detail-group {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .detail-group label {
@@ -458,6 +462,9 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .detail-input {
@@ -468,6 +475,9 @@
     color: #2d3748;
     font-size: 0.9rem;
     transition: all 0.3s ease;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .detail-input:focus {
