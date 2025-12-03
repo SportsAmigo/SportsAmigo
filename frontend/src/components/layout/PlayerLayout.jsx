@@ -72,13 +72,6 @@ const PlayerLayout = ({ children }) => {
                             My Teams
                         </Link>
                         <Link 
-                            to="/player/events" 
-                            className={`sidebar-nav-item ${isActive('/player/events') ? 'active' : ''}`}
-                        >
-                            <i className="fa fa-calendar-alt"></i>
-                            Browse Events
-                        </Link>
-                        <Link 
                             to="/player/my-events" 
                             className={`sidebar-nav-item ${isActive('/player/my-events') ? 'active' : ''}`}
                         >
@@ -91,20 +84,6 @@ const PlayerLayout = ({ children }) => {
                         >
                             <i className="fa fa-futbol"></i>
                             My Matches
-                        </Link>
-                        <Link 
-                            to="/player/stats" 
-                            className={`sidebar-nav-item ${isActive('/player/stats') ? 'active' : ''}`}
-                        >
-                            <i className="fa fa-chart-bar"></i>
-                            Statistics
-                        </Link>
-                        <Link 
-                            to="/wallet" 
-                            className={`sidebar-nav-item ${isActive('/wallet') ? 'active' : ''}`}
-                        >
-                            <i className="fa fa-wallet"></i>
-                            Wallet
                         </Link>
                         <Link 
                             to="/player/profile" 

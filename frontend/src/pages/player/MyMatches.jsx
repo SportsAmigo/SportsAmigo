@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import PlayerLayout from '../../components/layout/PlayerLayout';
 import './MyMatches.css';
 
 const MyMatches = () => {
@@ -99,16 +100,13 @@ const MyMatches = () => {
     }
 
     return (
-        <div className="player-dashboard">
+        <PlayerLayout>
             <div className="container">
                 <div className="page-header">
                     <button className="btn-back" onClick={() => navigate(-1)}>
                         <i className="fas fa-arrow-left"></i> Back
                     </button>
                     <h1><i className="fas fa-history"></i> My Match History</h1>
-                    <button className="btn-primary" onClick={() => navigate('/player/stats')}>
-                        <i className="fas fa-chart-bar"></i> View Stats
-                    </button>
                 </div>
 
                 {error && (
@@ -222,7 +220,7 @@ const MyMatches = () => {
                     </div>
                 </div>
             </div>
-        </div>
+        </PlayerLayout>
     );
 };
 

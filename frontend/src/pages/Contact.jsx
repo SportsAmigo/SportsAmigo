@@ -34,14 +34,7 @@ const Contact = () => {
                         <ul>
                             <li><Link to="/">HOME</Link></li>
                             <li><Link to="/about">ABOUT</Link></li>
-                            <li className="dropdown">
-                                <Link to="/events">EVENTS</Link>
-                                <div className="dropdown-content">
-                                    <Link to="/events/football">Football</Link>
-                                    <Link to="/events/cricket">Cricket</Link>
-                                    <Link to="/events/basketball">Basketball</Link>
-                                </div>
-                            </li>
+                            <li><Link to="/events">EVENTS</Link></li>
                             <li><Link to="/contact">CONTACT</Link></li>
                             {user ? (
                                 <>
