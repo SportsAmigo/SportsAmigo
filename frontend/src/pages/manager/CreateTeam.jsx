@@ -1,13 +1,17 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { selectUser } from '../../store/slices/authSlice';
+import ManagerLayout from '../../components/layout/ManagerLayout';
 import axios from 'axios';
 import './CreateTeam.css';
 
 const CreateTeam = () => {
     const user = useSelector(selectUser);
     const navigate = useNavigate();
+    const { id } = useParams();
+    const isEditMode = !!id;
+    
     const [formData, setFormData] = useState({
         name: '',
         sport_type: '',
@@ -16,23 +20,102 @@ const CreateTeam = () => {
     });
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
+    const [loadingTeam, setLoadingTeam] = useState(isEditMode);
+
+    useEffect(() => {
+        if (isEditMode) {
+            fetchTeamData();
+        }
+    }, [id]);
+
+    const fetchTeamData = async () => {
+        try {
+            setLoadingTeam(true);
+            const response = await axios.get(`http://localhost:5000/api/manager/team/${id}`, {
+                withCredentials: true
+            });
+            if (response.data.success) {
+                const team = response.data.team;
+                setFormData({
+                    name: team.name || '',
+                    sport_type: team.sport_type || '',
+                    description: team.description || '',
+                    max_members: team.max_members || 10
+                });
+            } else {
+                setErrors({ submit: 'Failed to load team details' });
+            }
+        } catch (error) {
+            console.error('Error fetching team:', error);
+            setErrors({ submit: error.response?.data?.message || 'Error loading team details' });
+        } finally {
+            setLoadingTeam(false);
+        }
+    };
+
+    const validateForm = () => {
+        const newErrors = {};
+        
+        if (!formData.name || formData.name.trim().length === 0) {
+            newErrors.name = 'Team name is required';
+        } else if (formData.name.trim().length < 3) {
+            newErrors.name = 'Team name must be at least 3 characters';
+        } else if (formData.name.trim().length > 50) {
+            newErrors.name = 'Team name must be less than 50 characters';
+        }
+        
+        if (!formData.sport_type) {
+            newErrors.sport_type = 'Sport type is required';
+        }
+        
+        if (formData.max_members < 5 || formData.max_members > 50) {
+            newErrors.max_members = 'Maximum members must be between 5 and 50';
+        }
+        
+        if (formData.description && formData.description.length > 500) {
+            newErrors.description = 'Description must be less than 500 characters';
+        }
+        
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
 
     const handleChange = (e) => {
+        const { name, value } = e.target;
         setFormData({
             ...formData,
-            [e.target.name]: e.target.value
+            [name]: value
         });
+        // Clear error for this field when user starts typing
+        if (errors[name]) {
+            setErrors({
+                ...errors,
+                [name]: undefined
+            });
+        }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        if (!validateForm()) {
+            return;
+        }
+        
         setLoading(true);
         setErrors({});
         try {
-            const response = await axios.post('http://localhost:5000/api/manager/create-team', formData, { withCredentials: true });
+            const url = isEditMode 
+                ? `http://localhost:5000/api/manager/teams/${id}/edit`
+                : 'http://localhost:5000/api/manager/create-team';
+                
+            const response = await axios.post(url, formData, { withCredentials: true });
+            
             if (response.data.success) {
-                alert('Team created successfully!');
+                alert(isEditMode ? 'Team updated successfully!' : 'Team created successfully!');
                 navigate('/manager/my-teams');
+            } else {
+                setErrors({ submit: response.data.message || `Error ${isEditMode ? 'updating' : 'creating'} team` });
             }
         } catch (error) {
             if (error.response?.data?.errors) {
@@ -68,13 +151,26 @@ const CreateTeam = () => {
                     </h1>
                     <p>Create a new sports team and invite players to join</p>
                 </div>
+            </ManagerLayout>
+        );
+    }
 
-                {errors.submit && (
-                    <div className="error-alert">
-                        <i className="fa fa-exclamation-circle"></i>
-                        {errors.submit}
+    return (
+        <ManagerLayout>
+            <div className="create-team-container">
+                <div className="create-team-wrapper">
+                    <div className="page-header">
+                        <h2 className="page-title">
+                            <i className={isEditMode ? "fa fa-edit" : "fa fa-plus-circle"}></i>
+                            {isEditMode ? 'Edit Team' : 'Create New Team'}
+                        </h2>
+                        <p className="page-subtitle">
+                            {isEditMode 
+                                ? 'Update your team details and settings'
+                                : 'Create a new sports team and invite players to join'
+                            }
+                        </p>
                     </div>
-                )}
 
                 <form onSubmit={handleSubmit} className="create-team-form">
                     {/* Team Name */}
@@ -182,7 +278,7 @@ const CreateTeam = () => {
                     </div>
                 </form>
             </div>
-        </div>
+        </ManagerLayout>
     );
 };
 
