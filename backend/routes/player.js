@@ -18,11 +18,8 @@ const isPlayer = (req, res, next) => {
     if (req.session.user && req.session.user.role === 'player') {
         next();
     } else {
-        // Return JSON for API calls instead of redirecting
-        return res.status(401).json({
-            success: false,
-            message: 'You must be logged in as a player to access this page'
-        });
+        req.session.errorMessage = 'You must be logged in as a player to access this page';
+        res.redirect('/auth/login');
     }
 };
 
@@ -332,64 +329,56 @@ router.get('/browse-teams', async (req, res) => {
 router.get('/team/:id', async (req, res) => {
     try {
         const teamId = req.params.id;
-        const playerId = req.session.user._id;
         
         // Get team details
         const team = await Team.getTeamById(teamId);
         
         if (!team) {
-            return res.status(404).json({
-                success: false,
-                message: 'Team not found'
-            });
+            req.session.flashMessage = {
+                type: 'error',
+                text: 'Team not found'
+            };
+            return res.redirect('/player/browse-teams');
         }
         
-        // Check if player is already a member
+        // Check if player is a member
+        const playerId = req.session.user._id;
         const isMember = team.members && team.members.some(
             member => member.player_id.toString() === playerId.toString()
-        );
-
-        // Check if player has a pending join request
-        const hasPendingRequest = team.join_requests && team.join_requests.some(
-            request => request.player_id.toString() === playerId.toString() && request.status === 'pending'
         );
         
         // Format team for display
         const formattedTeam = {
             id: team._id,
             name: team.name,
-            sport_type: team.sport_type,
-            manager_name: team.manager_name || 'Unknown',
-            manager_email: team.manager_email || '',
+            sport: team.sport_type,
+            manager: team.manager_name || 'Team Manager',
             manager_id: team.manager_id,
-            current_members: team.members ? team.members.length : 0,
-            max_members: team.max_members || 20,
-            wins: team.wins || 0,
-            description: team.description || '',
-            created_at: team.created_at,
-            members: team.members ? team.members.map(member => ({
-                player_id: member.player_id,
-                first_name: member.first_name || 'Player',
-                last_name: member.last_name || '',
-                email: member.email || '',
-                photo_url: member.photo_url || '',
-                joined_date: member.joined_date
-            })) : [],
-            already_joined: isMember,
-            request_status: hasPendingRequest ? 'pending' : null
+            members: team.members || [],
+            description: team.description || 'No description available',
+            achievements: team.achievements || [],
+            is_member: isMember,
+            upcoming_events: team.upcoming_events || []
         };
         
-        res.json({
-            success: true,
-            team: formattedTeam
+        res.render('player/team-details', {
+            title: team.name,
+            user: req.session.user,
+            team: formattedTeam,
+            messages: req.session.flashMessage || {},
+            layout: 'layouts/sidebar-dashboard',
+            path: '/player/team-details'
         });
+        
+        // Clear flash messages
+        delete req.session.flashMessage;
     } catch (err) {
         console.error('Error fetching team details:', err);
-        res.status(500).json({
-            success: false,
-            message: 'Error loading team details',
-            error: err.message
-        });
+        req.session.flashMessage = {
+            type: 'error',
+            text: 'Error loading team details'
+        };
+        res.redirect('/player/browse-teams');
     }
 });
 
@@ -604,24 +593,45 @@ router.put('/profile', upload.single('profile_image'), async (req, res) => {
 router.get('/event/:id', async (req, res) => {
     try {
         const eventId = req.params.id;
-        const playerId = req.session.user._id;
         
         // Get event details
         const event = await Event.getEventById(eventId);
         if (!event) {
-            return res.status(404).json({
-                success: false,
-                message: 'Event not found'
-            });
+            req.session.flashMessage = {
+                type: 'error',
+                text: 'Event not found'
+            };
+            return res.redirect('/player/browse-events');
         }
         
         // Get player's teams
+        const playerId = req.session.user._id;
         const teams = await Team.getPlayerTeams(playerId);
+        
+        // Format event for display
+        const formattedEvent = {
+            _id: event._id,
+            name: event.title,
+            title: event.title,
+            description: event.description,
+            date: event.event_date,
+            event_date: event.event_date,
+            location: event.location,
+            sport: event.sport_type,
+            sport_type: event.sport_type,
+            status: event.status,
+            max_teams: event.max_teams,
+            registration_deadline: event.registration_deadline,
+            organizer: `${event.organizer_first_name} ${event.organizer_last_name}`,
+            organizer_first_name: event.organizer_first_name,
+            organizer_last_name: event.organizer_last_name,
+            organizer_email: event.organizer_email,
+            team_registrations: event.team_registrations || []
+        };
         
         // Check if player's team is registered
         let isRegistered = false;
-        let registeredTeamName = null;
-        let registeredDate = null;
+        let registeredTeam = null;
         
         if (teams.length > 0 && event.team_registrations && event.team_registrations.length > 0) {
             const teamIds = teams.map(team => team._id.toString());
@@ -629,50 +639,34 @@ router.get('/event/:id', async (req, res) => {
             for (const reg of event.team_registrations) {
                 if (teamIds.includes(reg.team_id.toString())) {
                     isRegistered = true;
-                    const team = teams.find(team => team._id.toString() === reg.team_id.toString());
-                    registeredTeamName = team ? team.name : null;
-                    registeredDate = reg.registration_date;
+                    registeredTeam = teams.find(team => team._id.toString() === reg.team_id.toString());
                     break;
                 }
             }
         }
         
-        // Format event for response
-        const formattedEvent = {
-            id: event._id,
-            name: event.title,
-            description: event.description || '',
-            date: event.event_date,
-            event_date: event.event_date,
-            time: event.time || null,
-            location: event.location,
-            sport: event.sport_type,
-            sport_type: event.sport_type,
-            status: event.status,
-            max_participants: event.max_teams || event.max_participants,
-            current_participants: event.team_registrations ? event.team_registrations.length : 0,
-            registration_deadline: event.registration_deadline || null,
-            organizer: event.organizer_first_name && event.organizer_last_name 
-                ? `${event.organizer_first_name} ${event.organizer_last_name}`.trim()
-                : event.organizer_email || 'Unknown',
-            rules: event.rules || null,
-            prize_details: event.prize_details || null,
-            is_registered: isRegistered,
-            team_name: registeredTeamName,
-            registered_date: registeredDate
-        };
+        formattedEvent.isRegistered = isRegistered;
+        formattedEvent.registeredTeam = registeredTeam ? registeredTeam.name : null;
         
-        res.json({
-            success: true,
-            event: formattedEvent
+        res.render('player/event-details', {
+            title: event.title,
+            user: req.session.user,
+            event: formattedEvent,
+            teams: teams,
+            messages: req.session.flashMessage || {},
+            layout: 'layouts/sidebar-dashboard',
+            path: '/player/browse-events'
         });
+        
+        // Clear flash messages
+        delete req.session.flashMessage;
     } catch (err) {
         console.error('Error loading event details:', err);
-        res.status(500).json({
-            success: false,
-            message: 'Error loading event details',
-            error: err.message
-        });
+        req.session.flashMessage = {
+            type: 'error',
+            text: 'Error loading event details'
+        };
+        res.redirect('/player/browse-events');
     }
 });
 

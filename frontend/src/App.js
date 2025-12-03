@@ -10,6 +10,7 @@ import './App.css';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import Shop from './pages/Shop';
 import About from './pages/About';
 import Contact from './pages/Contact';
 
@@ -18,6 +19,7 @@ import PlayerDashboard from './pages/player/Dashboard';
 import Profile from './pages/player/Profile';
 import PlayerEvents from './pages/player/BrowseEvents';
 import BrowseTeams from './pages/player/BrowseTeams';
+import Wallet from './pages/player/Wallet';
 import MyEvents from './pages/player/MyEvents';
 import MyTeams from './pages/player/MyTeams';
 import MyMatches from './pages/player/MyMatches';
@@ -100,6 +102,7 @@ const AppContent = () => {
         <Route path="/signup/:role" element={<Signup />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/shop" element={<Shop />} />
 
         {/* Player Routes */}
         <Route
@@ -123,6 +126,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute allowedRoles={['player']}>
               <PlayerEvents />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/wallet"
+          element={
+            <ProtectedRoute allowedRoles={['player']}>
+              <Wallet />
             </ProtectedRoute>
           }
         />

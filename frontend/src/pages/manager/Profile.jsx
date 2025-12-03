@@ -272,9 +272,7 @@ const ManagerProfile = () => {
                                             className={`form-input ${errors.first_name ? 'error' : ''}`}
                                             value={formData.first_name}
                                             onChange={handleChange}
-                                            onBlur={handleBlur}
                                             required
-                                            maxLength="50"
                                         />
                                         {errors.first_name && <span className="error-message">{errors.first_name}</span>}
                                     </div>
@@ -290,9 +288,7 @@ const ManagerProfile = () => {
                                             className={`form-input ${errors.last_name ? 'error' : ''}`}
                                             value={formData.last_name}
                                             onChange={handleChange}
-                                            onBlur={handleBlur}
                                             required
-                                            maxLength="50"
                                         />
                                         {errors.last_name && <span className="error-message">{errors.last_name}</span>}
                                     </div>
@@ -307,18 +303,11 @@ const ManagerProfile = () => {
                                             type="email"
                                             id="email"
                                             name="email"
-                                            className={`form-input ${errors.email ? 'error' : ''}`}
+                                            className="form-input"
                                             value={formData.email}
                                             onChange={handleChange}
-                                            onBlur={handleBlur}
                                             required
                                         />
-                                        {errors.email && (
-                                            <span className="error-message">
-                                                <i className="fa fa-exclamation-circle"></i>
-                                                {errors.email}
-                                            </span>
-                                        )}
                                     </div>
 
                                     <div className="form-group">
@@ -348,23 +337,12 @@ const ManagerProfile = () => {
                                     <textarea
                                         id="bio"
                                         name="bio"
-                                        className={`form-textarea ${errors.bio ? 'error' : ''}`}
+                                        className="form-textarea"
                                         rows="4"
                                         value={formData.bio}
                                         onChange={handleChange}
-                                        onBlur={handleBlur}
                                         placeholder="Tell us about yourself..."
-                                        maxLength="500"
                                     ></textarea>
-                                    {errors.bio && (
-                                        <span className="error-message">
-                                            <i className="fa fa-exclamation-circle"></i>
-                                            {errors.bio}
-                                        </span>
-                                    )}
-                                    <small className="form-hint">
-                                        {formData.bio.length}/500 characters
-                                    </small>
                                 </div>
 
                                 <div className="form-actions">

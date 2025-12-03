@@ -91,69 +91,36 @@ module.exports = {
             const team = await Team.getTeamById(teamId);
             
             if (!team) {
-                return res.status(404).json({ 
-                    success: false, 
-                    message: 'Team not found' 
-                });
+                return res.status(404).json({ error: 'Team not found' });
             }
             
             if (team.manager_id.toString() !== managerId.toString()) {
-                return res.status(403).json({ 
-                    success: false, 
-                    message: 'Not authorized to update this team' 
-                });
-            }
-            
-            // Validate input
-            const errors = [];
-            
-            if (!req.body.name || req.body.name.trim().length === 0) {
-                errors.push('Team name is required');
-            } else if (req.body.name.trim().length < 3) {
-                errors.push('Team name must be at least 3 characters');
-            } else if (req.body.name.trim().length > 50) {
-                errors.push('Team name must be less than 50 characters');
-            }
-            
-            if (!req.body.sport_type) {
-                errors.push('Sport type is required');
-            }
-            
-            if (!req.body.max_members || req.body.max_members < 5 || req.body.max_members > 50) {
-                errors.push('Maximum members must be between 5 and 50');
-            }
-            
-            if (req.body.description && req.body.description.length > 500) {
-                errors.push('Description must be less than 500 characters');
-            }
-            
-            if (errors.length > 0) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: errors.join(', ') 
-                });
+                return res.status(403).json({ error: 'Not authorized to update this team' });
             }
             
             const teamData = {
-                name: req.body.name.trim(),
+                name: req.body.name,
                 sport_type: req.body.sport_type,
                 description: req.body.description,
-                max_members: parseInt(req.body.max_members)
+                max_members: req.body.max_members
             };
             
-            const updatedTeam = await Team.updateTeam(teamId, teamData);
+            await Team.updateTeam(teamId, teamData);
             
-            return res.json({ 
-                success: true, 
-                message: 'Team updated successfully!',
-                team: updatedTeam
-            });
+            // Set success message
+            req.session.flashMessage = {
+                type: 'success',
+                text: 'Team updated successfully!'
+            };
+            
+            return res.redirect(`/manager/teams/${teamId}`);
         } catch (err) {
             console.error('Error updating team:', err);
-            return res.status(500).json({ 
-                success: false, 
-                message: 'Error updating team. Please try again.' 
-            });
+            req.session.flashMessage = {
+                type: 'error',
+                text: 'Error updating team. Please try again.'
+            };
+            return res.redirect(`/manager/teams/${req.params.id}/edit`);
         }
     },
     
