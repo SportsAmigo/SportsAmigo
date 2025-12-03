@@ -74,12 +74,12 @@ const Signup = () => {
                 newErrors.password = 'Password must be at least 6 characters';
             }
 
-            const regex = /^[A-Za-z]+$/;
+            const regex = /^[A-Za-zÀ-ÖØ-öø-ÿ'\-\s]{1,50}$/;
             if (!regex.test(formData.first_name)) {
-                newErrors.first_name = 'First name can only contain letters';
+                newErrors.first_name = 'Names cannot contain numbers or special characters';
             }
             if (formData.last_name && !regex.test(formData.last_name)) {            
-                newErrors.last_name = 'Last name can only contain letters';
+                newErrors.last_name = 'Names cannot contain numbers or special characters';
             }
 
             if (Object.keys(newErrors).length > 0) {

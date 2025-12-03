@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { Team, User, Event } = require('../models');
+const TeamSchema = require('../models/schemas/teamSchema');
 const { teamController, eventController, userController } = require('../controllers');
 const multer = require('multer');
 const path = require('path');
@@ -188,7 +189,12 @@ router.get('/dashboard', async (req, res) => {
         let registeredEvents = [];
         try {
             const Event = require('../models/event');
-            registeredEvents = await Event.getManagerEvents(req.session.user._id);
+            const allRegistrations = await Event.getManagerEvents(req.session.user._id);
+            // Filter to only include approved or confirmed registrations
+            registeredEvents = allRegistrations.filter(reg => 
+                reg.registration_status === 'approved' || 
+                reg.registration_status === 'confirmed'
+            );
         } catch (error) {
             console.error('Error fetching registered events:', error);
         }
@@ -456,14 +462,15 @@ router.post('/create-team', async (req, res) => {
         }
         
         // Check if manager already has a team with this sport type
-        const existingTeam = await Team.find({
-            manager_id: req.session.user._id,
-            sport_type: sport_type
-        });
+        // Commented out to allow multiple teams of the same sport type
+        // const existingTeam = await TeamSchema.find({
+        //     manager_id: req.session.user._id,
+        //     sport_type: sport_type
+        // });
         
-        if (existingTeam && existingTeam.length > 0) {
-            validationErrors.sport_type = `You already have a ${sport_type} team. Each manager can only create one team per sport type.`;
-        }
+        // if (existingTeam && existingTeam.length > 0) {
+        //     validationErrors.sport_type = `You already have a ${sport_type} team. Each manager can only create one team per sport type.`;
+        // }
         
         // If validation fails, return appropriate response
         if (Object.keys(validationErrors).length > 0) {

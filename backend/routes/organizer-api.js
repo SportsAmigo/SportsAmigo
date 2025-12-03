@@ -248,21 +248,57 @@ router.get('/event/:id', async (req, res) => {
         // Populate team_id in team_registrations
         let teamRegistrations = [];
         if (event.team_registrations && event.team_registrations.length > 0) {
+            const UserSchema = require('../models/schemas/userSchema');
             teamRegistrations = await Promise.all(
                 event.team_registrations.map(async (reg) => {
                     try {
                         const team = await TeamSchema.findById(reg.team_id);
+                        if (!team) {
+                            return {
+                                team_id: reg.team_id,
+                                team_name: 'Unknown Team',
+                                manager_name: 'Unknown Manager',
+                                status: reg.status,
+                                registration_date: reg.registered_at,
+                                players: []
+                            };
+                        }
+
+                        // Get manager details
+                        const manager = await UserSchema.findById(team.manager_id)
+                            .select('first_name last_name')
+                            .exec();
+                        
+                        // Get player details from members
+                        let players = [];
+                        if (team.members && team.members.length > 0) {
+                            const playerIds = team.members.map(m => m.player_id);
+                            const playerUsers = await UserSchema.find({ _id: { $in: playerIds } })
+                                .select('first_name last_name')
+                                .exec();
+                            players = playerUsers.map(p => ({
+                                name: `${p.first_name} ${p.last_name}`
+                            }));
+                        }
+
                         return {
-                            team_id: team ? {
-                                _id: team._id,
-                                name: team.name
-                            } : reg.team_id,
+                            team_id: team._id,
+                            team_name: team.name || 'Unknown Team',
+                            manager_name: manager ? `${manager.first_name} ${manager.last_name}` : 'Unknown Manager',
                             status: reg.status,
-                            registered_at: reg.registered_at
+                            registration_date: reg.registered_at,
+                            players: players
                         };
                     } catch (err) {
                         console.error('Error populating team:', err);
-                        return reg;
+                        return {
+                            team_id: reg.team_id,
+                            team_name: 'Unknown Team',
+                            manager_name: 'Unknown Manager',
+                            status: reg.status,
+                            registration_date: reg.registered_at,
+                            players: []
+                        };
                     }
                 })
             );

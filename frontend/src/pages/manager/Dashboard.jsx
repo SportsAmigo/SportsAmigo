@@ -254,6 +254,21 @@ const ManagerDashboard = () => {
                                 Tied matches
                             </div>
                         </div>
+
+                        <div className="stat-card">
+                            <div className="stat-card-content">
+                                <div className="stat-icon purple">
+                                    <i className="fa fa-calendar-check"></i>
+                                </div>
+                                <div className="stat-info">
+                                    <div className="stat-label">Registered Events</div>
+                                    <div className="stat-value">{dashboardData.eventCount}</div>
+                                </div>
+                            </div>
+                            <Link to="/manager/browse-events" className="stat-link">
+                                Browse events <i className="fa fa-arrow-right"></i>
+                            </Link>
+                        </div>
                     </div>
 
                     {/* Upcoming Matches Section */}
