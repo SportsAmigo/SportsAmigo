@@ -477,75 +477,22 @@ router.put('/profile', upload.single('profile_image'), async (req, res) => {
         const User = require('../models/user');
         const userId = req.session.user._id;
         
-        // Validate required fields
-        const errors = [];
-        
-        if (!req.body.first_name || !req.body.first_name.trim()) {
-            errors.push('First name is required');
-        } else if (!/^[A-Za-z\s]{2,50}$/.test(req.body.first_name.trim())) {
-            errors.push('First name must be 2-50 letters only');
-        }
-        
-        if (!req.body.last_name || !req.body.last_name.trim()) {
-            errors.push('Last name is required');
-        } else if (!/^[A-Za-z\s]{2,50}$/.test(req.body.last_name.trim())) {
-            errors.push('Last name must be 2-50 letters only');
-        }
-        
-        if (!req.body.phone || !req.body.phone.trim()) {
-            errors.push('Phone number is required');
-        } else if (!/^[6-9]\d{9}$/.test(req.body.phone.trim())) {
-            errors.push('Phone must be 10 digits starting with 6-9');
-        }
-        
-        if (!req.body.organization || !req.body.organization.trim()) {
-            errors.push('Organization is required');
-        } else if (!/^[A-Za-z\s]{2,100}$/.test(req.body.organization.trim())) {
-            errors.push('Organization must be 2-100 letters only');
-        }
-        
-        if (!req.body.age) {
-            errors.push('Age is required');
-        } else {
-            const age = parseInt(req.body.age);
-            if (isNaN(age) || age < 18 || age > 100) {
-                errors.push('Age must be between 18 and 100');
-            }
-        }
-        
-        if (!req.body.address || !req.body.address.trim()) {
-            errors.push('Address is required');
-        } else if (req.body.address.length < 10 || req.body.address.length > 200) {
-            errors.push('Address must be 10-200 characters');
-        }
-        
-        if (req.body.bio && req.body.bio.length > 500) {
-            errors.push('Bio must not exceed 500 characters');
-        }
-        
-        if (errors.length > 0) {
-            return res.status(400).json({
-                success: false,
-                message: errors.join(', ')
-            });
-        }
-        
         const updateData = {
-            first_name: req.body.first_name.trim(),
-            last_name: req.body.last_name.trim(),
-            phone: req.body.phone.trim(),
-            bio: req.body.bio || ''
+            first_name: req.body.first_name,
+            last_name: req.body.last_name,
+            phone: req.body.phone,
+            bio: req.body.bio
         };
         
         // Handle nested profile fields (age, address, organization)
         if (req.body.age !== undefined) {
-            updateData['profile.age'] = parseInt(req.body.age, 10);
+            updateData['profile.age'] = req.body.age ? parseInt(req.body.age, 10) : null;
         }
         if (req.body.address !== undefined) {
-            updateData['profile.address'] = req.body.address.trim();
+            updateData['profile.address'] = req.body.address;
         }
         if (req.body.organization !== undefined) {
-            updateData['profile.organization_name'] = req.body.organization.trim();
+            updateData['profile.organization_name'] = req.body.organization;
         }
         
         // If profile image was uploaded
