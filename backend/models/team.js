@@ -92,7 +92,7 @@ module.exports = {
             
             // Get user information for join requests
             if (team.join_requests && team.join_requests.length > 0) {
-                const requestPlayerIds = team.join_requests.map(request => request.player_id);
+                const requestPlayerIds = team.join_requests.map(req => req.player_id);
                 const requestUsers = await User.find({ _id: { $in: requestPlayerIds } })
                     .select('first_name last_name email')
                     .exec();
@@ -108,10 +108,8 @@ module.exports = {
                     const user = requestUsersMap[request.player_id.toString()];
                     return {
                         ...request.toObject(),
-                        player_name: user ? `${user.first_name} ${user.last_name}` : 'Unknown',
-                        player_email: user ? user.email : '',
-                        player_first_name: user ? user.first_name : '',
-                        player_last_name: user ? user.last_name : ''
+                        player_name: user ? `${user.first_name} ${user.last_name}` : '',
+                        player_email: user ? user.email : ''
                     };
                 });
             }
@@ -152,14 +150,33 @@ module.exports = {
                 throw new Error('Manager ID is required');
             }
             
+            const EventSchema = require('./schemas/eventSchema');
             const teams = await Team.find({ manager_id: managerId })
                 .sort({ name: 1 })
                 .exec();
             
-            return teams.map(team => ({
-                ...team.toObject(),
-                current_members: team.members ? team.members.length : 0
+            // Get event count for each team by counting from Event.team_registrations subdocument
+            const teamsWithEventCount = await Promise.all(teams.map(async (team) => {
+                // Count events where this team is registered with approved or confirmed status
+                const registrationCount = await EventSchema.countDocuments({ 
+                    'team_registrations': {
+                        $elemMatch: {
+                            team_id: team._id,
+                            status: { $in: ['approved', 'confirmed'] }
+                        }
+                    }
+                });
+                
+                console.log(`Team ${team.name} (${team._id}) has ${registrationCount} approved/confirmed registrations`);
+                
+                return {
+                    ...team.toObject(),
+                    current_members: team.members ? team.members.length : 0,
+                    events_participated: registrationCount
+                };
             }));
+            
+            return teamsWithEventCount;
         } catch (err) {
             console.error('Error getting teams by manager:', err);
             throw err;
@@ -960,6 +977,65 @@ module.exports = {
             ).exec();
         } catch (err) {
             console.error('Error updating team stats:', err);
+            throw err;
+        }
+    },
+
+    /**
+     * Update team and player statistics after match verification
+     * @param {string} teamId - Team ID
+     * @param {string} result - Match result ('win', 'loss', 'draw')
+     * @returns {Promise<object>} - Promise resolving to updated team
+     */
+    updateTeamMatchStats: async function(teamId, result) {
+        try {
+            const team = await Team.findById(teamId).exec();
+            
+            if (!team) {
+                throw new Error('Team not found');
+            }
+            
+            // Update team-level stats
+            if (result === 'win') {
+                team.wins = (team.wins || 0) + 1;
+            } else if (result === 'loss') {
+                team.losses = (team.losses || 0) + 1;
+            } else if (result === 'draw') {
+                team.draws = (team.draws || 0) + 1;
+            }
+            
+            // Update all active player stats
+            team.members.forEach(member => {
+                if (member.status === 'active') {
+                    // Initialize stats if doesn't exist
+                    if (!member.stats) {
+                        member.stats = {
+                            matches_played: 0,
+                            matches_won: 0,
+                            matches_lost: 0,
+                            matches_drawn: 0
+                        };
+                    }
+                    
+                    // Update player stats
+                    member.stats.matches_played = (member.stats.matches_played || 0) + 1;
+                    
+                    if (result === 'win') {
+                        member.stats.matches_won = (member.stats.matches_won || 0) + 1;
+                    } else if (result === 'loss') {
+                        member.stats.matches_lost = (member.stats.matches_lost || 0) + 1;
+                    } else if (result === 'draw') {
+                        member.stats.matches_drawn = (member.stats.matches_drawn || 0) + 1;
+                    }
+                    
+                    member.stats.last_updated = new Date();
+                }
+            });
+            
+            await team.save();
+            return team;
+        } catch (err) {
+            console.error('Error updating team match stats:', err);
             throw err;
         }
     }

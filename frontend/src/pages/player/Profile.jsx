@@ -19,7 +19,6 @@ const Profile = () => {
     const [imagePreview, setImagePreview] = useState(null);
     const [message, setMessage] = useState({ type: '', text: '' });
     const [loading, setLoading] = useState(false);
-    const [errors, setErrors] = useState({});
 
     useEffect(() => {
         if (user) {
@@ -37,90 +36,11 @@ const Profile = () => {
         }
     }, [user]);
 
-    const validateField = (name, value) => {
-        const newErrors = { ...errors };
-
-        switch (name) {
-            case 'first_name':
-                if (!value.trim()) {
-                    newErrors.first_name = 'First name is required';
-                } else if (!/^[a-zA-Z\s]+$/.test(value)) {
-                    newErrors.first_name = 'Only letters and spaces allowed';
-                } else if (value.trim().length < 2 || value.length > 50) {
-                    newErrors.first_name = 'Must be 2-50 characters';
-                } else {
-                    delete newErrors.first_name;
-                }
-                break;
-
-            case 'last_name':
-                if (!value.trim()) {
-                    newErrors.last_name = 'Last name is required';
-                } else if (!/^[a-zA-Z\s]+$/.test(value)) {
-                    newErrors.last_name = 'Only letters and spaces allowed';
-                } else if (value.trim().length < 1 || value.length > 50) {
-                    newErrors.last_name = 'Must be 1-50 characters';
-                } else {
-                    delete newErrors.last_name;
-                }
-                break;
-
-            case 'email':
-                if (!value.trim()) {
-                    newErrors.email = 'Email is required';
-                } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-                    newErrors.email = 'Invalid email format';
-                } else {
-                    delete newErrors.email;
-                }
-                break;
-
-            case 'phone':
-                if (value && !/^[6-9]\d{9}$/.test(value)) {
-                    newErrors.phone = 'Phone must be 10 digits starting with 6-9';
-                } else {
-                    delete newErrors.phone;
-                }
-                break;
-
-            case 'bio':
-                if (value && value.length > 500) {
-                    newErrors.bio = 'Bio must not exceed 500 characters';
-                } else {
-                    delete newErrors.bio;
-                }
-                break;
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
-
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        
-        // Prevent non-digit input and limit length for phone
-        if (name === 'phone' && value && (!/^\d*$/.test(value) || value.length > 10)) {
-            return;
-        }
-
         setFormData({
             ...formData,
-            [name]: value
+            [e.target.name]: e.target.value
         });
-        
-        // Clear error when user starts typing
-        if (errors[name]) {
-            setErrors({
-                ...errors,
-                [name]: undefined
-            });
-        }
-    };
-
-    const handleBlur = (e) => {
-        const { name, value } = e.target;
-        validateField(name, value);
     };
 
     const handleImageChange = (e) => {
@@ -151,22 +71,33 @@ const Profile = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        // Validate all fields
-        let isValid = true;
-        ['first_name', 'last_name', 'email', 'phone', 'bio'].forEach(field => {
-            if (!validateField(field, formData[field])) {
-                isValid = false;
-            }
-        });
-
-        if (!isValid) {
-            setMessage({ type: 'error', text: 'Please fix all validation errors' });
-            return;
-        }
-        
         setLoading(true);
         setMessage({ type: '', text: '' });
+
+        // Validate first name - only letters and spaces
+        const nameRegex = /^[A-Za-z\s]+$/;
+        if (!nameRegex.test(formData.first_name)) {
+            setMessage({ type: 'error', text: 'First name can only contain letters and spaces' });
+            setLoading(false);
+            return;
+        }
+
+        // Validate last name - only letters and spaces
+        if (!nameRegex.test(formData.last_name)) {
+            setMessage({ type: 'error', text: 'Last name can only contain letters and spaces' });
+            setLoading(false);
+            return;
+        }
+
+        // Validate phone number - 10 digits starting with 6, 7, 8, or 9
+        if (formData.phone) {
+            const phoneRegex = /^[6-9]\d{9}$/;
+            if (!phoneRegex.test(formData.phone)) {
+                setMessage({ type: 'error', text: 'Phone number must be 10 digits starting with 6, 7, 8, or 9' });
+                setLoading(false);
+                return;
+            }
+        }
 
         try {
             // Create FormData for file upload
@@ -255,21 +186,6 @@ const Profile = () => {
                         <h3>{user?.first_name} {user?.last_name}</h3>
                         <p className="user-email">{user?.email}</p>
                         <span className="role-badge">Player</span>
-                        
-                        <div className="profile-stats">
-                            <div className="stat-item">
-                                <span className="stat-value">0</span>
-                                <span className="stat-label">Teams</span>
-                            </div>
-                            <div className="stat-item">
-                                <span className="stat-value">0</span>
-                                <span className="stat-label">Events</span>
-                            </div>
-                            <div className="stat-item">
-                                <span className="stat-value">0</span>
-                                <span className="stat-label">Awards</span>
-                            </div>
-                        </div>
                     </div>
 
                     <div className="profile-form-card">
@@ -284,19 +200,11 @@ const Profile = () => {
                                         type="text"
                                         id="first_name"
                                         name="first_name"
-                                        className={`form-input ${errors.first_name ? 'error' : ''}`}
+                                        className="form-input"
                                         value={formData.first_name}
                                         onChange={handleChange}
-                                        onBlur={handleBlur}
                                         required
-                                        maxLength="50"
                                     />
-                                    {errors.first_name && (
-                                        <span className="error-message">
-                                            <i className="fa fa-exclamation-circle"></i>
-                                            {errors.first_name}
-                                        </span>
-                                    )}
                                 </div>
 
                                 <div className="form-group">
@@ -307,19 +215,11 @@ const Profile = () => {
                                         type="text"
                                         id="last_name"
                                         name="last_name"
-                                        className={`form-input ${errors.last_name ? 'error' : ''}`}
+                                        className="form-input"
                                         value={formData.last_name}
                                         onChange={handleChange}
-                                        onBlur={handleBlur}
                                         required
-                                        maxLength="50"
                                     />
-                                    {errors.last_name && (
-                                        <span className="error-message">
-                                            <i className="fa fa-exclamation-circle"></i>
-                                            {errors.last_name}
-                                        </span>
-                                    )}
                                 </div>
                             </div>
 
@@ -332,18 +232,11 @@ const Profile = () => {
                                         type="email"
                                         id="email"
                                         name="email"
-                                        className={`form-input ${errors.email ? 'error' : ''}`}
+                                        className="form-input"
                                         value={formData.email}
                                         onChange={handleChange}
-                                        onBlur={handleBlur}
                                         required
                                     />
-                                    {errors.email && (
-                                        <span className="error-message">
-                                            <i className="fa fa-exclamation-circle"></i>
-                                            {errors.email}
-                                        </span>
-                                    )}
                                 </div>
 
                                 <div className="form-group">
@@ -354,19 +247,11 @@ const Profile = () => {
                                         type="tel"
                                         id="phone"
                                         name="phone"
-                                        className={`form-input ${errors.phone ? 'error' : ''}`}
+                                        className="form-input"
                                         value={formData.phone}
                                         onChange={handleChange}
-                                        onBlur={handleBlur}
-                                        placeholder="1234567890"
-                                        maxLength="10"
+                                        placeholder="+1234567890"
                                     />
-                                    {errors.phone && (
-                                        <span className="error-message">
-                                            <i className="fa fa-exclamation-circle"></i>
-                                            {errors.phone}
-                                        </span>
-                                    )}
                                 </div>
                             </div>
 
@@ -377,23 +262,12 @@ const Profile = () => {
                                 <textarea
                                     id="bio"
                                     name="bio"
-                                    className={`form-textarea ${errors.bio ? 'error' : ''}`}
+                                    className="form-textarea"
                                     rows="4"
                                     value={formData.bio}
                                     onChange={handleChange}
-                                    onBlur={handleBlur}
                                     placeholder="Tell us about yourself..."
-                                    maxLength="500"
                                 ></textarea>
-                                {errors.bio && (
-                                    <span className="error-message">
-                                        <i className="fa fa-exclamation-circle"></i>
-                                        {errors.bio}
-                                    </span>
-                                )}
-                                <small className="form-hint">
-                                    {formData.bio.length}/500 characters
-                                </small>
                             </div>
 
                             <div className="form-actions">

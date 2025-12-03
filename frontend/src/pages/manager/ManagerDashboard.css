@@ -727,6 +727,142 @@
   font-size: 0.9375rem;
 }
 
+/* ===== UPCOMING MATCHES SECTION ===== */
+.upcoming-matches-section {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin: 0 3rem 2rem;
+}
+
+.upcoming-matches-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.upcoming-match-card {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(37, 99, 235, 0.02));
+  border: 2px solid rgba(59, 130, 246, 0.1);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.upcoming-match-card:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(37, 99, 235, 0.04));
+  border-color: rgba(59, 130, 246, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.15);
+}
+
+.match-date-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 70px;
+  height: 70px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  border-radius: 12px;
+  color: white;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.date-day {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.date-month {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 0.25rem;
+}
+
+.match-details-upcoming {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.match-teams-info {
+  flex: 1;
+}
+
+.team-vs-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.your-team {
+  font-weight: 700;
+  font-size: 1.0625rem;
+  color: var(--primary);
+}
+
+.vs-text {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--gray-400);
+  text-transform: uppercase;
+}
+
+.opponent-team {
+  font-weight: 700;
+  font-size: 1.0625rem;
+  color: var(--gray-900);
+}
+
+.match-meta {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  font-size: 0.875rem;
+  color: var(--gray-600);
+}
+
+.match-event,
+.match-venue {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.match-event i,
+.match-venue i {
+  color: var(--primary);
+}
+
+.match-time {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  white-space: nowrap;
+}
+
+.match-time i {
+  color: var(--primary);
+}
+
 /* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 1200px) {
   .stats-grid {
@@ -735,7 +871,8 @@
 
   .teams-section,
   .no-teams-section,
-  .match-history-section {
+  .match-history-section,
+  .upcoming-matches-section {
     margin-left: 2.5rem;
     margin-right: 2.5rem;
   }
@@ -772,7 +909,8 @@
 
   .teams-section,
   .no-teams-section,
-  .match-history-section {
+  .match-history-section,
+  .upcoming-matches-section {
     margin-left: 1.5rem;
     margin-right: 1.5rem;
     padding: 1.5rem;
@@ -781,6 +919,38 @@
   .match-history-item {
     flex-wrap: wrap;
     gap: 8px;
+  }
+
+  .upcoming-match-card {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .match-date-badge {
+    align-self: flex-start;
+  }
+
+  .match-details-upcoming {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .team-vs-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .match-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .match-time {
+    align-self: flex-start;
   }
 
   .match-opponent {

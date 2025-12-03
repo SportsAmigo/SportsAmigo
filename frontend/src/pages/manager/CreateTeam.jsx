@@ -104,7 +104,6 @@ const CreateTeam = () => {
         
         setLoading(true);
         setErrors({});
-        
         try {
             const url = isEditMode 
                 ? `http://localhost:5000/api/manager/teams/${id}/edit`
@@ -119,19 +118,38 @@ const CreateTeam = () => {
                 setErrors({ submit: response.data.message || `Error ${isEditMode ? 'updating' : 'creating'} team` });
             }
         } catch (error) {
-            console.error('Error saving team:', error);
-            setErrors({ submit: error.response?.data?.message || `Error ${isEditMode ? 'updating' : 'creating'} team` });
+            if (error.response?.data?.errors) {
+                setErrors(error.response.data.errors);
+            } else {
+                setErrors({ submit: error.response?.data?.message || 'Error creating team' });
+            }
         } finally {
             setLoading(false);
         }
     };
 
-    if (loadingTeam) {
-        return (
-            <ManagerLayout>
-                <div className="loading-container">
-                    <div className="spinner"></div>
-                    <p>Loading team details...</p>
+    const sportTypes = [
+        'Football',
+        'Cricket',
+        'Basketball',
+        'Volleyball',
+        'Tennis',
+        'Badminton',
+        'Table Tennis',
+        'Hockey',
+        'Swimming',
+        'Athletics'
+    ];
+
+    return (
+        <div className="create-team-container">
+            <div className="create-team-wrapper">
+                <div className="create-team-header">
+                    <h1>
+                        <i className="fa fa-plus-circle"></i>
+                        Create New Team
+                    </h1>
+                    <p>Create a new sports team and invite players to join</p>
                 </div>
             </ManagerLayout>
         );
@@ -154,142 +172,111 @@ const CreateTeam = () => {
                         </p>
                     </div>
 
-                    {errors.submit && (
-                        <div className="error-alert">
-                            <i className="fa fa-exclamation-circle"></i>
-                            {errors.submit}
-                        </div>
-                    )}
-
-                    <div className="form-card">
-                        <form onSubmit={handleSubmit}>
-                            <div className="form-grid">
-                                <div className="form-group">
-                                    <label htmlFor="name" className="form-label">
-                                        Team Name <span className="required">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        id="name"
-                                        name="name"
-                                        value={formData.name}
-                                        onChange={handleChange}
-                                        className={`form-input ${errors.name ? 'error' : ''}`}
-                                        placeholder="Enter team name"
-                                        required
-                                        minLength="3"
-                                        maxLength="50"
-                                    />
-                                    {errors.name && (
-                                        <span className="error-message">
-                                            <i className="fa fa-exclamation-circle"></i>
-                                            {errors.name}
-                                        </span>
-                                    )}
-                                </div>
-
-                                <div className="form-group">
-                                    <label htmlFor="sport_type" className="form-label">
-                                        Sport Type <span className="required">*</span>
-                                    </label>
-                                    <select
-                                        id="sport_type"
-                                        name="sport_type"
-                                        value={formData.sport_type}
-                                        onChange={handleChange}
-                                        className={`form-input ${errors.sport_type ? 'error' : ''}`}
-                                        required
-                                    >
-                                        <option value="">Select sport</option>
-                                        <option value="Football">Football</option>
-                                        <option value="Basketball">Basketball</option>
-                                        <option value="Cricket">Cricket</option>
-                                        <option value="Volleyball">Volleyball</option>
-                                        <option value="Badminton">Badminton</option>
-                                        <option value="Tennis">Tennis</option>
-                                    </select>
-                                    {errors.sport_type && (
-                                        <span className="error-message">
-                                            <i className="fa fa-exclamation-circle"></i>
-                                            {errors.sport_type}
-                                        </span>
-                                    )}
-                                </div>
-
-                                <div className="form-group">
-                                    <label htmlFor="max_members" className="form-label">
-                                        Maximum Members <span className="required">*</span>
-                                    </label>
-                                    <input
-                                        type="number"
-                                        id="max_members"
-                                        name="max_members"
-                                        value={formData.max_members}
-                                        onChange={handleChange}
-                                        className={`form-input ${errors.max_members ? 'error' : ''}`}
-                                        min="5"
-                                        max="50"
-                                        required
-                                    />
-                                    {errors.max_members && (
-                                        <span className="error-message">
-                                            <i className="fa fa-exclamation-circle"></i>
-                                            {errors.max_members}
-                                        </span>
-                                    )}
-                                </div>
-
-                                <div className="form-group full-width">
-                                    <label htmlFor="description" className="form-label">
-                                        Team Description
-                                    </label>
-                                    <textarea
-                                        id="description"
-                                        name="description"
-                                        value={formData.description}
-                                        onChange={handleChange}
-                                        className={`form-textarea ${errors.description ? 'error' : ''}`}
-                                        rows="4"
-                                        placeholder="Describe your team, goals, and requirements..."
-                                        maxLength="500"
-                                    ></textarea>
-                                    {errors.description && (
-                                        <span className="error-message">
-                                            <i className="fa fa-exclamation-circle"></i>
-                                            {errors.description}
-                                        </span>
-                                    )}
-                                    <small className="form-hint">
-                                        {formData.description.length}/500 characters
-                                    </small>
-                                </div>
-                            </div>
-
-                            <div className="form-actions">
-                                <Link 
-                                    to={isEditMode ? `/manager/team/${id}/manage` : "/manager/my-teams"} 
-                                    className="btn-cancel"
-                                >
-                                    <i className="fa fa-times"></i>
-                                    Cancel
-                                </Link>
-                                <button type="submit" className="btn-submit" disabled={loading}>
-                                    {loading ? (
-                                        <>
-                                            <i className="fa fa-spinner fa-spin"></i>
-                                            {isEditMode ? 'Updating...' : 'Creating...'}
-                                        </>
-                                    ) : (
-                                        <>
-                                            <i className="fa fa-check"></i>
-                                            {isEditMode ? 'Update Team' : 'Create Team'}
-                                        </>
-                                    )}
-                                </button>
-                            </div>
-                        </form>
+                <form onSubmit={handleSubmit} className="create-team-form">
+                    {/* Team Name */}
+                    <div className="form-group">
+                        <label htmlFor="name" className="form-label">
+                            <i className="fa fa-shield-alt"></i>
+                            Team Name *
+                        </label>
+                        <input
+                            type="text"
+                            id="name"
+                            name="name"
+                            className={`form-input ${errors.name ? 'error' : ''}`}
+                            placeholder="Enter your team name"
+                            value={formData.name}
+                            onChange={handleChange}
+                            maxLength={50}
+                            required
+                        />
+                        {errors.name && <span className="error-message">{errors.name}</span>}
                     </div>
-                </div>
+
+                    {/* Sport Type */}
+                    <div className="form-group">
+                        <label htmlFor="sport_type" className="form-label">
+                            <i className="fa fa-futbol"></i>
+                            Sport Type *
+                        </label>
+                        <select
+                            id="sport_type"
+                            name="sport_type"
+                            className={`form-select ${errors.sport_type ? 'error' : ''}`}
+                            value={formData.sport_type}
+                            onChange={handleChange}
+                            required
+                        >
+                            <option value="">Select a sport</option>
+                            {sportTypes.map(sport => (
+                                <option key={sport} value={sport}>{sport}</option>
+                            ))}
+                        </select>
+                        {errors.sport_type && <span className="error-message">{errors.sport_type}</span>}
+                    </div>
+
+                    {/* Maximum Members */}
+                    <div className="form-group">
+                        <label htmlFor="max_members" className="form-label">
+                            <i className="fa fa-users"></i>
+                            Maximum Team Members *
+                        </label>
+                        <input
+                            type="number"
+                            id="max_members"
+                            name="max_members"
+                            className={`form-input ${errors.max_members ? 'error' : ''}`}
+                            placeholder="Enter maximum team size"
+                            value={formData.max_members}
+                            onChange={handleChange}
+                            min="5"
+                            max="50"
+                        />
+                        {errors.max_members && <span className="error-message">{errors.max_members}</span>}
+                        <span className="help-text">Set the maximum number of players (5-50)</span>
+                    </div>
+
+                    {/* Description */}
+                    <div className="form-group">
+                        <label htmlFor="description" className="form-label">
+                            <i className="fa fa-align-left"></i>
+                            Description (Optional)
+                        </label>
+                        <textarea
+                            id="description"
+                            name="description"
+                            className={`form-textarea ${errors.description ? 'error' : ''}`}
+                            placeholder="Describe your team, goals, and requirements..."
+                            value={formData.description}
+                            onChange={handleChange}
+                            maxLength={500}
+                            rows="4"
+                        ></textarea>
+                        {errors.description && <span className="error-message">{errors.description}</span>}
+                        <span className="char-count">{formData.description.length}/500 characters</span>
+                    </div>
+
+                    {/* Form Actions */}
+                    <div className="form-actions">
+                        <Link to="/manager/dashboard" className="btn-cancel">
+                            <i className="fa fa-times"></i>
+                            Cancel
+                        </Link>
+                        <button type="submit" className="btn-submit" disabled={loading}>
+                            {loading ? (
+                                <>
+                                    <i className="fa fa-spinner fa-spin"></i>
+                                    Creating Team...
+                                </>
+                            ) : (
+                                <>
+                                    <i className="fa fa-check"></i>
+                                    Create Team
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </form>
             </div>
         </ManagerLayout>
     );

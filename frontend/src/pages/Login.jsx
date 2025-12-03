@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginUser, selectLoading, selectError } from '../store/slices/authSlice';
+import authService from '../services/authService';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -17,9 +18,16 @@ const Login = () => {
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
+    
+    // Forgot Password state
     const [showForgotPassword, setShowForgotPassword] = useState(false);
     const [resetEmail, setResetEmail] = useState('');
-    const [resetStep, setResetStep] = useState(1);
+    const [resetOtp, setResetOtp] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmNewPassword, setConfirmNewPassword] = useState('');
+    const [resetStep, setResetStep] = useState(1); // 1: Enter email, 2: Enter OTP, 3: Enter new password
+    const [resetToken, setResetToken] = useState('');
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -62,19 +70,115 @@ const Login = () => {
         }
     };
 
-    const handleForgotPassword = async () => {
+    const handleForgotPasswordClick = () => {
+        setShowForgotPassword(true);
+        setResetStep(1);
+        setResetEmail('');
+        setResetOtp('');
+        setNewPassword('');
+        setConfirmNewPassword('');
+        setMessage('');
+        setSuccessMessage('');
+    };
+
+    const handleSendResetOTP = async () => {
         if (!resetEmail || !/\S+@\S+\.\S+/.test(resetEmail)) {
-            alert('Please enter a valid email address.');
+            setMessage('Please enter a valid email address.');
             return;
         }
-        // TODO: Implement password reset API call
-        setResetStep(2);
+        
+        setLoading(true);
+        setMessage('');
+        setSuccessMessage('');
+        
+        try {
+            const result = await authService.forgotPassword(resetEmail);
+            setSuccessMessage(result.message || 'Reset code sent to your email!');
+            setResetStep(2);
+        } catch (error) {
+            setMessage(error.message || 'Failed to send reset code. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleVerifyResetOTP = async () => {
+        if (!resetOtp || resetOtp.length !== 6) {
+            setMessage('Please enter the 6-digit OTP code.');
+            return;
+        }
+        
+        setLoading(true);
+        setMessage('');
+        setSuccessMessage('');
+        
+        try {
+            const result = await authService.verifyResetOTP(resetEmail, resetOtp);
+            setSuccessMessage(result.message || 'OTP verified! Please enter your new password.');
+            setResetToken(result.resetToken);
+            setResetStep(3);
+        } catch (error) {
+            setMessage(error.message || 'Invalid OTP. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleResetPassword = async () => {
+        if (!newPassword || newPassword.length < 6) {
+            setMessage('Password must be at least 6 characters.');
+            return;
+        }
+        
+        if (newPassword !== confirmNewPassword) {
+            setMessage('Passwords do not match.');
+            return;
+        }
+        
+        setLoading(true);
+        setMessage('');
+        setSuccessMessage('');
+        
+        try {
+            const result = await authService.resetPassword(resetEmail, resetToken, newPassword);
+            setSuccessMessage(result.message || 'Password reset successful! You can now login.');
+            
+            setTimeout(() => {
+                closeModal();
+                setFormData(prev => ({ ...prev, email: resetEmail, password: '' }));
+            }, 2000);
+        } catch (error) {
+            setMessage(error.message || 'Failed to reset password. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleResendOTP = async () => {
+        setLoading(true);
+        setMessage('');
+        setSuccessMessage('');
+        
+        try {
+            const result = await authService.forgotPassword(resetEmail);
+            setSuccessMessage(result.message || 'New reset code sent to your email!');
+        } catch (error) {
+            setMessage(error.message || 'Failed to resend code. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const closeModal = () => {
         setShowForgotPassword(false);
         setResetEmail('');
+        setResetOtp('');
+        setNewPassword('');
+        setConfirmNewPassword('');
         setResetStep(1);
+        setResetToken('');
+        setMessage('');
+        setSuccessMessage('');
     };
 
     return (
@@ -188,6 +292,22 @@ const Login = () => {
                                         {loading ? 'Logging in...' : 'Login'}
                                     </button>
                                 </div>
+                                <div className="forgot-password-link" style={{ textAlign: 'center', marginTop: '10px' }}>
+                                    <button 
+                                        type="button"
+                                        onClick={handleForgotPasswordClick}
+                                        style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            color: '#007bff',
+                                            cursor: 'pointer',
+                                            textDecoration: 'underline',
+                                            fontSize: '14px'
+                                        }}
+                                    >
+                                        Forgot Password?
+                                    </button>
+                                </div>
                                 <div className="register-link">
                                     <p>New to SportsAmigo? <Link to={`/signup?role=${formData.role}`}>Register Now</Link></p>
                                 </div>
@@ -199,18 +319,33 @@ const Login = () => {
 
             {/* Forgot Password Modal */}
             {showForgotPassword && (
-                <div className="modal" style={{ display: 'block' }} onClick={(e) => { if (e.target.className === 'modal') closeModal(); }}>
-                    <div className="modal-content">
-                        <span className="close-modal" onClick={closeModal}>&times;</span>
-                        <div className="modal-header">
-                            <h2>Reset Your Password</h2>
+                <div className="modal" style={{ display: 'block', position: 'fixed', zIndex: 1000, left: 0, top: 0, width: '100%', height: '100%', overflow: 'auto', backgroundColor: 'rgba(0,0,0,0.4)' }} onClick={(e) => { if (e.target.className === 'modal') closeModal(); }}>
+                    <div className="modal-content" style={{ backgroundColor: '#fefefe', margin: '5% auto', padding: '30px', border: '1px solid #888', width: '90%', maxWidth: '500px', borderRadius: '10px', position: 'relative' }}>
+                        <span className="close-modal" onClick={closeModal} style={{ color: '#aaa', float: 'right', fontSize: '28px', fontWeight: 'bold', cursor: 'pointer', position: 'absolute', right: '20px', top: '10px' }}>&times;</span>
+                        <div className="modal-header" style={{ marginBottom: '20px' }}>
+                            <h2 style={{ color: '#333', marginTop: '10px' }}>
+                                {resetStep === 1 && 'Reset Your Password'}
+                                {resetStep === 2 && 'Verify OTP'}
+                                {resetStep === 3 && 'Set New Password'}
+                            </h2>
                         </div>
                         <div className="modal-body">
-                            {resetStep === 1 ? (
+                            {message && (
+                                <div style={{ padding: '10px', marginBottom: '15px', backgroundColor: '#f8d7da', color: '#721c24', border: '1px solid #f5c6cb', borderRadius: '5px' }}>
+                                    {message}
+                                </div>
+                            )}
+                            {successMessage && (
+                                <div style={{ padding: '10px', marginBottom: '15px', backgroundColor: '#d4edda', color: '#155724', border: '1px solid #c3e6cb', borderRadius: '5px' }}>
+                                    {successMessage}
+                                </div>
+                            )}
+
+                            {resetStep === 1 && (
                                 <div id="reset-step-1">
-                                    <p>Enter your email address below and we'll send you a link to reset your password.</p>
-                                    <div className="form-group">
-                                        <label htmlFor="reset-email">Email Address</label>
+                                    <p style={{ marginBottom: '20px', color: '#666' }}>Enter your email address and we'll send you a 6-digit code to reset your password.</p>
+                                    <div className="form-group" style={{ marginBottom: '20px' }}>
+                                        <label htmlFor="reset-email" style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#333' }}>Email Address</label>
                                         <input 
                                             type="email" 
                                             id="reset-email" 
@@ -218,22 +353,136 @@ const Login = () => {
                                             placeholder="Enter your email"
                                             value={resetEmail}
                                             onChange={(e) => setResetEmail(e.target.value)}
+                                            style={{ width: '100%', padding: '12px', border: '1px solid #ddd', borderRadius: '5px', fontSize: '14px' }}
                                             required 
                                         />
                                     </div>
-                                    <div className="form-actions">
-                                        <button className="hero-btn reset-btn" onClick={handleForgotPassword}>Send Reset Link</button>
-                                        <button className="hero-btn cancel-btn" onClick={closeModal}>Cancel</button>
+                                    <div className="form-actions" style={{ display: 'flex', gap: '10px' }}>
+                                        <button 
+                                            className="hero-btn reset-btn" 
+                                            onClick={handleSendResetOTP}
+                                            disabled={loading}
+                                            style={{ flex: 1, padding: '12px 24px', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold' }}
+                                        >
+                                            {loading ? 'Sending...' : 'Send Reset Code'}
+                                        </button>
+                                        <button 
+                                            className="hero-btn cancel-btn" 
+                                            onClick={closeModal}
+                                            style={{ flex: 1, padding: '12px 24px', backgroundColor: '#777', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold' }}
+                                        >
+                                            Cancel
+                                        </button>
                                     </div>
                                 </div>
-                            ) : (
+                            )}
+
+                            {resetStep === 2 && (
                                 <div id="reset-step-2">
-                                    <div className="success-message">
-                                        <i className="fa fa-check-circle"></i>
-                                        <h3>Email Sent!</h3>
-                                        <p>We've sent a password reset link to your email address. Please check your inbox and follow the instructions to reset your password.</p>
-                                        <p className="note">If you don't receive an email within a few minutes, please check your spam folder.</p>
-                                        <button className="hero-btn ok-btn" onClick={closeModal}>OK</button>
+                                    <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#e7f3ff', borderRadius: '5px', border: '1px solid #b3d9ff' }}>
+                                        <p style={{ margin: '5px 0', color: '#666' }}>We've sent a 6-digit code to:</p>
+                                        <p style={{ margin: '5px 0', fontWeight: 'bold', color: '#333' }}>{resetEmail}</p>
+                                        <p style={{ margin: '5px 0', fontSize: '12px', color: '#999' }}>Please check your inbox (and spam folder)</p>
+                                    </div>
+                                    <div className="form-group" style={{ marginBottom: '20px' }}>
+                                        <label htmlFor="reset-otp" style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#333' }}>Enter OTP:</label>
+                                        <input 
+                                            type="text" 
+                                            id="reset-otp" 
+                                            name="reset-otp" 
+                                            placeholder="Enter 6-digit code"
+                                            value={resetOtp}
+                                            onChange={(e) => setResetOtp(e.target.value)}
+                                            maxLength="6"
+                                            pattern="[0-9]{6}"
+                                            autoFocus
+                                            style={{ width: '100%', padding: '12px', border: '1px solid #ddd', borderRadius: '5px', fontSize: '24px', textAlign: 'center', letterSpacing: '8px' }}
+                                            required 
+                                        />
+                                    </div>
+                                    <div className="form-actions" style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+                                        <button 
+                                            className="hero-btn verify-btn" 
+                                            onClick={handleVerifyResetOTP}
+                                            disabled={loading}
+                                            style={{ flex: 1, padding: '12px 24px', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold' }}
+                                        >
+                                            {loading ? 'Verifying...' : 'Verify Code'}
+                                        </button>
+                                        <button 
+                                            className="hero-btn cancel-btn" 
+                                            onClick={closeModal}
+                                            style={{ flex: 1, padding: '12px 24px', backgroundColor: '#777', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold' }}
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                    <div style={{ textAlign: 'center' }}>
+                                        <button 
+                                            type="button" 
+                                            onClick={handleResendOTP}
+                                            disabled={loading}
+                                            style={{ background: 'none', border: 'none', color: '#007bff', cursor: 'pointer', textDecoration: 'underline', fontSize: '14px' }}
+                                        >
+                                            Resend Code
+                                        </button>
+                                        <span style={{ margin: '0 10px', color: '#999' }}>|</span>
+                                        <button 
+                                            type="button" 
+                                            onClick={() => setResetStep(1)}
+                                            style={{ background: 'none', border: 'none', color: '#007bff', cursor: 'pointer', textDecoration: 'underline', fontSize: '14px' }}
+                                        >
+                                            Change Email
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {resetStep === 3 && (
+                                <div id="reset-step-3">
+                                    <p style={{ marginBottom: '20px', color: '#666' }}>Create a new password for your account.</p>
+                                    <div className="form-group" style={{ marginBottom: '15px' }}>
+                                        <label htmlFor="new-password" style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#333' }}>New Password:</label>
+                                        <input 
+                                            type="password" 
+                                            id="new-password" 
+                                            name="new-password" 
+                                            placeholder="At least 6 characters"
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
+                                            style={{ width: '100%', padding: '12px', border: '1px solid #ddd', borderRadius: '5px', fontSize: '14px' }}
+                                            required 
+                                        />
+                                    </div>
+                                    <div className="form-group" style={{ marginBottom: '20px' }}>
+                                        <label htmlFor="confirm-new-password" style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#333' }}>Confirm Password:</label>
+                                        <input 
+                                            type="password" 
+                                            id="confirm-new-password" 
+                                            name="confirm-new-password" 
+                                            placeholder="Re-enter password"
+                                            value={confirmNewPassword}
+                                            onChange={(e) => setConfirmNewPassword(e.target.value)}
+                                            style={{ width: '100%', padding: '12px', border: '1px solid #ddd', borderRadius: '5px', fontSize: '14px' }}
+                                            required 
+                                        />
+                                    </div>
+                                    <div className="form-actions" style={{ display: 'flex', gap: '10px' }}>
+                                        <button 
+                                            className="hero-btn reset-btn" 
+                                            onClick={handleResetPassword}
+                                            disabled={loading}
+                                            style={{ flex: 1, padding: '12px 24px', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold' }}
+                                        >
+                                            {loading ? 'Updating...' : 'Reset Password'}
+                                        </button>
+                                        <button 
+                                            className="hero-btn cancel-btn" 
+                                            onClick={closeModal}
+                                            style={{ flex: 1, padding: '12px 24px', backgroundColor: '#777', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold' }}
+                                        >
+                                            Cancel
+                                        </button>
                                     </div>
                                 </div>
                             )}
@@ -246,12 +495,6 @@ const Login = () => {
             <section className="footer">
                 <h4>About SportsAmigo</h4>
                 <p>Join the largest sports community and experience the thrill of competition, the joy of teamwork, and the pride of victory.</p>
-                <div className="icons">
-                    <i className="fa fa-facebook"></i>
-                    <i className="fa fa-twitter"></i>
-                    <i className="fa fa-instagram"></i>
-                    <i className="fa fa-linkedin"></i>
-                </div>
                 <p>Made with <i className="fa fa-heart-o"></i> by SportsAmigo Team</p>
             </section>
         </div>

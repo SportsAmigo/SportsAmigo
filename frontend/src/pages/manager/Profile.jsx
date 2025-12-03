@@ -45,9 +45,9 @@ const ManagerProfile = () => {
                 if (!value.trim()) {
                     newErrors.first_name = 'First name is required';
                 } else if (!/^[a-zA-Z\s]+$/.test(value)) {
-                    newErrors.first_name = 'Only letters and spaces allowed';
-                } else if (value.trim().length < 2 || value.length > 50) {
-                    newErrors.first_name = 'Must be 2-50 characters';
+                    newErrors.first_name = 'First name can only contain letters and spaces';
+                } else if (value.length < 2 || value.length > 50) {
+                    newErrors.first_name = 'First name must be between 2 and 50 characters';
                 } else {
                     delete newErrors.first_name;
                 }
@@ -57,27 +57,19 @@ const ManagerProfile = () => {
                 if (!value.trim()) {
                     newErrors.last_name = 'Last name is required';
                 } else if (!/^[a-zA-Z\s]+$/.test(value)) {
-                    newErrors.last_name = 'Only letters and spaces allowed';
-                } else if (value.trim().length < 1 || value.length > 50) {
-                    newErrors.last_name = 'Must be 1-50 characters';
+                    newErrors.last_name = 'Last name can only contain letters and spaces';
+                } else if (value.length < 2 || value.length > 50) {
+                    newErrors.last_name = 'Last name must be between 2 and 50 characters';
                 } else {
                     delete newErrors.last_name;
                 }
                 break;
 
-            case 'email':
-                if (!value.trim()) {
-                    newErrors.email = 'Email is required';
-                } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-                    newErrors.email = 'Invalid email format';
-                } else {
-                    delete newErrors.email;
-                }
-                break;
-
             case 'phone':
-                if (value && !/^[6-9]\d{9}$/.test(value)) {
-                    newErrors.phone = 'Phone must be 10 digits starting with 6-9';
+                if (!value.trim()) {
+                    newErrors.phone = 'Phone number is required';
+                } else if (!/^[6-9]\d{9}$/.test(value)) {
+                    newErrors.phone = 'Phone number must be exactly 10 digits starting with 6, 7, 8, or 9';
                 } else {
                     delete newErrors.phone;
                 }
@@ -90,36 +82,36 @@ const ManagerProfile = () => {
                     delete newErrors.bio;
                 }
                 break;
+
+            default:
+                break;
         }
 
         setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
     };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        
-        // Prevent non-digit input and limit length for phone
-        if (name === 'phone' && value && (!/^\d*$/.test(value) || value.length > 10)) {
-            return;
+
+        // Real-time input filtering to prevent invalid characters
+        if (name === 'first_name' || name === 'last_name') {
+            // Allow only letters and spaces
+            if (!/^[a-zA-Z\s]*$/.test(value)) {
+                return;
+            }
+        }
+
+        if (name === 'phone') {
+            // Allow only digits and max 10 characters
+            if (!/^\d*$/.test(value) || value.length > 10) {
+                return;
+            }
         }
 
         setFormData({
             ...formData,
             [name]: value
         });
-        
-        // Clear error when user starts typing
-        if (errors[name]) {
-            setErrors({
-                ...errors,
-                [name]: undefined
-            });
-        }
-    };
-
-    const handleBlur = (e) => {
-        const { name, value } = e.target;
         validateField(name, value);
     };
 
@@ -151,22 +143,27 @@ const ManagerProfile = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        // Validate all fields
-        let isValid = true;
-        ['first_name', 'last_name', 'email', 'phone', 'bio'].forEach(field => {
-            if (!validateField(field, formData[field])) {
-                isValid = false;
-            }
-        });
+        setMessage({ type: '', text: '' });
 
-        if (!isValid) {
-            setMessage({ type: 'error', text: 'Please fix all validation errors' });
+        // Validate all fields
+        validateField('first_name', formData.first_name);
+        validateField('last_name', formData.last_name);
+        validateField('phone', formData.phone);
+        validateField('bio', formData.bio);
+
+        // Check if there are any errors
+        if (Object.keys(errors).length > 0 || 
+            !formData.first_name.trim() || 
+            !formData.last_name.trim() || 
+            !formData.phone.trim() ||
+            !/^[a-zA-ZÀ-ÖØ-öø-ÿ'\-\s]+$/.test(formData.first_name) ||
+            !/^[a-zA-ZÀ-ÖØ-öø-ÿ'\-\s]+$/.test(formData.last_name) ||
+            !/^[6-9]\d{9}$/.test(formData.phone)) {
+            setMessage({ type: 'error', text: 'Please fix all validation errors before submitting' });
             return;
         }
-        
+
         setLoading(true);
-        setMessage({ type: '', text: '' });
 
         try {
             // Create FormData for file upload
@@ -258,21 +255,6 @@ const ManagerProfile = () => {
                             <h3>{user?.first_name} {user?.last_name}</h3>
                             <p className="user-email">{user?.email}</p>
                             <span className="role-badge">Manager</span>
-                            
-                            <div className="profile-stats">
-                                <div className="stat-item">
-                                    <span className="stat-value">0</span>
-                                    <span className="stat-label">Teams</span>
-                                </div>
-                                <div className="stat-item">
-                                    <span className="stat-value">0</span>
-                                    <span className="stat-label">Events</span>
-                                </div>
-                                <div className="stat-item">
-                                    <span className="stat-value">0</span>
-                                    <span className="stat-label">Wins</span>
-                                </div>
-                            </div>
                         </div>
 
                         <div className="profile-form-card">
@@ -294,12 +276,7 @@ const ManagerProfile = () => {
                                             required
                                             maxLength="50"
                                         />
-                                        {errors.first_name && (
-                                            <span className="error-message">
-                                                <i className="fa fa-exclamation-circle"></i>
-                                                {errors.first_name}
-                                            </span>
-                                        )}
+                                        {errors.first_name && <span className="error-message">{errors.first_name}</span>}
                                     </div>
 
                                     <div className="form-group">
@@ -317,12 +294,7 @@ const ManagerProfile = () => {
                                             required
                                             maxLength="50"
                                         />
-                                        {errors.last_name && (
-                                            <span className="error-message">
-                                                <i className="fa fa-exclamation-circle"></i>
-                                                {errors.last_name}
-                                            </span>
-                                        )}
+                                        {errors.last_name && <span className="error-message">{errors.last_name}</span>}
                                     </div>
                                 </div>
 
@@ -351,7 +323,7 @@ const ManagerProfile = () => {
 
                                     <div className="form-group">
                                         <label htmlFor="phone">
-                                            Phone Number
+                                            Phone Number <span className="required">*</span>
                                         </label>
                                         <input
                                             type="tel"
@@ -360,16 +332,12 @@ const ManagerProfile = () => {
                                             className={`form-input ${errors.phone ? 'error' : ''}`}
                                             value={formData.phone}
                                             onChange={handleChange}
-                                            onBlur={handleBlur}
-                                            placeholder="10-digit Indian number"
+                                            placeholder="9876543210"
                                             maxLength="10"
+                                            required
                                         />
-                                        {errors.phone && (
-                                            <span className="error-message">
-                                                <i className="fa fa-exclamation-circle"></i>
-                                                {errors.phone}
-                                            </span>
-                                        )}
+                                        {errors.phone && <span className="error-message">{errors.phone}</span>}
+                                        <small className="form-hint">10 digits starting with 6, 7, 8, or 9</small>
                                     </div>
                                 </div>
 

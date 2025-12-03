@@ -37,6 +37,27 @@ const eventSchema = new Schema({
     default: 'upcoming',
     enum: ['draft', 'upcoming', 'ongoing', 'completed', 'cancelled']
   },
+  // Schedule finalization tracking
+  schedule_finalized: {
+    type: Boolean,
+    default: false
+  },
+  schedule_finalized_at: {
+    type: Date
+  },
+  schedule_finalized_by: {
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  schedule_version: {
+    type: Number,
+    default: 0
+  },
+  tournament_format: {
+    type: String,
+    enum: ['round-robin', 'knockout', 'league'],
+    default: 'round-robin'
+  },
   created_at: { 
     type: Date, 
     default: Date.now 
@@ -54,7 +75,13 @@ const eventSchema = new Schema({
     status: { 
       type: String, 
       default: 'pending',
-      enum: ['pending', 'confirmed', 'cancelled']
+      enum: ['pending', 'approved', 'confirmed', 'rejected', 'cancelled']
+    },
+    approval_date: {
+      type: Date
+    },
+    rejection_date: {
+      type: Date
     }
   }]
 });

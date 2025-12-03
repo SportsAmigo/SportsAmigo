@@ -48,6 +48,13 @@ const teamSchema = new Schema({
       type: String, 
       default: 'active',
       enum: ['active', 'inactive']
+    },
+    stats: {
+      matches_played: { type: Number, default: 0 },
+      matches_won: { type: Number, default: 0 },
+      matches_lost: { type: Number, default: 0 },
+      matches_drawn: { type: Number, default: 0 },
+      last_updated: Date
     }
   }],
   // Join requests as a subdocument array

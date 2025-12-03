@@ -72,18 +72,18 @@ const PlayerLayout = ({ children }) => {
                             My Teams
                         </Link>
                         <Link 
-                            to="/player/events" 
-                            className={`sidebar-nav-item ${isActive('/player/events') ? 'active' : ''}`}
-                        >
-                            <i className="fa fa-calendar-alt"></i>
-                            Browse Events
-                        </Link>
-                        <Link 
                             to="/player/my-events" 
                             className={`sidebar-nav-item ${isActive('/player/my-events') ? 'active' : ''}`}
                         >
                             <i className="fa fa-calendar-check"></i>
                             My Events
+                        </Link>
+                        <Link 
+                            to="/player/my-matches" 
+                            className={`sidebar-nav-item ${isActive('/player/my-matches') ? 'active' : ''}`}
+                        >
+                            <i className="fa fa-futbol"></i>
+                            My Matches
                         </Link>
                         <Link 
                             to="/player/profile" 

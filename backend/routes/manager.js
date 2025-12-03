@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { Team, User, Event } = require('../models');
+const TeamSchema = require('../models/schemas/teamSchema');
 const { teamController, eventController, userController } = require('../controllers');
 const multer = require('multer');
 const path = require('path');
@@ -188,7 +189,12 @@ router.get('/dashboard', async (req, res) => {
         let registeredEvents = [];
         try {
             const Event = require('../models/event');
-            registeredEvents = await Event.getManagerEvents(req.session.user._id);
+            const allRegistrations = await Event.getManagerEvents(req.session.user._id);
+            // Filter to only include approved or confirmed registrations
+            registeredEvents = allRegistrations.filter(reg => 
+                reg.registration_status === 'approved' || 
+                reg.registration_status === 'confirmed'
+            );
         } catch (error) {
             console.error('Error fetching registered events:', error);
         }
@@ -491,6 +497,17 @@ router.post('/create-team', async (req, res) => {
             validationErrors.max_members = 'Max members must be a positive number';
         }
         
+        // Check if manager already has a team with this sport type
+        // Commented out to allow multiple teams of the same sport type
+        // const existingTeam = await TeamSchema.find({
+        //     manager_id: req.session.user._id,
+        //     sport_type: sport_type
+        // });
+        
+        // if (existingTeam && existingTeam.length > 0) {
+        //     validationErrors.sport_type = `You already have a ${sport_type} team. Each manager can only create one team per sport type.`;
+        // }
+        
         // If validation fails, return appropriate response
         if (Object.keys(validationErrors).length > 0) {
             if (isAjax) {
@@ -564,6 +581,71 @@ router.post('/create-team', async (req, res) => {
         
         req.session.messages = { error: 'An error occurred while creating the team' };
         res.redirect('/manager/create-team');
+    }
+});
+
+// Update team (PUT)
+router.put('/team/:id', async (req, res) => {
+    try {
+        const teamId = req.params.id;
+        const { name, sport_type, description, max_members } = req.body;
+        const managerId = req.session.user._id;
+        
+        // Get the team to check if current user is the manager
+        const team = await Team.getTeamById(teamId);
+        
+        if (!team) {
+            return res.status(404).json({
+                success: false,
+                message: 'Team not found'
+            });
+        }
+        
+        // Check if the current user is the team manager
+        if (team.manager_id.toString() !== managerId.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'You do not have permission to update this team'
+            });
+        }
+        
+        // Validation
+        if (!name || !sport_type) {
+            return res.status(400).json({
+                success: false,
+                message: 'Team name and sport type are required'
+            });
+        }
+        
+        if (max_members && (isNaN(max_members) || parseInt(max_members) < 5 || parseInt(max_members) > 50)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Max members must be between 5 and 50'
+            });
+        }
+        
+        // Update team data
+        const updatedData = {
+            name: name.trim(),
+            sport_type: sport_type.trim(),
+            description: description ? description.trim() : '',
+            max_members: max_members ? parseInt(max_members, 10) : team.max_members
+        };
+        
+        // Update the team
+        const updatedTeam = await Team.updateTeam(teamId, updatedData);
+        
+        return res.json({
+            success: true,
+            message: 'Team updated successfully',
+            team: updatedTeam
+        });
+    } catch (err) {
+        console.error('Error updating team:', err);
+        return res.status(500).json({
+            success: false,
+            message: err.message || 'Error updating team'
+        });
     }
 });
 
@@ -1220,6 +1302,20 @@ router.post('/event/:id/register', async (req, res) => {
         
         console.log(`Verified team ${teamId} belongs to manager ${managerId}`);
         
+        // Check if THIS SPECIFIC TEAM is already registered (allow multiple teams per manager)
+        if (event.team_registrations && event.team_registrations.length > 0) {
+            const alreadyRegistered = event.team_registrations.some(reg => 
+                reg.team_id.toString() === teamId.toString()
+            );
+            
+            if (alreadyRegistered) {
+                return res.status(400).json({
+                    success: false,
+                    message: `This team is already registered for this event.`
+                });
+            }
+        }
+        
         // Register the team for the event
         const registerData = {
             team_id: teamId,
@@ -1317,12 +1413,24 @@ router.get('/my-events', async (req, res) => {
         // Filter events that have registrations for this manager's teams
         const registeredEvents = [];
         
+        console.log('Manager team IDs:', teamIds);
+        
         for (const event of allEvents) {
             if (!event.team_registrations) continue;
+            
+            // Debug logging
+            if (event.team_registrations.length > 0) {
+                console.log(`Event "${event.title}" has ${event.team_registrations.length} registrations:`);
+                event.team_registrations.forEach(reg => {
+                    console.log(`  - Team ID: ${reg.team_id}, Status: ${reg.status}`);
+                });
+            }
             
             const teamRegistrations = event.team_registrations.filter(reg => 
                 teamIds.includes(reg.team_id.toString())
             );
+            
+            console.log(`Found ${teamRegistrations.length} matching registrations for manager's teams`);
             
             if (teamRegistrations.length > 0) {
                 // For each team registered to this event, add it to our list
@@ -1334,7 +1442,11 @@ router.get('/my-events', async (req, res) => {
                         event_id: event._id,
                         event_name: event.title,
                         event_date: new Date(event.event_date).toLocaleDateString(),
+                        start_date: event.event_date,
                         event_location: event.location,
+                        location: event.location,
+                        sport_type: event.sport_type,
+                        sport: event.sport_type,
                         event_status: event.status,
                         team_id: reg.team_id,
                         team_name: team.name,
@@ -1360,6 +1472,7 @@ router.get('/my-events', async (req, res) => {
         
         res.json({
             success: true,
+            events: registeredEvents, // Combined list for compatibility
             upcomingEvents,
             pastEvents,
             message: req.session.message || null
@@ -1427,19 +1540,8 @@ router.get('/event/:id/details', async (req, res) => {
         // Get teams managed by this manager for registration
         const teams = await Team.getTeamsByManager(req.session.user._id);
         
-        // Check if any teams are already registered for this event
-        let isRegistered = false;
-        
-        if (teams.length > 0 && event.team_registrations && event.team_registrations.length > 0) {
-            // Check if any of the manager's teams are in the event's team_registrations
-            const teamIds = teams.map(team => team._id.toString());
-            isRegistered = event.team_registrations.some(reg => 
-                teamIds.includes(reg.team_id.toString())
-            );
-        }
-        
-        // Add registration status to the formatted event
-        formattedEvent.isRegistered = isRegistered;
+        // Add team registration details (per-team status, not global)
+        formattedEvent.teamRegistrations = event.team_registrations || [];
     
         res.json({
             success: true,
@@ -2228,6 +2330,805 @@ router.post('/team/:id/remove-member', async (req, res) => {
             error: `Error removing team member: ${err.message}`
         };
         return res.redirect(`/manager/team/${req.params.id}/manage`);
+    }
+});
+
+// ==================== MATCH MANAGEMENT ROUTES ====================
+
+/**
+ * Record a match result
+ * POST /manager/team/:teamId/match/record
+ */
+router.post('/team/:teamId/match/record', async (req, res) => {
+    try {
+        const { teamId } = req.params;
+        const managerId = req.session.user._id;
+        const { team_a, team_b, team_a_name, team_b_name, score_a, score_b, match_date, match_type, event_id, venue, notes } = req.body;
+        
+        // Verify manager owns the team
+        const team = await Team.getTeamById(teamId);
+        if (team.manager_id.toString() !== managerId.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'You are not authorized to record matches for this team'
+            });
+        }
+        
+        // Build match data
+        const Match = require('../models/match');
+        const matchData = {
+            team_a,
+            team_b,
+            team_a_name,
+            team_b_name,
+            score_a: parseInt(score_a),
+            score_b: parseInt(score_b),
+            match_date: new Date(match_date),
+            match_type: match_type || 'friendly',
+            event_id: event_id || null,
+            venue: venue || '',
+            notes: notes || '',
+            recorded_by: managerId,
+            status: 'pending'
+        };
+        
+        // Auto-verify friendly matches
+        if (match_type === 'friendly') {
+            matchData.status = 'verified';
+            matchData.verified_by = managerId;
+            matchData.verified_at = new Date();
+        }
+        
+        const match = await Match.createMatch(matchData);
+        
+        // If friendly match (auto-verified), update stats immediately
+        if (matchData.status === 'verified') {
+            await Match.updateTeamStats(match);
+        }
+        
+        const message = match_type === 'friendly' 
+            ? 'Match recorded successfully' 
+            : 'Match submitted for organizer verification';
+        
+        res.json({
+            success: true,
+            message,
+            match
+        });
+    } catch (err) {
+        console.error('Error recording match:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Error recording match',
+            error: err.message
+        });
+    }
+});
+
+/**
+ * Get all matches for a team
+ * GET /manager/team/:teamId/matches
+ */
+router.get('/team/:teamId/matches', async (req, res) => {
+    try {
+        const { teamId } = req.params;
+        const managerId = req.session.user._id;
+        
+        // Verify manager owns the team
+        const team = await Team.getTeamById(teamId);
+        if (team.manager_id.toString() !== managerId.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'You are not authorized to view matches for this team'
+            });
+        }
+        
+        const Match = require('../models/match');
+        const matches = await Match.getMatchesByTeam(teamId);
+        
+        res.json({
+            success: true,
+            matches
+        });
+    } catch (err) {
+        console.error('Error fetching team matches:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching team matches',
+            error: err.message
+        });
+    }
+});
+
+/**
+ * Update a match
+ * PUT /manager/team/:teamId/match/:matchId
+ */
+router.put('/team/:teamId/match/:matchId', async (req, res) => {
+    try {
+        const { teamId, matchId } = req.params;
+        const managerId = req.session.user._id;
+        const { score_a, score_b } = req.body;
+        
+        // Verify manager owns the team
+        const team = await Team.getTeamById(teamId);
+        if (team.manager_id.toString() !== managerId.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'You are not authorized to update matches for this team'
+            });
+        }
+        
+        const Match = require('../models/match');
+        const match = await Match.getMatchById(matchId);
+        
+        if (!match) {
+            return res.status(404).json({
+                success: false,
+                message: 'Match not found'
+            });
+        }
+        
+        // Can only edit pending or disputed matches
+        if (match.status !== 'pending' && match.status !== 'disputed') {
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot edit verified matches'
+            });
+        }
+        
+        const updated = await Match.updateMatchResult(matchId, parseInt(score_a), parseInt(score_b));
+        
+        res.json({
+            success: true,
+            message: 'Match updated successfully',
+            match: updated
+        });
+    } catch (err) {
+        console.error('Error updating match:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Error updating match',
+            error: err.message
+        });
+    }
+});
+
+/**
+ * Delete a match
+ * DELETE /manager/team/:teamId/match/:matchId
+ */
+router.delete('/team/:teamId/match/:matchId', async (req, res) => {
+    try {
+        const { teamId, matchId } = req.params;
+        const managerId = req.session.user._id;
+        
+        // Verify manager owns the team
+        const team = await Team.getTeamById(teamId);
+        if (team.manager_id.toString() !== managerId.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'You are not authorized to delete matches for this team'
+            });
+        }
+        
+        const MatchModel = require('../models/schemas/matchSchema');
+        const match = await MatchModel.findById(matchId);
+        
+        if (!match) {
+            return res.status(404).json({
+                success: false,
+                message: 'Match not found'
+            });
+        }
+        
+        // Can only delete pending matches
+        if (match.status !== 'pending') {
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot delete verified matches'
+            });
+        }
+        
+        await MatchModel.findByIdAndDelete(matchId);
+        
+        res.json({
+            success: true,
+            message: 'Match deleted successfully'
+        });
+    } catch (err) {
+        console.error('Error deleting match:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Error deleting match',
+            error: err.message
+        });
+    }
+});
+
+/**
+ * Get team analytics
+ * GET /manager/team/:teamId/analytics
+ */
+router.get('/team/:teamId/analytics', async (req, res) => {
+    try {
+        const { teamId } = req.params;
+        const managerId = req.session.user._id;
+        
+        // Verify manager owns the team
+        const team = await Team.getTeamById(teamId);
+        if (team.manager_id.toString() !== managerId.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'You are not authorized to view analytics for this team'
+            });
+        }
+        
+        const Match = require('../models/match');
+        const matches = await Match.getMatchesByTeam(teamId);
+        
+        const total_matches = matches.length;
+        const wins = team.wins || 0;
+        const losses = team.losses || 0;
+        const draws = team.draws || 0;
+        const win_rate = total_matches > 0 ? ((wins / total_matches) * 100).toFixed(1) : 0;
+        
+        // Calculate recent form (last 5 matches)
+        const recent_form = [];
+        const recentMatches = matches.slice(0, 5);
+        
+        recentMatches.forEach(match => {
+            const isTeamA = match.team_a._id.toString() === teamId.toString();
+            let result;
+            
+            if (isTeamA) {
+                if (match.score_a > match.score_b) result = 'W';
+                else if (match.score_a < match.score_b) result = 'L';
+                else result = 'D';
+            } else {
+                if (match.score_b > match.score_a) result = 'W';
+                else if (match.score_b < match.score_a) result = 'L';
+                else result = 'D';
+            }
+            
+            recent_form.push(result);
+        });
+        
+        const analytics = {
+            total_matches,
+            wins,
+            losses,
+            draws,
+            win_rate,
+            recent_form
+        };
+        
+        res.json({
+            success: true,
+            analytics,
+            team: {
+                id: team._id,
+                name: team.name,
+                sport_type: team.sport_type
+            }
+        });
+    } catch (err) {
+        console.error('Error fetching team analytics:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching team analytics',
+            error: err.message
+        });
+    }
+});
+
+/**
+ * Get scheduled matches for a team
+ * GET /manager/team/:teamId/scheduled-matches
+ */
+router.get('/team/:teamId/scheduled-matches', async (req, res) => {
+    try {
+        const { teamId } = req.params;
+        const managerId = req.session.user._id;
+        
+        // Verify manager owns the team
+        const Team = require('../models/team');
+        const team = await Team.getTeamById(teamId);
+        
+        if (!team) {
+            return res.status(404).json({
+                success: false,
+                message: 'Team not found'
+            });
+        }
+        
+        if (team.manager_id.toString() !== managerId.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'You are not authorized to view matches for this team'
+            });
+        }
+        
+        const Match = require('../models/match');
+        const mongoose = require('mongoose');
+        
+        // Find all scheduled matches for this team
+        const matches = await Match.find({
+            $or: [
+                { team_a: mongoose.Types.ObjectId(teamId) },
+                { team_b: mongoose.Types.ObjectId(teamId) }
+            ],
+            status: 'scheduled'
+        })
+        .populate('team_a', 'name')
+        .populate('team_b', 'name')
+        .populate('event_id', 'title')
+        .sort({ match_date: 1 })
+        .exec();
+        
+        res.json({
+            success: true,
+            matches
+        });
+    } catch (err) {
+        console.error('Error fetching scheduled matches:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching scheduled matches',
+            error: err.message
+        });
+    }
+});
+
+/**
+ * Record match result
+ * POST /manager/match/:matchId/record-result
+ */
+router.post('/match/:matchId/record-result', async (req, res) => {
+    try {
+        const { matchId } = req.params;
+        const { score_a, score_b, notes } = req.body;
+        const managerId = req.session.user._id;
+        
+        const Match = require('../models/match');
+        const match = await Match.findById(matchId)
+            .populate('team_a', 'manager_id')
+            .populate('team_b', 'manager_id')
+            .exec();
+        
+        if (!match) {
+            return res.status(404).json({
+                success: false,
+                message: 'Match not found'
+            });
+        }
+        
+        // Verify manager owns one of the teams
+        const isTeamAManager = match.team_a.manager_id.toString() === managerId.toString();
+        const isTeamBManager = match.team_b.manager_id.toString() === managerId.toString();
+        
+        if (!isTeamAManager && !isTeamBManager) {
+            return res.status(403).json({
+                success: false,
+                message: 'You are not authorized to record results for this match'
+            });
+        }
+        
+        // Validate scores
+        if (typeof score_a !== 'number' || typeof score_b !== 'number' ||
+            score_a < 0 || score_b < 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid score values'
+            });
+        }
+        
+        // Update match
+        match.score_a = score_a;
+        match.score_b = score_b;
+        match.status = 'pending'; // Pending organizer verification
+        match.recorded_by = managerId;
+        match.notes = notes || '';
+        
+        // Determine winner
+        if (score_a > score_b) {
+            match.winner = 'team_a';
+        } else if (score_b > score_a) {
+            match.winner = 'team_b';
+        } else {
+            match.winner = 'draw';
+        }
+        
+        await match.save();
+        
+        res.json({
+            success: true,
+            message: 'Match result recorded successfully. Awaiting organizer verification.',
+            match
+        });
+    } catch (err) {
+        console.error('Error recording match result:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Error recording match result',
+            error: err.message
+        });
+    }
+});
+
+/**
+ * Get matches pending verification for manager's teams
+ * GET /manager/pending-matches
+ */
+router.get('/pending-matches', async (req, res) => {
+    try {
+        const managerId = req.session.user._id;
+        
+        // Get manager's teams
+        const Team = require('../models/team');
+        const teams = await Team.getTeamsByManager(managerId);
+        const teamIds = teams.map(team => team._id);
+        
+        const Match = require('../models/match');
+        const mongoose = require('mongoose');
+        
+        // Find all pending/disputed matches for manager's teams
+        const matches = await Match.find({
+            $or: [
+                { team_a: { $in: teamIds } },
+                { team_b: { $in: teamIds } }
+            ],
+            status: { $in: ['pending', 'disputed'] }
+        })
+        .populate('team_a', 'name')
+        .populate('team_b', 'name')
+        .populate('event_id', 'title')
+        .populate('verified_by', 'first_name last_name')
+        .sort({ match_date: -1 })
+        .exec();
+        
+        res.json({
+            success: true,
+            matches
+        });
+    } catch (err) {
+        console.error('Error fetching pending matches:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching pending matches',
+            error: err.message
+        });
+    }
+});
+
+// ============================================
+// MANAGER MATCH ROUTES
+// ============================================
+
+// Get all matches for a specific team
+router.get('/team/:teamId/matches', async (req, res) => {
+    try {
+        const { teamId } = req.params;
+        const Match = require('../models/match');
+        const MatchSchema = require('../models/schemas/matchSchema');
+        
+        // Verify manager owns this team
+        const team = await Team.getTeamById(teamId);
+        if (!team) {
+            return res.status(404).json({
+                success: false,
+                message: 'Team not found'
+            });
+        }
+        
+        if (team.manager_id.toString() !== req.session.user._id.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'Not authorized to view this team\'s matches'
+            });
+        }
+        
+        // Get all matches
+        const matches = await MatchSchema.find({
+            $or: [
+                { team_a: teamId },
+                { team_b: teamId }
+            ]
+        })
+        .populate('team_a', 'name')
+        .populate('team_b', 'name')
+        .populate('event_id', 'title location')
+        .sort({ match_date: -1 })
+        .lean();
+        
+        res.json({
+            success: true,
+            matches: matches,
+            team: team
+        });
+        
+    } catch (error) {
+        console.error('Error fetching team matches:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching matches'
+        });
+    }
+});
+
+// Record a friendly match result
+router.post('/team/:teamId/match/record', async (req, res) => {
+    try {
+        const { teamId } = req.params;
+        const {
+            opponent_team_id,
+            your_score,
+            opponent_score,
+            match_date,
+            match_type,
+            venue,
+            notes
+        } = req.body;
+        
+        const Match = require('../models/match');
+        
+        // Verify manager owns team
+        const team = await Team.getTeamById(teamId);
+        if (!team || team.manager_id.toString() !== req.session.user._id.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'Not authorized'
+            });
+        }
+        
+        // Get opponent team
+        const opponentTeam = await Team.getTeamById(opponent_team_id);
+        if (!opponentTeam) {
+            return res.status(404).json({
+                success: false,
+                message: 'Opponent team not found'
+            });
+        }
+        
+        // Determine winner
+        let winner = null;
+        if (parseInt(your_score) > parseInt(opponent_score)) {
+            winner = 'team_a';
+        } else if (parseInt(opponent_score) > parseInt(your_score)) {
+            winner = 'team_b';
+        } else {
+            winner = 'draw';
+        }
+        
+        // Create match
+        const matchData = {
+            team_a: teamId,
+            team_b: opponent_team_id,
+            team_a_name: team.name,
+            team_b_name: opponentTeam.name,
+            score_a: parseInt(your_score),
+            score_b: parseInt(opponent_score),
+            match_date: new Date(match_date),
+            match_type: match_type || 'friendly',
+            status: 'pending', // Needs verification
+            winner: winner,
+            venue: venue,
+            notes: notes,
+            recorded_by: req.session.user._id,
+            event_id: null // Friendly matches have no event
+        };
+        
+        const match = await Match.createMatch(matchData);
+        
+        res.json({
+            success: true,
+            message: 'Match recorded successfully. Awaiting verification.',
+            match: match
+        });
+        
+    } catch (error) {
+        console.error('Error recording match:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error recording match: ' + error.message
+        });
+    }
+});
+
+// Edit match result (only if pending or disputed)
+router.put('/team/:teamId/match/:matchId', async (req, res) => {
+    try {
+        const { teamId, matchId } = req.params;
+        const { your_score, opponent_score, match_date, venue, notes } = req.body;
+        
+        const Match = require('../models/match');
+        const MatchSchema = require('../models/schemas/matchSchema');
+        
+        // Verify ownership
+        const team = await Team.getTeamById(teamId);
+        if (!team || team.manager_id.toString() !== req.session.user._id.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'Not authorized'
+            });
+        }
+        
+        // Get match
+        const match = await MatchSchema.findById(matchId);
+        if (!match) {
+            return res.status(404).json({
+                success: false,
+                message: 'Match not found'
+            });
+        }
+        
+        // Check if editable
+        if (!['pending', 'disputed'].includes(match.status)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot edit verified or completed matches'
+            });
+        }
+        
+        // Verify this team is in the match
+        if (!match.team_a.equals(teamId) && !match.team_b.equals(teamId)) {
+            return res.status(403).json({
+                success: false,
+                message: 'This team is not in this match'
+            });
+        }
+        
+        // Update scores (determine which team)
+        const isTeamA = match.team_a.equals(teamId);
+        match.score_a = isTeamA ? parseInt(your_score) : parseInt(opponent_score);
+        match.score_b = isTeamA ? parseInt(opponent_score) : parseInt(your_score);
+        match.match_date = match_date ? new Date(match_date) : match.match_date;
+        match.venue = venue || match.venue;
+        match.notes = notes || match.notes;
+        
+        // Recalculate winner
+        if (match.score_a > match.score_b) {
+            match.winner = 'team_a';
+        } else if (match.score_b > match.score_a) {
+            match.winner = 'team_b';
+        } else {
+            match.winner = 'draw';
+        }
+        
+        match.updated_at = Date.now();
+        await match.save();
+        
+        res.json({
+            success: true,
+            message: 'Match updated successfully',
+            match: match
+        });
+        
+    } catch (error) {
+        console.error('Error updating match:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error updating match'
+        });
+    }
+});
+
+// Delete match (only if pending)
+router.delete('/team/:teamId/match/:matchId', async (req, res) => {
+    try {
+        const { teamId, matchId } = req.params;
+        const MatchSchema = require('../models/schemas/matchSchema');
+        
+        // Verify ownership
+        const team = await Team.getTeamById(teamId);
+        if (!team || team.manager_id.toString() !== req.session.user._id.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'Not authorized'
+            });
+        }
+        
+        const match = await MatchSchema.findById(matchId);
+        if (!match) {
+            return res.status(404).json({
+                success: false,
+                message: 'Match not found'
+            });
+        }
+        
+        if (match.status !== 'pending') {
+            return res.status(400).json({
+                success: false,
+                message: 'Can only delete pending matches'
+            });
+        }
+        
+        await MatchSchema.findByIdAndDelete(matchId);
+        
+        res.json({
+            success: true,
+            message: 'Match deleted successfully'
+        });
+        
+    } catch (error) {
+        console.error('Error deleting match:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error deleting match'
+        });
+    }
+});
+
+// Get team analytics
+router.get('/team/:teamId/analytics', async (req, res) => {
+    try {
+        const { teamId } = req.params;
+        const Match = require('../models/match');
+        const MatchSchema = require('../models/schemas/matchSchema');
+        
+        // Verify ownership
+        const team = await Team.getTeamById(teamId);
+        if (!team || team.manager_id.toString() !== req.session.user._id.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'Not authorized'
+            });
+        }
+        
+        // Get completed matches
+        const matches = await MatchSchema.find({
+            $or: [{ team_a: teamId }, { team_b: teamId }],
+            status: { $in: ['completed', 'verified'] }
+        }).lean();
+        
+        let stats = {
+            total_matches: matches.length,
+            wins: 0,
+            losses: 0,
+            draws: 0,
+            goals_scored: 0,
+            goals_conceded: 0,
+            points: 0
+        };
+        
+        matches.forEach(match => {
+            const isTeamA = match.team_a.toString() === teamId;
+            const yourScore = isTeamA ? match.score_a : match.score_b;
+            const oppScore = isTeamA ? match.score_b : match.score_a;
+            
+            stats.goals_scored += yourScore;
+            stats.goals_conceded += oppScore;
+            
+            if (match.winner === 'draw') {
+                stats.draws++;
+                stats.points += 1;
+            } else if (
+                (isTeamA && match.winner === 'team_a') ||
+                (!isTeamA && match.winner === 'team_b')
+            ) {
+                stats.wins++;
+                stats.points += 3;
+            } else {
+                stats.losses++;
+            }
+        });
+        
+        stats.goal_difference = stats.goals_scored - stats.goals_conceded;
+        stats.win_rate = stats.total_matches > 0 
+            ? ((stats.wins / stats.total_matches) * 100).toFixed(1)
+            : 0;
+        
+        res.json({
+            success: true,
+            analytics: stats
+        });
+        
+    } catch (error) {
+        console.error('Error fetching analytics:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching analytics'
+        });
     }
 });
 

@@ -74,6 +74,79 @@ export const authService = {
             throw error.response?.data || { success: false, message: 'Failed to get user data' };
         }
     },
+
+    /**
+     * Send OTP for email verification during signup
+     * @param {Object} data - { email, first_name, last_name, role }
+     * @returns {Promise}
+     */
+    sendOTP: async (data) => {
+        try {
+            const response = await api.post('/auth/send-otp', data);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || { success: false, message: 'Failed to send OTP' };
+        }
+    },
+
+    /**
+     * Verify OTP and complete signup
+     * @param {Object} data - { email, otp, password, first_name, last_name, phone, role, ... }
+     * @returns {Promise}
+     */
+    verifyOTP: async (data) => {
+        try {
+            const response = await api.post('/auth/verify-otp', data);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || { success: false, message: 'Failed to verify OTP' };
+        }
+    },
+
+    /**
+     * Request password reset OTP
+     * @param {string} email 
+     * @returns {Promise}
+     */
+    forgotPassword: async (email) => {
+        try {
+            const response = await api.post('/auth/forgot-password', { email });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || { success: false, message: 'Failed to send reset code' };
+        }
+    },
+
+    /**
+     * Verify password reset OTP
+     * @param {string} email 
+     * @param {string} otp 
+     * @returns {Promise}
+     */
+    verifyResetOTP: async (email, otp) => {
+        try {
+            const response = await api.post('/auth/verify-reset-otp', { email, otp });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || { success: false, message: 'Failed to verify reset code' };
+        }
+    },
+
+    /**
+     * Reset password with verified OTP
+     * @param {string} email 
+     * @param {string} otp 
+     * @param {string} newPassword 
+     * @returns {Promise}
+     */
+    resetPassword: async (email, otp, newPassword) => {
+        try {
+            const response = await api.post('/auth/reset-password', { email, otp, newPassword });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || { success: false, message: 'Failed to reset password' };
+        }
+    },
 };
 
 export default authService;

@@ -229,6 +229,8 @@ router.post('/create-event', async (req, res) => {
 router.get('/event/:id', async (req, res) => {
     try {
         const Event = require('../models/event');
+        const TeamSchema = require('../models/schemas/teamSchema');
+        
         const event = await Event.getEventById(req.params.id);
         
         if (!event) {
@@ -241,6 +243,65 @@ router.get('/event/:id', async (req, res) => {
                 success: false, 
                 message: 'You do not have permission to view this event' 
             });
+        }
+
+        // Populate team_id in team_registrations
+        let teamRegistrations = [];
+        if (event.team_registrations && event.team_registrations.length > 0) {
+            const UserSchema = require('../models/schemas/userSchema');
+            teamRegistrations = await Promise.all(
+                event.team_registrations.map(async (reg) => {
+                    try {
+                        const team = await TeamSchema.findById(reg.team_id);
+                        if (!team) {
+                            return {
+                                team_id: reg.team_id,
+                                team_name: 'Unknown Team',
+                                manager_name: 'Unknown Manager',
+                                status: reg.status,
+                                registration_date: reg.registered_at,
+                                players: []
+                            };
+                        }
+
+                        // Get manager details
+                        const manager = await UserSchema.findById(team.manager_id)
+                            .select('first_name last_name')
+                            .exec();
+                        
+                        // Get player details from members
+                        let players = [];
+                        if (team.members && team.members.length > 0) {
+                            const playerIds = team.members.map(m => m.player_id);
+                            const playerUsers = await UserSchema.find({ _id: { $in: playerIds } })
+                                .select('first_name last_name')
+                                .exec();
+                            players = playerUsers.map(p => ({
+                                name: `${p.first_name} ${p.last_name}`
+                            }));
+                        }
+
+                        return {
+                            team_id: team._id,
+                            team_name: team.name || 'Unknown Team',
+                            manager_name: manager ? `${manager.first_name} ${manager.last_name}` : 'Unknown Manager',
+                            status: reg.status,
+                            registration_date: reg.registered_at,
+                            players: players
+                        };
+                    } catch (err) {
+                        console.error('Error populating team:', err);
+                        return {
+                            team_id: reg.team_id,
+                            team_name: 'Unknown Team',
+                            manager_name: 'Unknown Manager',
+                            status: reg.status,
+                            registration_date: reg.registered_at,
+                            players: []
+                        };
+                    }
+                })
+            );
         }
         
         const formattedEvent = {
@@ -256,8 +317,8 @@ router.get('/event/:id', async (req, res) => {
             entry_fee: event.entry_fee,
             registration_deadline: event.registration_deadline,
             status: event.status,
-            registered_teams: event.team_registrations?.length || 0,
-            team_registrations: event.team_registrations || []
+            registered_teams: teamRegistrations.length,
+            team_registrations: teamRegistrations
         };
         
         res.json({ success: true, event: formattedEvent });
@@ -689,6 +750,192 @@ router.put('/event/:eventId/reject-team/:teamId', isOrganizerAPI, async (req, re
             success: false, 
             message: 'Error rejecting team registration',
             error: error.message 
+        });
+    }
+});
+
+// POST /api/organizer/event/:eventId/schedule-matches - Schedule matches for an event
+router.post('/event/:eventId/schedule-matches', async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const { matches } = req.body;
+        const Match = require('../models/match');
+        const Event = require('../models/event');
+
+        console.log('📅 Scheduling matches for event:', eventId);
+        console.log('📊 Total matches to create:', matches?.length);
+
+        // Verify event exists and organizer owns it
+        const event = await Event.getEventById(eventId);
+        
+        if (!event) {
+            return res.status(404).json({
+                success: false,
+                message: 'Event not found'
+            });
+        }
+
+        if (event.organizer_id.toString() !== req.session.user._id.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'Not authorized to schedule matches for this event'
+            });
+        }
+
+        // Validate matches array
+        if (!matches || !Array.isArray(matches) || matches.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Matches array is required and cannot be empty'
+            });
+        }
+
+        const createdMatches = [];
+        const errors = [];
+
+        // Create each match
+        for (let i = 0; i < matches.length; i++) {
+            const matchData = matches[i];
+            
+            try {
+                // Validate required fields
+                if (!matchData.team_a || !matchData.team_b) {
+                    errors.push(`Match ${matchData.match_number}: Missing teams`);
+                    continue;
+                }
+
+                if (!matchData.match_date) {
+                    errors.push(`Match ${matchData.match_number}: Missing date`);
+                    continue;
+                }
+
+                if (matchData.team_a === matchData.team_b) {
+                    errors.push(`Match ${matchData.match_number}: Teams must be different`);
+                    continue;
+                }
+
+                // Create match in database
+                const match = await Match.createMatch({
+                    event_id: eventId,
+                    team_a: matchData.team_a,
+                    team_b: matchData.team_b,
+                    team_a_name: matchData.team_a_name,
+                    team_b_name: matchData.team_b_name,
+                    match_date: new Date(matchData.match_date),
+                    venue: matchData.venue || event.location || '',
+                    round: matchData.round || 'Round 1',
+                    match_number: matchData.match_number || (i + 1),
+                    status: 'scheduled',
+                    scheduled_by: req.session.user._id,
+                    scheduled_at: new Date()
+                });
+
+                createdMatches.push(match);
+                console.log(`✅ Created match ${match.match_number}`);
+
+            } catch (error) {
+                console.error(`❌ Error creating match ${matchData.match_number}:`, error);
+                errors.push(`Match ${matchData.match_number}: ${error.message}`);
+            }
+        }
+
+        // Return response
+        if (createdMatches.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Failed to create any matches',
+                errors: errors
+            });
+        }
+
+        console.log(`✅ Successfully created ${createdMatches.length} matches`);
+
+        res.status(201).json({
+            success: true,
+            message: `Successfully scheduled ${createdMatches.length} out of ${matches.length} matches`,
+            matchesCreated: createdMatches.length,
+            totalRequested: matches.length,
+            matches: createdMatches,
+            errors: errors.length > 0 ? errors : undefined
+        });
+
+    } catch (error) {
+        console.error('❌ Schedule matches error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to schedule matches',
+            error: error.message
+        });
+    }
+});
+
+// POST /api/organizer/event/:eventId/finalize-schedule - Finalize the schedule (lock it)
+router.post('/event/:eventId/finalize-schedule', async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const Event = require('../models/event');
+        const Match = require('../models/schemas/matchSchema');
+
+        console.log('🔒 Finalizing schedule for event:', eventId);
+
+        // Get event
+        const event = await Event.getEventById(eventId);
+        
+        if (!event) {
+            return res.status(404).json({
+                success: false,
+                message: 'Event not found'
+            });
+        }
+
+        // Check authorization
+        if (event.organizer_id.toString() !== req.session.user._id.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'Not authorized to finalize this event schedule'
+            });
+        }
+
+        // Check if already finalized
+        if (event.schedule_finalized) {
+            return res.status(400).json({
+                success: false,
+                message: 'Schedule is already finalized'
+            });
+        }
+
+        // Check if matches exist
+        const matchCount = await Match.countDocuments({ event_id: eventId });
+        
+        if (matchCount === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot finalize schedule - no matches have been created yet'
+            });
+        }
+
+        // Update event
+        await Event.findByIdAndUpdate(eventId, {
+            schedule_finalized: true,
+            schedule_finalized_at: new Date(),
+            schedule_finalized_by: req.session.user._id,
+            $inc: { schedule_version: 1 }
+        });
+
+        console.log('✅ Schedule finalized successfully');
+
+        res.json({
+            success: true,
+            message: 'Schedule finalized successfully. Matches are now locked.',
+            matchCount: matchCount
+        });
+
+    } catch (error) {
+        console.error('❌ Finalize schedule error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to finalize schedule',
+            error: error.message
         });
     }
 });

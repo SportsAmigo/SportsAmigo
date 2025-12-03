@@ -13,6 +13,7 @@ const PlayerDashboard = () => {
     const [dashboardData, setDashboardData] = useState({
         teamCount: 0,
         eventCount: 0,
+        matchCount: 0,
         upcomingEvents: [],
         teams: []
     });
@@ -30,6 +31,7 @@ const PlayerDashboard = () => {
                 setDashboardData({
                     teamCount: response.data.teamCount || 0,
                     eventCount: response.data.eventCount || 0,
+                    matchCount: response.data.matchCount || 0,
                     upcomingEvents: response.data.upcomingEvents || [],
                     teams: response.data.teams || []
                 });
@@ -98,31 +100,16 @@ const PlayerDashboard = () => {
                         <div className="stat-card">
                             <div className="stat-card-content">
                                 <div className="stat-icon yellow">
-                                    <i className="fa fa-trophy"></i>
+                                    <i className="fa fa-calendar-alt"></i>
                                 </div>
                                 <div className="stat-info">
-                                    <div className="stat-label">Achievements</div>
-                                    <div className="stat-value">0</div>
+                                    <div className="stat-label">My Settings</div>
+                                    {/* <div className="stat-value">{dashboardData.eventCount}</div> */}
                                 </div>
                             </div>
-                            <div className="stat-link" style={{cursor: 'default'}}>
-                                Coming soon
-                            </div>
-                        </div>
-
-                        <div className="stat-card">
-                            <div className="stat-card-content">
-                                <div className="stat-icon purple">
-                                    <i className="fa fa-chart-line"></i>
-                                </div>
-                                <div className="stat-info">
-                                    <div className="stat-label">Performance</div>
-                                    <div className="stat-value">--</div>
-                                </div>
-                            </div>
-                            <div className="stat-link" style={{cursor: 'default'}}>
-                                Coming soon
-                            </div>
+                            <Link to="/player/profile" className="stat-link">
+                                View settings <i className="fa fa-arrow-right"></i>
+                            </Link>
                         </div>
                     </div>
 

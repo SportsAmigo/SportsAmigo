@@ -540,48 +540,12 @@ router.put('/profile', upload.single('profile_image'), async (req, res) => {
         console.log('Received profile update:', req.body);
         console.log('Received file:', req.file);
         
-        // Validate required fields
-        const errors = [];
-        
-        if (!req.body.first_name || !req.body.first_name.trim()) {
-            errors.push('First name is required');
-        } else if (!/^[A-Za-z\s]{2,50}$/.test(req.body.first_name.trim())) {
-            errors.push('First name must be 2-50 letters only');
-        }
-        
-        if (!req.body.last_name || !req.body.last_name.trim()) {
-            errors.push('Last name is required');
-        } else if (!/^[A-Za-z\s]{1,50}$/.test(req.body.last_name.trim())) {
-            errors.push('Last name must be 1-50 letters only');
-        }
-        
-        if (!req.body.email || !req.body.email.trim()) {
-            errors.push('Email is required');
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(req.body.email)) {
-            errors.push('Invalid email format');
-        }
-        
-        if (req.body.phone && req.body.phone.trim() && !/^[6-9]\d{9}$/.test(req.body.phone.trim())) {
-            errors.push('Phone must be 10 digits starting with 6-9');
-        }
-        
-        if (req.body.bio && req.body.bio.length > 500) {
-            errors.push('Bio must not exceed 500 characters');
-        }
-        
-        if (errors.length > 0) {
-            return res.status(400).json({
-                success: false,
-                message: errors.join(', ')
-            });
-        }
-        
         // Create the updated profile object
         const updatedProfile = {
-            first_name: req.body.first_name.trim(),
-            last_name: req.body.last_name.trim(),
-            email: req.body.email.trim(),
-            phone: req.body.phone ? req.body.phone.trim() : '',
+            first_name: req.body.first_name || '',
+            last_name: req.body.last_name || '',
+            email: req.body.email || req.session.user.email,
+            phone: req.body.phone || '',
             bio: req.body.bio || ''
         };
         
@@ -1349,6 +1313,361 @@ router.post('/api/teams/:teamId/join', async (req, res) => {
         res.json({ 
             success: false, 
             message: `Error requesting to join team: ${error.message}` 
+        });
+    }
+});
+
+// ==================== MATCH STATISTICS ROUTES ====================
+
+/**
+ * Get all matches for player's teams
+ * GET /player/my-matches
+ */
+router.get('/my-matches', async (req, res) => {
+    try {
+        const playerId = req.session.user._id;
+        
+        // Get player's teams
+        const teams = await Team.getPlayerTeams(playerId);
+        const teamIds = teams.map(t => t._id);
+        
+        // Get matches for those teams
+        const MatchModel = require('../models/schemas/matchSchema');
+        const matches = await MatchModel.find({
+            $or: [
+                { team_a: { $in: teamIds } },
+                { team_b: { $in: teamIds } }
+            ],
+            status: 'verified'
+        })
+        .populate('team_a', 'name')
+        .populate('team_b', 'name')
+        .populate('event_id', 'title')
+        .sort({ match_date: -1 })
+        .limit(20)
+        .exec();
+        
+        // Transform matches to add player context
+        const transformedMatches = matches.map(match => {
+            const isTeamA = teamIds.some(id => id.toString() === match.team_a._id.toString());
+            
+            let result, playerTeam, opponentTeam;
+            
+            if (isTeamA) {
+                playerTeam = match.team_a;
+                opponentTeam = match.team_b;
+                result = match.score_a > match.score_b ? 'won' 
+                    : match.score_a < match.score_b ? 'lost' 
+                    : 'draw';
+            } else {
+                playerTeam = match.team_b;
+                opponentTeam = match.team_a;
+                result = match.score_b > match.score_a ? 'won' 
+                    : match.score_b < match.score_a ? 'lost' 
+                    : 'draw';
+            }
+            
+            return {
+                ...match.toObject(),
+                player_result: result,
+                player_team: playerTeam,
+                opponent_team: opponentTeam
+            };
+        });
+        
+        res.json({
+            success: true,
+            matches: transformedMatches
+        });
+    } catch (err) {
+        console.error('Error fetching player matches:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching player matches',
+            error: err.message
+        });
+    }
+});
+
+/**
+ * Get aggregated player statistics
+ * GET /player/stats
+ */
+router.get('/stats', async (req, res) => {
+    try {
+        const playerId = req.session.user._id;
+        
+        // Get player's teams
+        const teams = await Team.getPlayerTeams(playerId);
+        
+        // Aggregate stats across all teams
+        let total_matches_played = 0;
+        let total_wins = 0;
+        let total_losses = 0;
+        let total_draws = 0;
+        
+        teams.forEach(team => {
+            const member = team.members.find(m => m.player_id.toString() === playerId.toString());
+            if (member && member.stats) {
+                total_matches_played += member.stats.matches_played || 0;
+                total_wins += member.stats.matches_won || 0;
+                total_losses += member.stats.matches_lost || 0;
+                total_draws += member.stats.matches_drawn || 0;
+            }
+        });
+        
+        const win_rate = total_matches_played > 0 
+            ? ((total_wins / total_matches_played) * 100).toFixed(1) 
+            : 0;
+        
+        // Get recent form (last 5 matches)
+        const teamIds = teams.map(t => t._id);
+        const MatchModel = require('../models/schemas/matchSchema');
+        const recentMatches = await MatchModel.find({
+            $or: [
+                { team_a: { $in: teamIds } },
+                { team_b: { $in: teamIds } }
+            ],
+            status: 'verified'
+        })
+        .sort({ match_date: -1 })
+        .limit(5)
+        .exec();
+        
+        const recent_form = recentMatches.map(match => {
+            const isTeamA = teamIds.some(id => id.toString() === match.team_a.toString());
+            
+            if (isTeamA) {
+                return match.score_a > match.score_b ? 'W' 
+                    : match.score_a < match.score_b ? 'L' 
+                    : 'D';
+            } else {
+                return match.score_b > match.score_a ? 'W' 
+                    : match.score_b < match.score_a ? 'L' 
+                    : 'D';
+            }
+        });
+        
+        const stats = {
+            total_matches_played,
+            total_wins,
+            total_losses,
+            total_draws,
+            win_rate,
+            teams_count: teams.length,
+            recent_form
+        };
+        
+        res.json({
+            success: true,
+            stats
+        });
+    } catch (err) {
+        console.error('Error fetching player stats:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching player stats',
+            error: err.message
+        });
+    }
+});
+
+/**
+ * Get player's performance for specific team
+ * GET /player/teams/:teamId/performance
+ */
+router.get('/teams/:teamId/performance', async (req, res) => {
+    try {
+        const { teamId } = req.params;
+        const playerId = req.session.user._id;
+        
+        // Get team
+        const team = await Team.getTeamById(teamId);
+        const member = team.members.find(m => m.player_id.toString() === playerId.toString());
+        
+        if (!member) {
+            return res.status(403).json({
+                success: false,
+                message: 'You are not a member of this team'
+            });
+        }
+        
+        const stats = member.stats || {
+            matches_played: 0,
+            matches_won: 0,
+            matches_lost: 0,
+            matches_drawn: 0
+        };
+        
+        const win_rate = stats.matches_played > 0 
+            ? ((stats.matches_won / stats.matches_played) * 100).toFixed(1) 
+            : 0;
+        
+        const Match = require('../models/match');
+        const matches = await Match.getMatchesByTeam(teamId);
+        
+        res.json({
+            success: true,
+            team: {
+                id: team._id,
+                name: team.name,
+                sport_type: team.sport_type
+            },
+            player_stats: {
+                ...stats,
+                win_rate
+            },
+            team_record: {
+                wins: team.wins || 0,
+                losses: team.losses || 0,
+                draws: team.draws || 0
+            }
+        });
+    } catch (err) {
+        console.error('Error fetching team performance:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching team performance',
+            error: err.message
+        });
+    }
+});
+
+// ============================================
+// PLAYER MATCH ROUTES
+// ============================================
+
+// Get player's match history (via teams they're in)
+router.get('/my-matches', async (req, res) => {
+    try {
+        const playerId = req.session.user._id;
+        const Match = require('../models/match');
+        
+        // Get all teams player belongs to
+        const teams = await Team.getPlayerTeams(playerId);
+        const teamIds = teams.map(t => t._id);
+        
+        if (teamIds.length === 0) {
+            return res.json({
+                success: true,
+                matches: [],
+                stats: { total: 0, won: 0, lost: 0, drawn: 0, winRate: 0 }
+            });
+        }
+        
+        // Get all matches involving these teams
+        const MatchSchema = require('../models/schemas/matchSchema');
+        const matches = await MatchSchema.find({
+            $or: [
+                { team_a: { $in: teamIds } },
+                { team_b: { $in: teamIds } }
+            ],
+            status: { $in: ['completed', 'verified'] }
+        })
+        .populate('team_a', 'name')
+        .populate('team_b', 'name')
+        .populate('event_id', 'title')
+        .sort({ match_date: -1 })
+        .limit(50)
+        .lean();
+        
+        // Calculate player statistics
+        let won = 0, lost = 0, drawn = 0;
+        
+        matches.forEach(match => {
+            const isTeamA = teamIds.some(id => id.toString() === match.team_a._id.toString());
+            
+            if (match.winner === 'draw') {
+                drawn++;
+            } else if (
+                (isTeamA && match.winner === 'team_a') ||
+                (!isTeamA && match.winner === 'team_b')
+            ) {
+                won++;
+            } else {
+                lost++;
+            }
+        });
+        
+        res.json({
+            success: true,
+            matches: matches,
+            stats: {
+                total: matches.length,
+                won: won,
+                lost: lost,
+                drawn: drawn,
+                winRate: matches.length > 0 ? ((won / matches.length) * 100).toFixed(1) : 0
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error fetching player matches:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching match history'
+        });
+    }
+});
+
+// Get player statistics
+router.get('/stats', async (req, res) => {
+    try {
+        const playerId = req.session.user._id;
+        const Match = require('../models/match');
+        const MatchSchema = require('../models/schemas/matchSchema');
+        
+        // Get teams
+        const teams = await Team.getPlayerTeams(playerId);
+        const teamIds = teams.map(t => t._id);
+        
+        // Aggregate statistics
+        const totalMatches = await MatchSchema.countDocuments({
+            $or: [
+                { team_a: { $in: teamIds } },
+                { team_b: { $in: teamIds } }
+            ],
+            status: { $in: ['completed', 'verified'] }
+        });
+        
+        // Get recent matches for form
+        const recentMatches = await MatchSchema.find({
+            $or: [
+                { team_a: { $in: teamIds } },
+                { team_b: { $in: teamIds } }
+            ],
+            status: { $in: ['completed', 'verified'] }
+        })
+        .sort({ match_date: -1 })
+        .limit(5)
+        .populate('team_a team_b')
+        .lean();
+        
+        // Calculate form (W/L/D for last 5 matches)
+        const form = recentMatches.map(match => {
+            const isTeamA = teamIds.some(id => id.toString() === match.team_a._id.toString());
+            
+            if (match.winner === 'draw') return 'D';
+            if ((isTeamA && match.winner === 'team_a') || 
+                (!isTeamA && match.winner === 'team_b')) return 'W';
+            return 'L';
+        });
+        
+        res.json({
+            success: true,
+            stats: {
+                totalMatches,
+                teamsCount: teams.length,
+                recentForm: form
+            },
+            teams: teams
+        });
+        
+    } catch (error) {
+        console.error('Error fetching player stats:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching statistics'
         });
     }
 });

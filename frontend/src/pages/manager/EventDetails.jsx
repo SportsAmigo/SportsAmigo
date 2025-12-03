@@ -37,6 +37,14 @@ const EventDetails = () => {
             setLoading(false);
         }
     };
+    
+    // Check if a specific team is registered
+    const isTeamRegistered = (teamId) => {
+        if (!event || !event.teamRegistrations) return false;
+        return event.teamRegistrations.some(reg => 
+            reg.team_id?.toString() === teamId?.toString()
+        );
+    };
 
     if (loading) {
         return (
@@ -80,15 +88,6 @@ const EventDetails = () => {
                             Back to Events
                         </Link>
                         <h1 className="page-title">Event Details</h1>
-                        {!event.isRegistered && (
-                            <Link 
-                                to={`/manager/event/${id}/register`} 
-                                className="register-btn"
-                            >
-                                <i className="fa fa-user-plus"></i>
-                                Register Team
-                            </Link>
-                        )}
                     </div>
 
                     {/* Event Card */}
@@ -98,9 +97,6 @@ const EventDetails = () => {
                                 <span className="sport-badge">
                                     <i className="fa fa-futbol"></i>
                                     {event.sport || event.sport_type}
-                                </span>
-                                <span className={`status-badge ${event.isRegistered ? 'registered' : 'open'}`}>
-                                    {event.isRegistered ? 'Registered' : 'Open for Registration'}
                                 </span>
                             </div>
                         </div>
@@ -179,29 +175,44 @@ const EventDetails = () => {
                             </div>
                         )}
 
-                        {!event.isRegistered && teams.length > 0 && (
-                            <div className="action-section">
-                                <h3>Ready to Register?</h3>
-                                <p>You have {teams.length} team{teams.length !== 1 ? 's' : ''} that can participate in this event.</p>
-                                <Link 
-                                    to={`/manager/event/${id}/register`}
-                                    className="btn-register-large"
-                                >
-                                    <i className="fa fa-user-plus"></i>
-                                    Register Your Team
-                                </Link>
+                        {teams.length > 0 && (
+                            <div className="teams-registration-section">
+                                <h3>Register Your Teams</h3>
+                                <p>Select which teams you want to register for this event:</p>
+                                <div className="teams-list">
+                                    {teams.map((team) => {
+                                        const registered = isTeamRegistered(team._id);
+                                        return (
+                                            <div key={team._id} className="team-registration-card">
+                                                <div className="team-info">
+                                                    <i className="fa fa-users"></i>
+                                                    <div>
+                                                        <h4>{team.name}</h4>
+                                                        <p>{team.sport_type}</p>
+                                                    </div>
+                                                </div>
+                                                {registered ? (
+                                                    <div className="registered-badge">
+                                                        <i className="fa fa-check-circle"></i>
+                                                        Registered
+                                                    </div>
+                                                ) : (
+                                                    <Link 
+                                                        to={`/manager/event/${id}/register?teamId=${team._id}`}
+                                                        className="btn-register-team"
+                                                    >
+                                                        <i className="fa fa-user-plus"></i>
+                                                        Register
+                                                    </Link>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         )}
 
-                        {event.isRegistered && (
-                            <div className="registered-section">
-                                <i className="fa fa-check-circle"></i>
-                                <h3>You're Registered!</h3>
-                                <p>Your team has been registered for this event. Good luck!</p>
-                            </div>
-                        )}
-
-                        {!event.isRegistered && teams.length === 0 && (
+                        {teams.length === 0 && (
                             <div className="no-teams-section">
                                 <i className="fa fa-users"></i>
                                 <h3>No Teams Available</h3>

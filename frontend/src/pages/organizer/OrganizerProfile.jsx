@@ -20,13 +20,6 @@ const OrganizerProfile = () => {
         profile_image: ''
     });
 
-    const [passwordData, setPasswordData] = useState({
-        oldPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-    });
-
-    const [passwordErrors, setPasswordErrors] = useState({});
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
     const [accountStats, setAccountStats] = useState({
@@ -37,7 +30,6 @@ const OrganizerProfile = () => {
     });
     const [imagePreview, setImagePreview] = useState(null);
     const [imageFile, setImageFile] = useState(null);
-    const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [errors, setErrors] = useState({});
 
     useEffect(() => {
@@ -65,7 +57,14 @@ const OrganizerProfile = () => {
             const response = await axios.get('http://localhost:5000/api/organizer/stats', {
                 withCredentials: true
             });
-            setAccountStats(response.data);
+            if (response.data.success && response.data.stats) {
+                setAccountStats({
+                    status: 'Active',
+                    memberSince: user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : '',
+                    totalEvents: response.data.stats.totalEvents || 0,
+                    upcomingEvents: response.data.stats.upcomingEvents || 0
+                });
+            }
         } catch (error) {
             console.error('Error fetching stats:', error);
         }
@@ -104,7 +103,7 @@ const OrganizerProfile = () => {
                 if (!value.trim()) {
                     newErrors.phone = 'Phone number is required';
                 } else if (!/^[6-9]\d{9}$/.test(value)) {
-                    newErrors.phone = 'Phone must be 10 digits starting with 6-9';
+                    newErrors.phone = 'Phone number must be exactly 10 digits starting with 6, 7, 8, or 9';
                 } else {
                     delete newErrors.phone;
                 }
@@ -132,7 +131,9 @@ const OrganizerProfile = () => {
                 if (!value.trim()) {
                     newErrors.first_name = 'First name is required';
                 } else if (!/^[a-zA-Z\s]+$/.test(value)) {
-                    newErrors.first_name = 'First name can only contain letters';
+                    newErrors.first_name = 'First name can only contain letters and spaces';
+                } else if (value.length < 2 || value.length > 50) {
+                    newErrors.first_name = 'First name must be between 2 and 50 characters';
                 } else {
                     delete newErrors.first_name;
                 }
@@ -142,7 +143,9 @@ const OrganizerProfile = () => {
                 if (!value.trim()) {
                     newErrors.last_name = 'Last name is required';
                 } else if (!/^[a-zA-Z\s]+$/.test(value)) {
-                    newErrors.last_name = 'Last name can only contain letters';
+                    newErrors.last_name = 'Last name can only contain letters and spaces';
+                } else if (value.length < 2 || value.length > 50) {
+                    newErrors.last_name = 'Last name must be between 2 and 50 characters';
                 } else {
                     delete newErrors.last_name;
                 }
@@ -159,19 +162,30 @@ const OrganizerProfile = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
 
-        if (name === 'organization' || name === 'first_name' || name === 'last_name') {
+        // Real-time input filtering to prevent invalid characters
+        if (name === 'first_name' || name === 'last_name') {
+            // Allow only letters and spaces
+            if (!/^[a-zA-Z\s]*$/.test(value)) {
+                return;
+            }
+        }
+
+        if (name === 'organization') {
+            // Allow only letters and spaces for organization name
             if (!/^[a-zA-Z\s]*$/.test(value)) {
                 return;
             }
         }
 
         if (name === 'age') {
+            // Allow only digits
             if (!/^\d*$/.test(value)) {
                 return;
             }
         }
 
         if (name === 'phone') {
+            // Allow only digits and max 10 characters
             if (!/^\d*$/.test(value) || value.length > 10) {
                 return;
             }
@@ -260,84 +274,6 @@ const OrganizerProfile = () => {
             setMessage({ 
                 type: 'error', 
                 text: error.response?.data?.message || 'Error updating profile' 
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handlePasswordChange = (e) => {
-        const { name, value } = e.target;
-        setPasswordData(prev => ({ ...prev, [name]: value }));
-        
-        const newErrors = { ...passwordErrors };
-        
-        if (name === 'newPassword') {
-            if (value.length < 6) {
-                newErrors.newPassword = 'Password must be at least 6 characters';
-            } else {
-                delete newErrors.newPassword;
-            }
-        }
-        
-        if (name === 'confirmPassword') {
-            if (value !== passwordData.newPassword) {
-                newErrors.confirmPassword = 'Passwords do not match';
-            } else {
-                delete newErrors.confirmPassword;
-            }
-        }
-        
-        setPasswordErrors(newErrors);
-    };
-
-    const handlePasswordSubmit = async (e) => {
-        e.preventDefault();
-        
-        const newErrors = {};
-        
-        if (!passwordData.oldPassword) {
-            newErrors.oldPassword = 'Current password is required';
-        }
-        
-        if (!passwordData.newPassword) {
-            newErrors.newPassword = 'New password is required';
-        } else if (passwordData.newPassword.length < 6) {
-            newErrors.newPassword = 'Password must be at least 6 characters';
-        }
-        
-        if (!passwordData.confirmPassword) {
-            newErrors.confirmPassword = 'Please confirm your password';
-        } else if (passwordData.newPassword !== passwordData.confirmPassword) {
-            newErrors.confirmPassword = 'Passwords do not match';
-        }
-        
-        if (Object.keys(newErrors).length > 0) {
-            setPasswordErrors(newErrors);
-            return;
-        }
-
-        setLoading(true);
-        
-        try {
-            await axios.put('http://localhost:5000/api/organizer/change-password', {
-                oldPassword: passwordData.oldPassword,
-                newPassword: passwordData.newPassword
-            }, {
-                withCredentials: true
-            });
-
-            setMessage({ type: 'success', text: 'Password changed successfully! Please login with your new password.' });
-            setShowPasswordModal(false);
-            setPasswordData({
-                oldPassword: '',
-                newPassword: '',
-                confirmPassword: ''
-            });
-            setPasswordErrors({});
-        } catch (error) {
-            setPasswordErrors({ 
-                submit: error.response?.data?.message || 'Error changing password' 
             });
         } finally {
             setLoading(false);
@@ -433,16 +369,6 @@ const OrganizerProfile = () => {
 
                                 <div className="border-t border-gray-100 p-6 space-y-4">
                                     <div className="flex items-center justify-between p-3 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg">
-                                        <span className="text-gray-600 font-medium">Status</span>
-                                        <span className="px-3 py-1 bg-green-500 text-white text-sm font-semibold rounded-full">
-                                            {accountStats.status}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg">
-                                        <span className="text-gray-600 font-medium">Member Since</span>
-                                        <span className="text-gray-800 font-semibold">{accountStats.memberSince}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg">
                                         <span className="text-gray-600 font-medium">Total Events</span>
                                         <span className="text-orange-600 font-bold text-lg">{accountStats.totalEvents}</span>
                                     </div>
@@ -450,21 +376,6 @@ const OrganizerProfile = () => {
                                         <span className="text-gray-600 font-medium">Upcoming Events</span>
                                         <span className="text-red-600 font-bold text-lg">{accountStats.upcomingEvents}</span>
                                     </div>
-                                </div>
-
-                                <div className="p-6 border-t border-gray-100">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPasswordModal(true)}
-                                        className="w-full py-3 px-4 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white font-semibold rounded-xl shadow-lg transform transition-all hover:scale-105"
-                                    >
-                                        <span className="flex items-center justify-center">
-                                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                            </svg>
-                                            Change Password
-                                        </span>
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -686,115 +597,6 @@ const OrganizerProfile = () => {
                 </div>
             </div>
 
-            {showPasswordModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 animate-fade-in">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-2xl font-bold text-gray-800">Change Password</h3>
-                            <button
-                                onClick={() => {
-                                    setShowPasswordModal(false);
-                                    setPasswordData({ oldPassword: '', newPassword: '', confirmPassword: '' });
-                                    setPasswordErrors({});
-                                }}
-                                className="text-gray-400 hover:text-gray-600 transition-colors"
-                            >
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-
-                        <form onSubmit={handlePasswordSubmit}>
-                            {passwordErrors.submit && (
-                                <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 rounded">
-                                    <p className="text-sm">{passwordErrors.submit}</p>
-                                </div>
-                            )}
-
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                        Current Password <span className="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        type="password"
-                                        name="oldPassword"
-                                        value={passwordData.oldPassword}
-                                        onChange={handlePasswordChange}
-                                        className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all ${
-                                            passwordErrors.oldPassword ? 'border-red-500' : 'border-gray-200'
-                                        }`}
-                                        placeholder="Enter current password"
-                                    />
-                                    {passwordErrors.oldPassword && (
-                                        <p className="text-red-500 text-xs mt-1">{passwordErrors.oldPassword}</p>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                        New Password <span className="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        type="password"
-                                        name="newPassword"
-                                        value={passwordData.newPassword}
-                                        onChange={handlePasswordChange}
-                                        className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all ${
-                                            passwordErrors.newPassword ? 'border-red-500' : 'border-gray-200'
-                                        }`}
-                                        placeholder="Enter new password"
-                                    />
-                                    {passwordErrors.newPassword && (
-                                        <p className="text-red-500 text-xs mt-1">{passwordErrors.newPassword}</p>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                        Confirm New Password <span className="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        type="password"
-                                        name="confirmPassword"
-                                        value={passwordData.confirmPassword}
-                                        onChange={handlePasswordChange}
-                                        className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all ${
-                                            passwordErrors.confirmPassword ? 'border-red-500' : 'border-gray-200'
-                                        }`}
-                                        placeholder="Confirm new password"
-                                    />
-                                    {passwordErrors.confirmPassword && (
-                                        <p className="text-red-500 text-xs mt-1">{passwordErrors.confirmPassword}</p>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="flex gap-4 mt-6">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setShowPasswordModal(false);
-                                        setPasswordData({ oldPassword: '', newPassword: '', confirmPassword: '' });
-                                        setPasswordErrors({});
-                                    }}
-                                    className="flex-1 py-3 px-4 border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-semibold rounded-xl transition-all"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="flex-1 py-3 px-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-semibold rounded-xl shadow-lg transform transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {loading ? 'Changing...' : 'Change Password'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
         </OrganizerLayout>
     );
 };

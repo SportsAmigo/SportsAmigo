@@ -147,4 +147,42 @@ router.get('/user', async (req, res) => {
     }
 });
 
+// OTP-based authentication endpoints
+
+/**
+ * Send OTP for email verification during signup
+ * POST /auth/send-otp
+ * Body: { email, first_name, last_name, role }
+ */
+router.post('/send-otp', userController.sendOTP);
+
+/**
+ * Verify OTP and complete signup
+ * POST /auth/verify-otp
+ * Body: { email, otp, password, first_name, last_name, phone, role, preferred_sports?, organization_name?, team_name? }
+ */
+router.post('/verify-otp', userController.verifyOTP);
+
+/**
+ * Initiate forgot password - send reset OTP
+ * POST /auth/forgot-password
+ * Body: { email }
+ */
+router.post('/forgot-password', userController.forgotPassword);
+
+/**
+ * Verify password reset OTP
+ * POST /auth/verify-reset-otp
+ * Body: { email, otp }
+ */
+router.post('/verify-reset-otp', userController.verifyResetOTP);
+
+/**
+ * Reset password with verified OTP
+ * POST /auth/reset-password
+ * Body: { email, otp, newPassword }
+ */
+router.post('/reset-password', userController.resetPassword);
+
 module.exports = router;
+

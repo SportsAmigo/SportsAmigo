@@ -20,12 +20,14 @@ import PlayerEvents from './pages/player/BrowseEvents';
 import BrowseTeams from './pages/player/BrowseTeams';
 import MyEvents from './pages/player/MyEvents';
 import MyTeams from './pages/player/MyTeams';
-import TeamDetails from './pages/player/TeamDetails';
-import PlayerEventDetails from './pages/player/EventDetails';
+import MyMatches from './pages/player/MyMatches';
+import PlayerStats from './pages/player/PlayerStats';
+import PlayerMatches from './pages/player/PlayerMatches';
 
 // Manager Pages
 import ManagerDashboard from './pages/manager/Dashboard';
 import CreateTeam from './pages/manager/CreateTeam';
+import EditTeam from './pages/manager/EditTeam';
 import ManagerBrowseEvents from './pages/manager/BrowseEvents';
 import ManagerMyTeams from './pages/manager/MyTeams';
 import ManagerMyEvents from './pages/manager/MyEvents';
@@ -33,6 +35,7 @@ import ManagerProfile from './pages/manager/Profile';
 import TeamManage from './pages/manager/TeamManage';
 import ManagerEventDetails from './pages/manager/EventDetails';
 import EventRegister from './pages/manager/EventRegister';
+import TeamMatches from './pages/manager/TeamMatches';
 
 // Organizer Pages
 import OrganizerDashboard from './pages/organizer/OrganizerDashboard';
@@ -41,6 +44,9 @@ import EditEvent from './pages/organizer/EditEvent';
 import EventDetails from './pages/organizer/EventDetails';
 import OrganizerMyEvents from './pages/organizer/MyEvents';
 import OrganizerProfile from './pages/organizer/OrganizerProfile';
+import EventMatches from './pages/organizer/EventMatches';
+import EventLeaderboard from './pages/organizer/EventLeaderboard';
+import ScheduleMatches from './pages/organizer/ScheduleMatches';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -145,18 +151,26 @@ const AppContent = () => {
           }
         />
         <Route
-          path="/player/team/:id"
+          path="/player/my-matches"
           element={
             <ProtectedRoute allowedRoles={['player']}>
-              <TeamDetails />
+              <MyMatches />
             </ProtectedRoute>
           }
         />
         <Route
-          path="/player/event/:id"
+          path="/player/stats"
           element={
             <ProtectedRoute allowedRoles={['player']}>
-              <PlayerEventDetails />
+              <PlayerStats />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/player/matches"
+          element={
+            <ProtectedRoute allowedRoles={['player']}>
+              <PlayerMatches />
             </ProtectedRoute>
           }
         />
@@ -195,10 +209,18 @@ const AppContent = () => {
           }
         />
         <Route
+          path="/manager/edit-team/:id"
+          element={
+            <ProtectedRoute allowedRoles={['manager']}>
+              <EditTeam />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/manager/team/:id/edit"
           element={
             <ProtectedRoute allowedRoles={['manager']}>
-              <CreateTeam />
+              <EditTeam />
             </ProtectedRoute>
           }
         />
@@ -239,6 +261,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute allowedRoles={['manager']}>
               <EventRegister />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/manager/team/:teamId/matches"
+          element={
+            <ProtectedRoute allowedRoles={['manager']}>
+              <TeamMatches />
             </ProtectedRoute>
           }
         />
@@ -297,6 +327,30 @@ const AppContent = () => {
           element={
             <ProtectedRoute allowedRoles={['organizer']}>
               <OrganizerProfile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/organizer/event/:eventId/matches"
+          element={
+            <ProtectedRoute allowedRoles={['organizer']}>
+              <EventMatches />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/organizer/event/:eventId/schedule-matches"
+          element={
+            <ProtectedRoute allowedRoles={['organizer']}>
+              <ScheduleMatches />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/organizer/event/:eventId/leaderboard"
+          element={
+            <ProtectedRoute allowedRoles={['organizer']}>
+              <EventLeaderboard />
             </ProtectedRoute>
           }
         />
