@@ -121,6 +121,9 @@ const EventRegister = () => {
     );
   }
 
+  // Filter out teams with no members
+  const eligibleTeams = teams.filter(team => team.members && team.members.length > 0);
+
   if (teams.length === 0) {
     return (
       <ManagerLayout>
@@ -141,6 +144,34 @@ const EventRegister = () => {
               <Link to="/manager/create-team" className="btn-create-team">
                 <i className="fas fa-plus-circle"></i>
                 Create Your First Team
+              </Link>
+            </div>
+          </div>
+        </div>
+      </ManagerLayout>
+    );
+  }
+
+  if (eligibleTeams.length === 0) {
+    return (
+      <ManagerLayout>
+        <div className="event-register-container">
+          <div className="register-wrapper">
+            <div className="page-header">
+              <Link to="/manager/browse-events" className="back-link">
+                <i className="fas fa-arrow-left"></i>
+                Back
+              </Link>
+              <h1 className="page-title">Register for Event</h1>
+            </div>
+            
+            <div className="no-teams-warning">
+              <i className="fas fa-users-slash"></i>
+              <h3>No Eligible Teams</h3>
+              <p>All your teams need to have at least one player before you can register for events.</p>
+              <Link to="/manager/my-teams" className="btn-create-team">
+                <i className="fas fa-users"></i>
+                Add Players to Your Teams
               </Link>
             </div>
           </div>
@@ -194,7 +225,7 @@ const EventRegister = () => {
                 <p className="section-description">Choose which team you want to register for this event</p>
                 
                 <div className="team-selection">
-                  {teams.map(team => (
+                  {eligibleTeams.map(team => (
                     <div
                       key={team._id}
                       className={`team-option ${selectedTeam === team._id ? 'selected' : ''}`}
