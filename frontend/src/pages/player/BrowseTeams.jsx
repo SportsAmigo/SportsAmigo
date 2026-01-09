@@ -25,6 +25,7 @@ const BrowseTeams = () => {
             });
             
             if (response.data.success) {
+                console.log('BrowseTeams - Fetched teams:', response.data.teams);
                 setTeams(response.data.teams || []);
             }
         } catch (error) {

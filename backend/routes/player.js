@@ -1666,4 +1666,180 @@ router.get('/stats', async (req, res) => {
     }
 });
 
+/**
+ * Get team details
+ * GET /player/team/:teamId
+ */
+router.get('/team/:teamId', async (req, res) => {
+    try {
+        const { teamId } = req.params;
+        const playerId = req.session.user._id;
+        
+        const team = await Team.getTeamById(teamId);
+        
+        if (!team) {
+            return res.status(404).json({
+                success: false,
+                message: 'Team not found'
+            });
+        }
+        
+        // Check if player is a member or has a pending request
+        const isMember = team.members.some(m => m.player_id.toString() === playerId.toString());
+        
+        // Check for pending join request
+        const Registration = require('../models/registration');
+        const pendingRequest = await Registration.findOne({
+            player_id: playerId,
+            team_id: teamId,
+            status: 'pending'
+        });
+        
+        // Get team matches
+        const MatchSchema = require('../models/schemas/matchSchema');
+        const matches = await MatchSchema.find({
+            $or: [{ team_a: teamId }, { team_b: teamId }],
+            status: 'verified'
+        })
+        .populate('team_a team_b')
+        .sort({ match_date: -1 })
+        .limit(10)
+        .lean();
+        
+        // Format matches
+        const formattedMatches = matches.map(match => {
+            const isTeamA = match.team_a._id.toString() === teamId;
+            const opponent = isTeamA ? match.team_b : match.team_a;
+            const teamScore = isTeamA ? match.score_a : match.score_b;
+            const oppScore = isTeamA ? match.score_b : match.score_a;
+            
+            let result = 'draw';
+            if (teamScore > oppScore) result = 'win';
+            else if (teamScore < oppScore) result = 'loss';
+            
+            return {
+                opponent: opponent.name,
+                score: `${teamScore} - ${oppScore}`,
+                result: result,
+                date: match.match_date
+            };
+        });
+        
+        res.json({
+            success: true,
+            team: {
+                id: team._id,
+                name: team.name,
+                sport_type: team.sport_type,
+                description: team.description,
+                manager_name: team.manager_name,
+                manager_email: team.manager_email,
+                current_members: team.members ? team.members.length : 0,
+                max_members: team.max_members,
+                wins: team.stats?.wins || 0,
+                losses: team.stats?.losses || 0,
+                members: team.members.map(m => ({
+                    name: `${m.first_name || ''} ${m.last_name || ''}`.trim() || 'Player',
+                    role: m.role || 'Player'
+                })),
+                matches: formattedMatches,
+                already_joined: isMember
+            },
+            requestStatus: pendingRequest ? 'pending' : null
+        });
+        
+    } catch (error) {
+        console.error('Error fetching team details:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching team details',
+            error: error.message
+        });
+    }
+});
+
+/**
+ * Get event details
+ * GET /player/event/:eventId
+ */
+router.get('/event/:eventId', async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const playerId = req.session.user._id;
+        
+        const Event = require('../models/event');
+        const event = await Event.getEventById(eventId);
+        
+        if (!event) {
+            return res.status(404).json({
+                success: false,
+                message: 'Event not found'
+            });
+        }
+        
+        // Get player's teams
+        const playerTeams = await Team.getPlayerTeams(playerId);
+        const playerTeamIds = playerTeams.map(t => t._id.toString());
+        
+        // Find which team is participating
+        const participatingTeam = event.team_registrations.find(reg => 
+            playerTeamIds.includes(reg.team_id.toString()) && 
+            (reg.status === 'confirmed' || reg.status === 'approved')
+        );
+        
+        // Get all confirmed teams
+        const confirmedTeams = event.team_registrations
+            .filter(reg => reg.status === 'confirmed' || reg.status === 'approved')
+            .map(reg => ({
+                name: reg.team_name,
+                manager: reg.manager_name,
+                is_my_team: participatingTeam && reg.team_id.toString() === participatingTeam.team_id.toString()
+            }));
+        
+        // Get fixtures/matches
+        const MatchSchema = require('../models/schemas/matchSchema');
+        const fixtures = await MatchSchema.find({ event_id: eventId })
+            .populate('team_a team_b')
+            .sort({ match_date: 1 })
+            .lean();
+        
+        const formattedFixtures = fixtures.map(match => ({
+            team_a: match.team_a.name,
+            team_b: match.team_b.name,
+            date: match.match_date,
+            score: match.status === 'verified' ? `${match.score_a} - ${match.score_b}` : null,
+            status: match.status
+        }));
+        
+        res.json({
+            success: true,
+            event: {
+                id: event._id,
+                name: event.title,
+                sport: event.sport_type,
+                location: event.location,
+                description: event.description,
+                start_date: event.start_date || event.event_date,
+                end_date: event.end_date || event.start_date || event.event_date,
+                entry_fee: event.entry_fee,
+                max_teams: event.max_teams,
+                registered_teams: confirmedTeams.length,
+                my_team: participatingTeam ? participatingTeam.team_name : null,
+                teams: confirmedTeams,
+                fixtures: formattedFixtures,
+                total_matches: fixtures.length,
+                completed_matches: fixtures.filter(f => f.status === 'verified').length
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error fetching event details:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching event details',
+            error: error.message
+        });
+    }
+});
+
 module.exports = router; 

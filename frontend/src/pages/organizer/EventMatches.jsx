@@ -125,15 +125,36 @@ const EventMatches = () => {
             <div className="match-body">
                 <div className="match-teams">
                     <div className="team-info">
-                        <h4>{match.team_a?.name || 'Team A'}</h4>
-                        <div className="team-score">{match.team_a_score}</div>
+                        <h4>{match.team_a?.name || match.team_a_name || 'Team A'}</h4>
+                        <div className="team-score">{match.score_a !== undefined ? match.score_a : (match.team_a_score || 0)}</div>
                     </div>
                     <div className="match-vs">VS</div>
                     <div className="team-info">
-                        <h4>{match.team_b?.name || 'Team B'}</h4>
-                        <div className="team-score">{match.team_b_score}</div>
+                        <h4>{match.team_b?.name || match.team_b_name || 'Team B'}</h4>
+                        <div className="team-score">{match.score_b !== undefined ? match.score_b : (match.team_b_score || 0)}</div>
                     </div>
                 </div>
+
+                {match.status === 'pending' && (
+                    <div className="score-info-box">
+                        <div className="score-label">
+                            <i className="fas fa-info-circle"></i> Submitted Score
+                        </div>
+                        <div className="score-details">
+                            This score was submitted by the team manager and is awaiting your approval.
+                            {match.recorded_by && (
+                                <div className="submission-info">
+                                    <strong>Submitted by:</strong> {match.recorded_by.name || match.recorded_by.email}
+                                </div>
+                            )}
+                            {match.updated_at && (
+                                <div className="submission-info">
+                                    <strong>Submitted on:</strong> {formatDate(match.updated_at)}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {match.location && (
                     <div className="match-location">
@@ -141,15 +162,15 @@ const EventMatches = () => {
                     </div>
                 )}
 
-                {match.recorded_by && (
-                    <div className="match-recorder">
-                        Recorded by: {match.recorded_by.name || match.recorded_by.email}
-                    </div>
-                )}
-
                 {match.dispute_reason && (
                     <div className="dispute-reason">
                         <strong>Dispute Reason:</strong> {match.dispute_reason}
+                    </div>
+                )}
+
+                {match.notes && (
+                    <div className="match-notes">
+                        <strong>Notes:</strong> {match.notes}
                     </div>
                 )}
             </div>

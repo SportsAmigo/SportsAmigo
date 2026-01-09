@@ -286,7 +286,7 @@ module.exports = {
             
             const event = await Event.getEventById(eventId);
             const teamIds = event.team_registrations
-                .filter(r => r.status === 'confirmed')
+                .filter(r => r.status === 'confirmed' || r.status === 'approved')
                 .map(r => r.team_id);
             
             const matches = await Match.find({

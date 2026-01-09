@@ -356,7 +356,8 @@
   gap: 1.5rem;
   padding: 2.5rem;
   max-width: 1400px;
-  margin: 0 auto;
+  margin: 0;
+  margin-left: 0;
 }
 
 .stat-card {
@@ -470,10 +471,9 @@
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 16px;
   padding: 2rem;
-  max-width: 1400px;
+  max-width: 500yypx;
+  width: 100%;
   margin: 0 auto 2.5rem;
-  margin-left: calc(50% - 700px + 140px);
-  margin-right: 2.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
@@ -594,7 +594,6 @@
   text-align: center;
   max-width: 1400px;
   margin: 0 auto 2.5rem;
-  margin-left: calc(50% - 700px + 140px);
   margin-right: 2.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
@@ -646,12 +645,6 @@
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-
-  .teams-section,
-  .no-teams-section {
-    margin-left: 2.5rem;
-    margin-right: 2.5rem;
-  }
 }
 
 @media (max-width: 768px) {
@@ -685,8 +678,6 @@
 
   .teams-section,
   .no-teams-section {
-    margin-left: 1.5rem;
-    margin-right: 1.5rem;
     padding: 1.5rem;
   }
 }

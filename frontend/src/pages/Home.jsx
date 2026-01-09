@@ -25,7 +25,6 @@ const Home = () => {
                             <li><Link to="/">HOME</Link></li>
                             <li><Link to="/about">ABOUT</Link></li>
                             <li><Link to="/events">EVENTS</Link></li>
-                            <li><Link to="/shop">SHOP</Link></li>
                             <li><Link to="/contact">CONTACT</Link></li>
                             {authenticated ? (
                                 <>
@@ -33,8 +32,6 @@ const Home = () => {
                                         <a href="#">{user.first_name || user.email} ▼</a>
                                         <div className="dropdown-content">
                                             <Link to={`/${user.role}/dashboard`}>Dashboard</Link>
-                                            {user.role === 'player' && <Link to="/player/wallet">💰 Wallet</Link>}
-                                            <Link to="/shop/orders">My Orders</Link>
                                             <a href="#" onClick={handleLogout}>Logout</a>
                                         </div>
                                     </li>
@@ -168,12 +165,6 @@ const Home = () => {
             <section className="footer">
                 <h4>About SportsAmigo</h4>
                 <p>Join the largest sports community and experience the thrill of competition, the joy of teamwork, and the pride of victory.</p>
-                <div className="icons">
-                    <i className="fa fa-facebook"></i>
-                    <i className="fa fa-twitter"></i>
-                    <i className="fa fa-instagram"></i>
-                    <i className="fa fa-linkedin"></i>
-                </div>
                 <p>Made with <i className="fa fa-heart-o"></i> by SportsAmigo Team</p>
             </section>
         </div>

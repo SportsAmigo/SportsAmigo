@@ -248,7 +248,7 @@ module.exports = {
       let teamId;
       let registrationData = {
         registration_date: new Date(),
-        status: 'confirmed',
+        status: 'pending',
         notes: ''
       };
       

@@ -101,39 +101,35 @@ const MyEvents = () => {
                                             <div className="event-info-grid">
                                                 <div className="info-item">
                                                     <i className="fa fa-users"></i>
-                                                    <span>{event.team_name}</span>
+                                                    <span>Team: {event.team_name}</span>
                                                 </div>
                                                 <div className="info-item">
                                                     <i className="fa fa-futbol"></i>
-                                                    <span>{event.sport || 'Sport'}</span>
+                                                    <span>{event.sport_type || event.sport || 'Sport'}</span>
                                                 </div>
                                                 <div className="info-item">
                                                     <i className="fa fa-map-marker-alt"></i>
                                                     <span>{event.location || 'TBA'}</span>
                                                 </div>
-                                                <div className="info-item">
-                                                    <i className="fa fa-clock"></i>
-                                                    <span>{new Date(event.event_date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
-                                                </div>
                                             </div>
                                         </div>
 
                                         <div className="event-status">
-                                            <span className={`status-badge ${new Date(event.event_date) > new Date() ? 'upcoming' : 'past'}`}>
-                                                {new Date(event.event_date) > new Date() ? 'Upcoming' : 'Completed'}
+                                            <span className={`status-badge ${new Date(event.event_date || event.start_date) > new Date() ? 'upcoming' : 'past'}`}>
+                                                {new Date(event.event_date || event.start_date) > new Date() ? 'Upcoming' : 'Completed'}
                                             </span>
                                         </div>
                                     </div>
 
                                     <div className="event-actions">
-                                        <button className="btn-view-details">
+                                        <Link to={`/manager/event/${event.event_id || event._id}`} className="btn-view-details">
                                             <i className="fa fa-info-circle"></i>
                                             View Details
-                                        </button>
-                                        <button className="btn-team-roster">
+                                        </Link>
+                                        <Link to={`/manager/team/${event.team_id}`} className="btn-team-roster">
                                             <i className="fa fa-users"></i>
                                             Team Roster
-                                        </button>
+                                        </Link>
                                     </div>
                                 </div>
                             ))}

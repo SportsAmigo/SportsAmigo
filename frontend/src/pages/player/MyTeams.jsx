@@ -19,6 +19,7 @@ const MyTeams = () => {
         try {
             const response = await axios.get('http://localhost:5000/api/player/my-teams', { withCredentials: true });
             if (response.data.success) {
+                console.log('MyTeams - Fetched teams:', response.data.teams);
                 setTeams(response.data.teams);
             }
         } catch (error) {
@@ -63,96 +64,58 @@ const MyTeams = () => {
                         <p className="loading-text">Loading teams...</p>
                     </div>
                 ) : teams && teams.length > 0 ? (
-                    teams.map(team => (
-                        <div key={team.id} className="my-team-card">
-                            <div className="my-team-card-header">
-                                <div className="team-header-content">
-                                    <div className="team-title">
-                                        <h3>{team.name}</h3>
-                                        <span className="sport-badge">{team.sport}</span>
+                    <div className="my-teams-grid">
+                        {teams.map(team => (
+                            <div key={team.id} className="my-team-card">
+                                <div className="my-team-card-header">
+                                    <div className="team-header-content">
+                                        <div className="team-title">
+                                            <h3>{team.name}</h3>
+                                            <span className="sport-badge">{team.sport}</span>
+                                        </div>
                                     </div>
-                                    <button 
-                                        onClick={() => handleLeaveTeam(team.id)} 
-                                        className="leave-team-btn"
-                                    >
-                                        <i className="fa fa-sign-out"></i> Leave Team
-                                    </button>
                                 </div>
-                            </div>
-                            <div className="my-team-card-body">
-                                <div className="team-info-row">
-                                    <div className="team-info-section">
-                                        <div className="info-item">
-                                            <strong>Manager:</strong>
-                                            <span>{team.manager_name || team.manager_email}</span>
-                                        </div>
-                                        <div className="info-item">
-                                            <strong>Members:</strong>
-                                            <span>{team.current_members} of {team.members}</span>
+                                <div className="my-team-card-body">
+                                    <div className="team-info-row">
+                                        <div className="team-info-section">
+                                            <div className="info-item">
+                                                <strong>Manager:</strong>
+                                                <span>{team.manager_name || team.manager_email}</span>
+                                            </div>
+                                            <div className="info-item">
+                                                <strong>Members:</strong>
+                                                <span>{team.current_members} / {team.members}</span>
+                                            </div>
                                         </div>
                                     </div>
+                                    
                                     <div className="team-progress-section">
                                         <div className="team-progress">
                                             <div 
                                                 className="team-progress-fill" 
                                                 style={{ width: `${Math.min(100, (team.current_members / team.members) * 100)}%` }}
-                                            >
-                                                <span className="progress-text">
-                                                    {team.current_members} / {team.members} Players
-                                                </span>
-                                            </div>
+                                            ></div>
                                         </div>
+                                        <span className="progress-text">
+                                            {team.current_members} / {team.members} Players
+                                        </span>
                                     </div>
-                                </div>
-                                
-                                <div className="team-members-section">
-                                    <h5 className="section-title">
-                                        <i className="fa fa-users"></i> Team Members
-                                    </h5>
                                     
-                                    <div className="table-container">
-                                        <table className="team-members-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Name</th>
-                                                    <th>Email</th>
-                                                    <th>Join Date</th>
-                                                    <th>Status</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {team.team_members && team.team_members.length > 0 ? (
-                                                    team.team_members.map((member, idx) => (
-                                                        <tr key={idx}>
-                                                            <td>
-                                                                {member.first_name} {member.last_name}
-                                                                {user?.id === member.player_id && (
-                                                                    <span className="you-badge">You</span>
-                                                                )}
-                                                            </td>
-                                                            <td>{member.email}</td>
-                                                            <td>{new Date(member.joined_date).toLocaleDateString()}</td>
-                                                            <td>
-                                                                <span className={`member-status-badge ${member.status === 'active' ? 'status-active' : 'status-inactive'}`}>
-                                                                    {member.status}
-                                                                </span>
-                                                            </td>
-                                                        </tr>
-                                                    ))
-                                                ) : (
-                                                    <tr>
-                                                        <td colSpan="4" className="no-members-msg">
-                                                            No team members information available
-                                                        </td>
-                                                    </tr>
-                                                )}
-                                            </tbody>
-                                        </table>
+                                    <div className="team-actions">
+                                        <Link to={`/player/team/${team.id}`} className="team-view-btn">
+                                            <i className="fa fa-info-circle"></i> View Details
+                                        </Link>
+                                        <button 
+                                            onClick={() => handleLeaveTeam(team.id)} 
+                                            className="leave-team-btn"
+                                        >
+                                            <i className="fa fa-sign-out"></i> Leave
+                                        </button>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    ))
+                        ))}
+                    </div>
                 ) : (
                     <div className="empty-state">
                         <div className="empty-state-icon">

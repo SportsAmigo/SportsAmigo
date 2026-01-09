@@ -24,36 +24,6 @@
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-/* Main Dashboard with Background Image */
-.player-my-teams {
-  min-height: 100vh;
-  background-image: url('../../../public/images/fancy-crave-qowyMze7jqg-unsplash.jpg');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  position: relative;
-}
-
-.player-my-teams::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(2px);
-  z-index: 0;
-}
-
-.my-teams-content {
-  position: relative;
-  z-index: 1;
-  padding: 2.5rem;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
 /* Page Header */
 .my-teams-header {
   background: rgba(255, 255, 255, 0.95);
@@ -73,6 +43,14 @@
   gap: 1.5rem;
 }
 
+/* Teams Grid Layout */
+.my-teams-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 24px;
+  margin-bottom: 2rem;
+}
+
 /* Team Card */
 .my-team-card {
   background: rgba(255, 255, 255, 0.95);
@@ -81,207 +59,209 @@
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  margin-bottom: 2rem;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.my-team-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
 }
 
 .my-team-card-header {
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-  padding: 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
+  background: linear-gradient(135deg, #EA580C, #DC2626);
+  padding: 1.5rem;
 }
 
-.team-name-section h2 {
-  font-size: 1.75rem;
+.team-header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.team-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.team-title h3 {
+  font-size: 1.5rem;
   font-weight: 700;
   color: white;
-  margin: 0 0 0.5rem 0;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  margin: 0;
+  flex: 1;
+  min-width: 200px;
 }
 
-.team-sport-badge-header {
-  display: inline-block;
-  padding: 0.375rem 0.875rem;
-  background: rgba(255, 255, 255, 0.25);
-  color: white;
-  border-radius: 20px;
-  font-size: 0.8125rem;
-  font-weight: 600;
-}
-
-.team-leave-btn {
-  padding: 0.75rem 1.5rem;
+.sport-badge {
   background: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: 2px solid white;
-  border-radius: 10px;
+  padding: 6px 16px;
+  border-radius: 20px;
   font-size: 0.875rem;
   font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.2s;
-}
-
-.team-leave-btn:hover {
-  background: white;
-  color: var(--danger);
+  color: white;
 }
 
 .my-team-card-body {
-  padding: 2rem;
+  padding: 1.5rem;
 }
 
-.team-details-grid {
+.team-info-row {
+  margin-bottom: 1.5rem;
+}
+
+.team-info-section {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
-.team-detail-item {
+.info-item {
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
+  gap: 4px;
+  padding: 12px;
+  background: var(--gray-50);
+  border-radius: 8px;
 }
 
-.team-detail-label {
-  font-size: 0.875rem;
-  font-weight: 600;
+.info-item strong {
+  font-size: 0.75rem;
   color: var(--gray-600);
   text-transform: uppercase;
+  font-weight: 600;
   letter-spacing: 0.5px;
 }
 
-.team-detail-value {
-  font-size: 1.125rem;
-  font-weight: 600;
+.info-item span {
+  font-size: 1rem;
   color: var(--gray-900);
+  font-weight: 600;
 }
 
-.team-members-progress {
-  margin-bottom: 2rem;
+.team-progress-section {
+  margin: 16px 0;
 }
 
-.progress-bar-container {
-  height: 32px;
+.team-progress {
   background: var(--gray-200);
-  border-radius: 8px;
+  border-radius: 10px;
+  height: 10px;
   overflow: hidden;
-  position: relative;
+  margin-bottom: 8px;
 }
 
-.progress-bar-fill {
+.team-progress-fill {
+  background: linear-gradient(90deg, #EA580C, #DC2626);
   height: 100%;
-  background: linear-gradient(135deg, var(--success), #059669);
+  border-radius: 10px;
+  transition: width 0.5s ease;
+}
+
+.progress-text {
+  font-size: 0.875rem;
+  color: var(--gray-600);
+  display: block;
+  text-align: center;
+}
+
+.team-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.team-view-btn,
+.leave-team-btn {
+  flex: 1;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s;
+  border: none;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-size: 0.875rem;
-  font-weight: 600;
-  transition: width 0.3s;
+  gap: 8px;
+  text-decoration: none;
 }
 
-.team-members-section {
-  margin-top: 2rem;
-}
-
-.team-members-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--gray-900);
-  margin: 0 0 1.5rem 0;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid rgba(0, 0, 0, 0.08);
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.team-members-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  overflow: hidden;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.team-members-table thead {
-  background: var(--gray-900);
+.team-view-btn {
+  background: linear-gradient(135deg, #EA580C, #DC2626);
   color: white;
 }
 
-.team-members-table th {
-  padding: 1rem;
-  text-align: left;
-  font-size: 0.875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+.team-view-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.4);
 }
 
-.team-members-table tbody tr {
+.leave-team-btn {
   background: white;
-  border-bottom: 1px solid var(--gray-200);
-  transition: all 0.2s;
+  color: #DC2626;
+  border: 2px solid #DC2626;
 }
 
-.team-members-table tbody tr:hover {
-  background: var(--gray-50);
+.leave-team-btn:hover {
+  background: #FEE2E2;
+  transform: translateY(-2px);
 }
 
-.team-members-table td {
-  padding: 1rem;
+@media (max-width: 768px) {
+  .my-teams-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .team-info-section {
+    grid-template-columns: 1fr;
+  }
+  
+  .team-actions {
+    flex-direction: column;
+  }
+}
+
+/* Header Title Section */
+.header-title-section h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin: 0 0 0.5rem 0;
+}
+
+.header-title-section p {
+  font-size: 1rem;
+  color: var(--gray-600);
+  margin: 0;
+}
+
+.header-action-btn {
+  padding: 0.875rem 1.75rem;
+  background: linear-gradient(135deg, #EA580C, #DC2626);
+  color: white;
+  text-decoration: none;
+  border-radius: 10px;
   font-size: 0.9375rem;
-  color: var(--gray-700);
-}
-
-.member-name-cell {
-  display: flex;
+  font-weight: 600;
+  display: inline-flex;
   align-items: center;
   gap: 0.625rem;
+  transition: all 0.3s;
+  box-shadow: 0 4px 16px rgba(234, 88, 12, 0.3);
 }
 
-.you-badge {
-  padding: 0.25rem 0.625rem;
-  background: linear-gradient(135deg, #D1FAE5, #A7F3D0);
-  color: var(--success);
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.status-badge {
-  padding: 0.375rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.status-badge.active {
-  background: linear-gradient(135deg, #D1FAE5, #A7F3D0);
-  color: var(--success);
-}
-
-.status-badge.inactive {
-  background: linear-gradient(135deg, #E5E7EB, #D1D5DB);
-  color: var(--gray-600);
+.header-action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(234, 88, 12, 0.4);
 }
 
 /* Empty State */
-.my-teams-empty {
+.empty-state {
   text-align: center;
   padding: 4rem 2rem;
   background: rgba(255, 255, 255, 0.95);
@@ -290,28 +270,28 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
-.my-teams-empty i {
+.empty-state-icon {
   font-size: 4rem;
   color: var(--gray-400);
   margin-bottom: 1.5rem;
 }
 
-.my-teams-empty h3 {
+.empty-state h3 {
   font-size: 1.5rem;
   font-weight: 600;
   color: var(--gray-900);
   margin: 0 0 0.75rem 0;
 }
 
-.my-teams-empty p {
+.empty-state p {
   font-size: 1.0625rem;
   color: var(--gray-600);
   margin: 0 0 2rem 0;
 }
 
-.browse-teams-btn {
+.empty-state-btn {
   padding: 1rem 2rem;
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  background: linear-gradient(135deg, #EA580C, #DC2626);
   color: white;
   text-decoration: none;
   border-radius: 10px;
@@ -321,39 +301,10 @@
   align-items: center;
   gap: 0.625rem;
   transition: all 0.3s;
-  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 4px 16px rgba(234, 88, 12, 0.3);
 }
 
-.browse-teams-btn:hover {
+.empty-state-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4);
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .my-teams-content {
-    padding: 1.5rem;
-  }
-
-  .my-teams-header {
-    padding: 2rem 1.5rem;
-  }
-
-  .my-teams-header-content {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .team-details-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .team-members-table {
-    font-size: 0.875rem;
-  }
-
-  .team-members-table th,
-  .team-members-table td {
-    padding: 0.75rem 0.5rem;
-  }
+  box-shadow: 0 8px 24px rgba(234, 88, 12, 0.4);
 }

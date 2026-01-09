@@ -74,6 +74,31 @@ const Profile = () => {
         setLoading(true);
         setMessage({ type: '', text: '' });
 
+        // Validate first name - only letters and spaces
+        const nameRegex = /^[A-Za-z\s]+$/;
+        if (!nameRegex.test(formData.first_name)) {
+            setMessage({ type: 'error', text: 'First name can only contain letters and spaces' });
+            setLoading(false);
+            return;
+        }
+
+        // Validate last name - only letters and spaces
+        if (!nameRegex.test(formData.last_name)) {
+            setMessage({ type: 'error', text: 'Last name can only contain letters and spaces' });
+            setLoading(false);
+            return;
+        }
+
+        // Validate phone number - 10 digits starting with 6, 7, 8, or 9
+        if (formData.phone) {
+            const phoneRegex = /^[6-9]\d{9}$/;
+            if (!phoneRegex.test(formData.phone)) {
+                setMessage({ type: 'error', text: 'Phone number must be 10 digits starting with 6, 7, 8, or 9' });
+                setLoading(false);
+                return;
+            }
+        }
+
         try {
             // Create FormData for file upload
             const formDataToSend = new FormData();
@@ -161,21 +186,6 @@ const Profile = () => {
                         <h3>{user?.first_name} {user?.last_name}</h3>
                         <p className="user-email">{user?.email}</p>
                         <span className="role-badge">Player</span>
-                        
-                        <div className="profile-stats">
-                            <div className="stat-item">
-                                <span className="stat-value">0</span>
-                                <span className="stat-label">Teams</span>
-                            </div>
-                            <div className="stat-item">
-                                <span className="stat-value">0</span>
-                                <span className="stat-label">Events</span>
-                            </div>
-                            <div className="stat-item">
-                                <span className="stat-value">0</span>
-                                <span className="stat-label">Awards</span>
-                            </div>
-                        </div>
                     </div>
 
                     <div className="profile-form-card">

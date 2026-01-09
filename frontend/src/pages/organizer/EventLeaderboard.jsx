@@ -44,7 +44,7 @@ const EventLeaderboard = () => {
         const headers = ['Rank', 'Team', 'Played', 'Won', 'Drawn', 'Lost', 'GF', 'GA', 'GD', 'Points'];
         const rows = leaderboard.map((team, index) => [
             index + 1,
-            team.name,
+            team.team_name || team.name,
             team.played,
             team.won,
             team.drawn,
@@ -146,12 +146,12 @@ const EventLeaderboard = () => {
                                     </thead>
                                     <tbody>
                                         {leaderboard.map((team, index) => (
-                                            <tr key={team._id} className={index < 3 ? `top-${index + 1}` : ''}>
+                                            <tr key={team.team_id || team._id} className={index < 3 ? `top-${index + 1}` : ''}>
                                                 <td className="col-rank">
                                                     <span className="rank-badge">{getRankBadge(index + 1)}</span>
                                                 </td>
                                                 <td className="col-team">
-                                                    <div className="team-name">{team.name}</div>
+                                                    <div className="team-name">{team.team_name || team.name}</div>
                                                 </td>
                                                 <td className="col-stat">{team.played}</td>
                                                 <td className="col-stat text-success">{team.won}</td>

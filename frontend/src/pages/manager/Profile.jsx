@@ -19,6 +19,7 @@ const ManagerProfile = () => {
     const [imagePreview, setImagePreview] = useState(null);
     const [message, setMessage] = useState({ type: '', text: '' });
     const [loading, setLoading] = useState(false);
+    const [errors, setErrors] = useState({});
 
     useEffect(() => {
         if (user) {
@@ -36,11 +37,82 @@ const ManagerProfile = () => {
         }
     }, [user]);
 
+    const validateField = (name, value) => {
+        const newErrors = { ...errors };
+
+        switch (name) {
+            case 'first_name':
+                if (!value.trim()) {
+                    newErrors.first_name = 'First name is required';
+                } else if (!/^[a-zA-Z\s]+$/.test(value)) {
+                    newErrors.first_name = 'First name can only contain letters and spaces';
+                } else if (value.length < 2 || value.length > 50) {
+                    newErrors.first_name = 'First name must be between 2 and 50 characters';
+                } else {
+                    delete newErrors.first_name;
+                }
+                break;
+
+            case 'last_name':
+                if (!value.trim()) {
+                    newErrors.last_name = 'Last name is required';
+                } else if (!/^[a-zA-Z\s]+$/.test(value)) {
+                    newErrors.last_name = 'Last name can only contain letters and spaces';
+                } else if (value.length < 2 || value.length > 50) {
+                    newErrors.last_name = 'Last name must be between 2 and 50 characters';
+                } else {
+                    delete newErrors.last_name;
+                }
+                break;
+
+            case 'phone':
+                if (!value.trim()) {
+                    newErrors.phone = 'Phone number is required';
+                } else if (!/^[6-9]\d{9}$/.test(value)) {
+                    newErrors.phone = 'Phone number must be exactly 10 digits starting with 6, 7, 8, or 9';
+                } else {
+                    delete newErrors.phone;
+                }
+                break;
+
+            case 'bio':
+                if (value && value.length > 500) {
+                    newErrors.bio = 'Bio must not exceed 500 characters';
+                } else {
+                    delete newErrors.bio;
+                }
+                break;
+
+            default:
+                break;
+        }
+
+        setErrors(newErrors);
+    };
+
     const handleChange = (e) => {
+        const { name, value } = e.target;
+
+        // Real-time input filtering to prevent invalid characters
+        if (name === 'first_name' || name === 'last_name') {
+            // Allow only letters and spaces
+            if (!/^[a-zA-Z\s]*$/.test(value)) {
+                return;
+            }
+        }
+
+        if (name === 'phone') {
+            // Allow only digits and max 10 characters
+            if (!/^\d*$/.test(value) || value.length > 10) {
+                return;
+            }
+        }
+
         setFormData({
             ...formData,
-            [e.target.name]: e.target.value
+            [name]: value
         });
+        validateField(name, value);
     };
 
     const handleImageChange = (e) => {
@@ -71,8 +143,27 @@ const ManagerProfile = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
         setMessage({ type: '', text: '' });
+
+        // Validate all fields
+        validateField('first_name', formData.first_name);
+        validateField('last_name', formData.last_name);
+        validateField('phone', formData.phone);
+        validateField('bio', formData.bio);
+
+        // Check if there are any errors
+        if (Object.keys(errors).length > 0 || 
+            !formData.first_name.trim() || 
+            !formData.last_name.trim() || 
+            !formData.phone.trim() ||
+            !/^[a-zA-ZÀ-ÖØ-öø-ÿ'\-\s]+$/.test(formData.first_name) ||
+            !/^[a-zA-ZÀ-ÖØ-öø-ÿ'\-\s]+$/.test(formData.last_name) ||
+            !/^[6-9]\d{9}$/.test(formData.phone)) {
+            setMessage({ type: 'error', text: 'Please fix all validation errors before submitting' });
+            return;
+        }
+
+        setLoading(true);
 
         try {
             // Create FormData for file upload
@@ -164,21 +255,6 @@ const ManagerProfile = () => {
                             <h3>{user?.first_name} {user?.last_name}</h3>
                             <p className="user-email">{user?.email}</p>
                             <span className="role-badge">Manager</span>
-                            
-                            <div className="profile-stats">
-                                <div className="stat-item">
-                                    <span className="stat-value">0</span>
-                                    <span className="stat-label">Teams</span>
-                                </div>
-                                <div className="stat-item">
-                                    <span className="stat-value">0</span>
-                                    <span className="stat-label">Events</span>
-                                </div>
-                                <div className="stat-item">
-                                    <span className="stat-value">0</span>
-                                    <span className="stat-label">Wins</span>
-                                </div>
-                            </div>
                         </div>
 
                         <div className="profile-form-card">
@@ -193,11 +269,12 @@ const ManagerProfile = () => {
                                             type="text"
                                             id="first_name"
                                             name="first_name"
-                                            className="form-input"
+                                            className={`form-input ${errors.first_name ? 'error' : ''}`}
                                             value={formData.first_name}
                                             onChange={handleChange}
                                             required
                                         />
+                                        {errors.first_name && <span className="error-message">{errors.first_name}</span>}
                                     </div>
 
                                     <div className="form-group">
@@ -208,11 +285,12 @@ const ManagerProfile = () => {
                                             type="text"
                                             id="last_name"
                                             name="last_name"
-                                            className="form-input"
+                                            className={`form-input ${errors.last_name ? 'error' : ''}`}
                                             value={formData.last_name}
                                             onChange={handleChange}
                                             required
                                         />
+                                        {errors.last_name && <span className="error-message">{errors.last_name}</span>}
                                     </div>
                                 </div>
 
@@ -234,17 +312,21 @@ const ManagerProfile = () => {
 
                                     <div className="form-group">
                                         <label htmlFor="phone">
-                                            Phone Number
+                                            Phone Number <span className="required">*</span>
                                         </label>
                                         <input
                                             type="tel"
                                             id="phone"
                                             name="phone"
-                                            className="form-input"
+                                            className={`form-input ${errors.phone ? 'error' : ''}`}
                                             value={formData.phone}
                                             onChange={handleChange}
-                                            placeholder="+1234567890"
+                                            placeholder="9876543210"
+                                            maxLength="10"
+                                            required
                                         />
+                                        {errors.phone && <span className="error-message">{errors.phone}</span>}
+                                        <small className="form-hint">10 digits starting with 6, 7, 8, or 9</small>
                                     </div>
                                 </div>
 
