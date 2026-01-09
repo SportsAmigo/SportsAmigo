@@ -95,7 +95,7 @@ const Shop = () => {
                             <li><Link to="/">HOME</Link></li>
                             <li><Link to="/about">ABOUT</Link></li>
                             <li><Link to="/events">EVENTS</Link></li>
-                            <li><Link to="/shop" className="active">SHOP</Link></li>
+                            {/* <li><Link to="/shop" className="active">SHOP</Link></li> */}
                             <li><Link to="/contact">CONTACT</Link></li>
                             {authenticated ? (
                                 <>
@@ -104,7 +104,6 @@ const Shop = () => {
                                         <div className="dropdown-content">
                                             <Link to={`/${user.role}/dashboard`}>Dashboard</Link>
                                             {user.role === 'player' && <Link to="/player/wallet">💰 Wallet</Link>}
-                                            <Link to="/shop/orders">My Orders</Link>
                                             <a href="#" onClick={handleLogout}>Logout</a>
                                         </div>
                                     </li>
@@ -207,12 +206,6 @@ const Shop = () => {
             <section className="footer">
                 <h4>About SportsAmigo Shop</h4>
                 <p>Premium sports gear, apparel, and equipment for all your sporting needs.</p>
-                <div className="icons">
-                    <i className="fa fa-facebook"></i>
-                    <i className="fa fa-twitter"></i>
-                    <i className="fa fa-instagram"></i>
-                    <i className="fa fa-linkedin"></i>
-                </div>
                 <p>Made with <i className="fa fa-heart-o"></i> by SportsAmigo Team</p>
             </section>
         </div>

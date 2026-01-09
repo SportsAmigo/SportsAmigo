@@ -106,7 +106,7 @@ export const deleteEvent = createAsyncThunk(
 );
 
 /**
- * Register for event (Player)
+ * Register for event 
  */
 export const registerForEvent = createAsyncThunk(
     'events/registerForEvent',

@@ -90,6 +90,30 @@ module.exports = {
                 });
             }
             
+            // Get user information for join requests
+            if (team.join_requests && team.join_requests.length > 0) {
+                const requestPlayerIds = team.join_requests.map(req => req.player_id);
+                const requestUsers = await User.find({ _id: { $in: requestPlayerIds } })
+                    .select('first_name last_name email')
+                    .exec();
+                
+                // Create a map of user info by ID
+                const requestUsersMap = requestUsers.reduce((map, user) => {
+                    map[user._id.toString()] = user;
+                    return map;
+                }, {});
+                
+                // Add user info to join requests
+                teamWithManager.join_requests = team.join_requests.map(request => {
+                    const user = requestUsersMap[request.player_id.toString()];
+                    return {
+                        ...request.toObject(),
+                        player_name: user ? `${user.first_name} ${user.last_name}` : '',
+                        player_email: user ? user.email : ''
+                    };
+                });
+            }
+            
             return teamWithManager;
         } catch (err) {
             console.error('Error getting team by ID:', err);
@@ -126,17 +150,24 @@ module.exports = {
                 throw new Error('Manager ID is required');
             }
             
-            const RegistrationSchema = require('./schemas/registrationSchema');
+            const EventSchema = require('./schemas/eventSchema');
             const teams = await Team.find({ manager_id: managerId })
                 .sort({ name: 1 })
                 .exec();
             
-            // Get event count for each team
+            // Get event count for each team by counting from Event.team_registrations subdocument
             const teamsWithEventCount = await Promise.all(teams.map(async (team) => {
-                const registrationCount = await RegistrationSchema.countDocuments({ 
-                    team_id: team._id,
-                    status: { $in: ['approved', 'confirmed'] }
+                // Count events where this team is registered with approved or confirmed status
+                const registrationCount = await EventSchema.countDocuments({ 
+                    'team_registrations': {
+                        $elemMatch: {
+                            team_id: team._id,
+                            status: { $in: ['approved', 'confirmed'] }
+                        }
+                    }
                 });
+                
+                console.log(`Team ${team.name} (${team._id}) has ${registrationCount} approved/confirmed registrations`);
                 
                 return {
                     ...team.toObject(),

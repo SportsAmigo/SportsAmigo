@@ -75,7 +75,13 @@ const eventSchema = new Schema({
     status: { 
       type: String, 
       default: 'pending',
-      enum: ['pending', 'confirmed', 'cancelled']
+      enum: ['pending', 'approved', 'confirmed', 'rejected', 'cancelled']
+    },
+    approval_date: {
+      type: Date
+    },
+    rejection_date: {
+      type: Date
     }
   }]
 });

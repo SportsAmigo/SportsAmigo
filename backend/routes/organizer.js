@@ -542,10 +542,24 @@ router.post('/create-event', async (req, res) => {
         // Validation
         const validationErrors = {};
         
-        if (!req.body.name) validationErrors.name = 'Event name is required';
+        if (!req.body.name) {
+            validationErrors.name = 'Event name is required';
+        } else if (/^\d+$/.test(req.body.name.trim())) {
+            validationErrors.name = 'Event name cannot contain only numbers. Please include at least one letter.';
+        } else if (!/[a-zA-Z]/.test(req.body.name.trim())) {
+            validationErrors.name = 'Event name must contain at least one letter.';
+        }
+        
         if (!req.body.sport) validationErrors.sport = 'Sport type is required';
-        if (!req.body.start_date) validationErrors.start_date = 'Event date is required';
-        if (!req.body.location) validationErrors.location = 'Location is required';
+        if (!req.body.start_date) validationErrors.start_date = 'Start date is required';
+        
+        if (!req.body.location) {
+            validationErrors.location = 'Location is required';
+        } else if (/^\d+$/.test(req.body.location.trim())) {
+            validationErrors.location = 'Location cannot contain only numbers. Please include at least one letter.';
+        } else if (!/[a-zA-Z]/.test(req.body.location.trim())) {
+            validationErrors.location = 'Location must contain at least one letter.';
+        }
         
         // Check if event date is in the future
         if (req.body.start_date && new Date(req.body.start_date) <= new Date()) {
@@ -584,11 +598,13 @@ router.post('/create-event', async (req, res) => {
             title: req.body.name,
             description: req.body.description || '',
             sport_type: req.body.sport,
-            event_date: req.body.start_date,
+            event_date: req.body.start_date,  // Legacy field for compatibility
+            start_date: req.body.start_date,   // Proper start date
+            end_date: req.body.end_date || req.body.start_date,  // End date, default to start if not provided
             event_time: req.body.event_time || '10:00',
             location: req.body.location,
             max_teams: parseInt(req.body.max_teams || 16),
-            entry_fee: req.body.entry_fee || 0,
+            entry_fee: req.body.entry_fee ? parseFloat(req.body.entry_fee) : 0,  // Default to 0 if not provided
             registration_deadline: req.body.registration_deadline || null,
             status: req.body.status === 'Draft' ? 'draft' : 'upcoming'
         };
@@ -715,18 +731,19 @@ router.get('/event/:id', async (req, res) => {
                     
                     // Get manager details
                     const manager = await User.getUserById(team.manager_id);
-                    const managerName = manager ? `${manager.first_name || ''} ${manager.last_name || ''}`.trim() || manager.username : 'Unknown Manager';
+                    const managerName = manager ? `${manager.first_name || ''} ${manager.last_name || ''}`.trim() || manager.username || 'Unknown Manager' : 'Unknown Manager';
                     
                     // Add to the list of registered teams
                     registeredTeams.push({
-                        id: team._id,
-                        name: team.name,
+                        team_id: team._id,
+                        team_name: team.name || 'Unknown Team',
                         sport: team.sport_type,
                         members: team.members?.length || 0,
-                        manager: managerName,
+                        manager_name: managerName,
                         status: registration.status,
                         registration_date: new Date(registration.registration_date).toLocaleDateString(),
-                        notes: registration.notes || ''
+                        notes: registration.notes || '',
+                        players: team.members || []
                     });
                     
                     console.log(`Added team ${team.name} to registered teams list`);
@@ -1888,16 +1905,19 @@ router.get('/events', async (req, res) => {
         const events = await Event.getEventsByOrganizer(organizerId);
         
         const formattedEvents = events.map(event => ({
+            _id: event._id,
             id: event._id,
             name: event.title,
+            sport: event.sport_type,
             sport_type: event.sport_type,
             location: event.location,
-            start_date: event.event_date,
-            end_date: event.end_date,
+            start_date: event.start_date || event.event_date,  // Use start_date first, fallback to event_date
+            end_date: event.end_date || event.start_date || event.event_date,  // Use end_date, fallback to start_date
             registration_deadline: event.registration_deadline,
             max_teams: event.max_teams,
-            entry_fee: event.entry_fee,
+            entry_fee: event.entry_fee || 0,
             status: event.status,
+            registered_teams: event.team_registrations ? event.team_registrations.filter(reg => reg.status === 'approved' || reg.status === 'confirmed').length : 0,
             team_registrations: event.team_registrations || [],
             created_at: event.created_at
         }));

@@ -19,12 +19,14 @@ import PlayerDashboard from './pages/player/Dashboard';
 import Profile from './pages/player/Profile';
 import PlayerEvents from './pages/player/BrowseEvents';
 import BrowseTeams from './pages/player/BrowseTeams';
+import TeamDetail from './pages/player/TeamDetail';
 import Wallet from './pages/player/Wallet';
 import MyEvents from './pages/player/MyEvents';
 import MyTeams from './pages/player/MyTeams';
 import MyMatches from './pages/player/MyMatches';
 import PlayerStats from './pages/player/PlayerStats';
 import PlayerMatches from './pages/player/PlayerMatches';
+import PlayerEventDetail from './pages/player/EventDetail';
 
 // Manager Pages
 import ManagerDashboard from './pages/manager/Dashboard';
@@ -158,6 +160,22 @@ const AppContent = () => {
           element={
             <ProtectedRoute allowedRoles={['player']}>
               <BrowseTeams />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/player/team/:teamId"
+          element={
+            <ProtectedRoute allowedRoles={['player']}>
+              <TeamDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/player/event/:eventId"
+          element={
+            <ProtectedRoute allowedRoles={['player']}>
+              <PlayerEventDetail />
             </ProtectedRoute>
           }
         />
