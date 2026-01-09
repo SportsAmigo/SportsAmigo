@@ -19,7 +19,7 @@ const CreateEvent = () => {
         end_date: '',
         registration_deadline: '',
         max_teams: 16,
-        entry_fee: ''
+        entry_fee: 0
     });
 
     const [errors, setErrors] = useState({});
@@ -39,6 +39,10 @@ const CreateEvent = () => {
             newErrors.name = 'Event name must be at least 3 characters';
         } else if (formData.name.length > 100) {
             newErrors.name = 'Event name must not exceed 100 characters';
+        } else if (/^\d+$/.test(formData.name.trim())) {
+            newErrors.name = 'Event name cannot contain only numbers. Please include at least one letter.';
+        } else if (!/[a-zA-Z]/.test(formData.name.trim())) {
+            newErrors.name = 'Event name must contain at least one letter.';
         }
 
         if (!formData.sport) {
@@ -49,6 +53,10 @@ const CreateEvent = () => {
             newErrors.location = 'Location is required';
         } else if (formData.location.length < 3) {
             newErrors.location = 'Location must be at least 3 characters';
+        } else if (/^\d+$/.test(formData.location.trim())) {
+            newErrors.location = 'Location cannot contain only numbers. Please include at least one letter.';
+        } else if (!/[a-zA-Z]/.test(formData.location.trim())) {
+            newErrors.location = 'Location must contain at least one letter.';
         }
 
         if (formData.description && formData.description.length > 1000) {
@@ -118,9 +126,10 @@ const CreateEvent = () => {
             }
         }
 
-        if (formData.entry_fee && formData.entry_fee < 0) {
+        if (formData.entry_fee && parseFloat(formData.entry_fee) < 0) {
             newErrors.entry_fee = 'Entry fee cannot be negative';
         }
+        // Entry fee is optional - default to 0 if not provided
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;

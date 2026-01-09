@@ -19,6 +19,7 @@ const MyEvents = () => {
         try {
             const response = await axios.get('http://localhost:5000/api/player/my-events', { withCredentials: true });
             if (response.data.success) {
+                console.log('MyEvents - Fetched events:', response.data.events);
                 setEvents(response.data.events);
             }
         } catch (error) {
@@ -39,9 +40,6 @@ const MyEvents = () => {
                             </h1>
                             <p>Events you have joined through your teams</p>
                         </div>
-                        <Link to="/player/events" className="header-action-btn">
-                            <i className="fa fa-search"></i> Browse Events
-                        </Link>
                     </div>
                 </div>
 

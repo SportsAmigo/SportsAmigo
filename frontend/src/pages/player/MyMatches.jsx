@@ -22,12 +22,22 @@ const MyMatches = () => {
             });
             const data = await response.json();
             if (data.success) {
-                setMatches(data.matches);
+                // Map backend data to frontend format
+                const mappedMatches = data.matches.map(match => ({
+                    ...match,
+                    result: match.player_result || 'draw', // Backend returns player_result
+                    myTeam: match.player_team, // Backend returns player_team
+                    date: match.match_date || match.date,
+                    team_a_score: match.score_a,
+                    team_b_score: match.score_b
+                }));
                 
-                // Extract unique teams
+                setMatches(mappedMatches);
+                
+                // Extract unique teams from player_team
                 const uniqueTeams = [];
                 const teamIds = new Set();
-                data.matches.forEach(match => {
+                mappedMatches.forEach(match => {
                     if (match.myTeam && !teamIds.has(match.myTeam._id)) {
                         teamIds.add(match.myTeam._id);
                         uniqueTeams.push(match.myTeam);
@@ -46,20 +56,28 @@ const MyMatches = () => {
     };
 
     const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
+        if (!dateString) return 'Date Not Available';
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return 'Date Not Available';
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        } catch (error) {
+            return 'Date Not Available';
+        }
     };
 
     const getResultBadge = (result) => {
         const badges = {
             won: { class: 'result-won', text: 'Won', icon: 'fa-trophy' },
             lost: { class: 'result-lost', text: 'Lost', icon: 'fa-times-circle' },
+            draw: { class: 'result-drawn', text: 'Draw', icon: 'fa-handshake' },
             drawn: { class: 'result-drawn', text: 'Draw', icon: 'fa-handshake' }
         };
-        const badge = badges[result] || badges.drawn;
+        const badge = badges[result] || badges.draw;
         return (
             <span className={`result-badge ${badge.class}`}>
                 <i className={`fas ${badge.icon}`}></i> {badge.text}
@@ -85,7 +103,7 @@ const MyMatches = () => {
     const stats = {
         total: filteredMatches.length,
         won: filteredMatches.filter(m => m.result === 'won').length,
-        drawn: filteredMatches.filter(m => m.result === 'drawn').length,
+        drawn: filteredMatches.filter(m => m.result === 'draw' || m.result === 'drawn').length,
         lost: filteredMatches.filter(m => m.result === 'lost').length
     };
 
@@ -205,12 +223,6 @@ const MyMatches = () => {
                                         {match.event_id && (
                                             <div className="match-event">
                                                 <i className="fas fa-calendar"></i> {match.event_id.title || 'Tournament Match'}
-                                            </div>
-                                        )}
-
-                                        {match.match_type === 'friendly' && (
-                                            <div className="match-type">
-                                                <i className="fas fa-handshake"></i> Friendly Match
                                             </div>
                                         )}
                                     </div>

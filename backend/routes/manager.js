@@ -461,6 +461,20 @@ router.post('/create-team', async (req, res) => {
             validationErrors.max_members = 'Max members must be a positive number';
         }
         
+        // Backend validation: Team name cannot be only numbers
+        if (name) {
+            const teamNameOnlyNumbers = /^\d+$/;
+            if (teamNameOnlyNumbers.test(name.trim())) {
+                validationErrors.name = 'Team name cannot contain only numbers. Please include at least one letter.';
+            }
+            
+            // Team name must contain at least one letter
+            const hasLetter = /[a-zA-Z]/;
+            if (!hasLetter.test(name.trim())) {
+                validationErrors.name = 'Team name must contain at least one letter.';
+            }
+        }
+        
         // Check if manager already has a team with this sport type
         // Commented out to allow multiple teams of the same sport type
         // const existingTeam = await TeamSchema.find({
@@ -578,6 +592,24 @@ router.put('/team/:id', async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message: 'Team name and sport type are required'
+            });
+        }
+        
+        // Backend validation: Team name cannot be only numbers
+        const teamNameOnlyNumbers = /^\d+$/;
+        if (teamNameOnlyNumbers.test(name.trim())) {
+            return res.status(400).json({
+                success: false,
+                message: 'Team name cannot contain only numbers. Please include at least one letter.'
+            });
+        }
+        
+        // Team name must contain at least one letter
+        const hasLetter = /[a-zA-Z]/;
+        if (!hasLetter.test(name.trim())) {
+            return res.status(400).json({
+                success: false,
+                message: 'Team name must contain at least one letter.'
             });
         }
         

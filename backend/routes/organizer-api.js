@@ -310,11 +310,11 @@ router.get('/event/:id', async (req, res) => {
             description: event.description,
             sport: event.sport_type,
             location: event.location,
-            start_date: event.start_date || event.event_date,
-            end_date: event.end_date || event.event_date,
+            start_date: event.start_date || event.event_date,  // Use start_date first, fallback to event_date
+            end_date: event.end_date || event.start_date || event.event_date,  // Use end_date, fallback to start_date
             event_time: event.event_time,
             max_teams: event.max_teams,
-            entry_fee: event.entry_fee,
+            entry_fee: event.entry_fee || 0,
             registration_deadline: event.registration_deadline,
             status: event.status,
             registered_teams: teamRegistrations.length,
@@ -350,26 +350,65 @@ router.put('/event/:id', async (req, res) => {
             });
         }
         
+        // Backend validation for event name and location
+        const validationErrors = {};
+        
+        if (req.body.name) {
+            if (/^\d+$/.test(req.body.name.trim())) {
+                validationErrors.name = 'Event name cannot contain only numbers. Please include at least one letter.';
+            } else if (!/[a-zA-Z]/.test(req.body.name.trim())) {
+                validationErrors.name = 'Event name must contain at least one letter.';
+            }
+        }
+        
+        if (req.body.location) {
+            if (/^\d+$/.test(req.body.location.trim())) {
+                validationErrors.location = 'Location cannot contain only numbers. Please include at least one letter.';
+            } else if (!/[a-zA-Z]/.test(req.body.location.trim())) {
+                validationErrors.location = 'Location must contain at least one letter.';
+            }
+        }
+        
+        if (Object.keys(validationErrors).length > 0) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Validation failed',
+                errors: validationErrors
+            });
+        }
+        
         const updateData = {
-            title: req.body.name || req.body.title,
-            description: req.body.description,
-            sport_type: req.body.sport || req.body.sport_type,
-            event_date: req.body.start_date || req.body.event_date,
-            start_date: req.body.start_date,
-            end_date: req.body.end_date,
-            event_time: req.body.event_time,
-            location: req.body.location,
+            title: req.body.name || req.body.title || event.title,
+            description: req.body.description !== undefined ? req.body.description : event.description,
+            sport_type: req.body.sport || req.body.sport_type || event.sport_type,
+            event_date: req.body.start_date || event.start_date || event.event_date,  // Legacy field
+            start_date: req.body.start_date || event.start_date || event.event_date,  // Proper start date
+            end_date: req.body.end_date || event.end_date || event.start_date || event.event_date,  // End date
+            event_time: req.body.event_time || event.event_time,
+            location: req.body.location || event.location,
             max_teams: req.body.max_teams ? parseInt(req.body.max_teams) : event.max_teams,
-            entry_fee: req.body.entry_fee !== undefined ? parseFloat(req.body.entry_fee) : event.entry_fee,
-            registration_deadline: req.body.registration_deadline,
+            entry_fee: (req.body.entry_fee !== undefined && req.body.entry_fee !== '' && req.body.entry_fee !== null) ? parseFloat(req.body.entry_fee) || 0 : (event.entry_fee || 0),
+            registration_deadline: req.body.registration_deadline || event.registration_deadline,
             status: req.body.status || event.status
         };
         
         await Event.updateEvent(req.params.id, updateData);
         
+        // Fetch updated event to return fresh data
+        const updatedEvent = await Event.getEventById(req.params.id);
+        
         res.json({
             success: true,
-            message: 'Event updated successfully'
+            message: 'Event updated successfully',
+            event: {
+                _id: updatedEvent._id,
+                name: updatedEvent.title,
+                sport: updatedEvent.sport_type,
+                location: updatedEvent.location,
+                start_date: updatedEvent.start_date || updatedEvent.event_date,
+                end_date: updatedEvent.end_date || updatedEvent.start_date || updatedEvent.event_date,
+                registration_deadline: updatedEvent.registration_deadline
+            }
         });
     } catch (error) {
         console.error('Error updating event:', error);
@@ -477,6 +516,11 @@ router.put('/profile', upload.single('profile_image'), async (req, res) => {
         const User = require('../models/user');
         const userId = req.session.user._id;
         
+        console.log('=== Profile Update Request ===');
+        console.log('User ID:', userId);
+        console.log('Request body:', req.body);
+        console.log('File uploaded:', req.file ? req.file.filename : 'No file');
+        
         const updateData = {
             first_name: req.body.first_name,
             last_name: req.body.last_name,
@@ -485,13 +529,13 @@ router.put('/profile', upload.single('profile_image'), async (req, res) => {
         };
         
         // Handle nested profile fields (age, address, organization)
-        if (req.body.age !== undefined) {
-            updateData['profile.age'] = req.body.age ? parseInt(req.body.age, 10) : null;
+        if (req.body.age !== undefined && req.body.age !== '') {
+            updateData['profile.age'] = parseInt(req.body.age, 10);
         }
-        if (req.body.address !== undefined) {
+        if (req.body.address !== undefined && req.body.address !== '') {
             updateData['profile.address'] = req.body.address;
         }
-        if (req.body.organization !== undefined) {
+        if (req.body.organization !== undefined && req.body.organization !== '') {
             updateData['profile.organization_name'] = req.body.organization;
         }
         
@@ -500,23 +544,27 @@ router.put('/profile', upload.single('profile_image'), async (req, res) => {
             updateData.profile_image = `/uploads/profile/${req.file.filename}`;
         }
         
-        console.log('Updating user with data:', updateData);
+        console.log('Update data prepared:', updateData);
         
-        // Update user in database using findByIdAndUpdate for nested fields
-        const updatedUser = await User.findByIdAndUpdate(
+        // Use User model's findByIdAndUpdate directly
+        const mongoose = require('mongoose');
+        const UserModel = mongoose.model('User');
+        
+        const updatedUser = await UserModel.findByIdAndUpdate(
             userId, 
             { $set: updateData },
             { new: true, runValidators: true }
         );
         
         if (!updatedUser) {
+            console.error('User not found or update failed');
             return res.status(500).json({ 
                 success: false, 
                 message: 'Failed to update profile in database' 
             });
         }
         
-        console.log('Updated user from database:', updatedUser);
+        console.log('Profile updated successfully');
         
         // Prepare session user object
         const sessionUser = updatedUser.toObject ? updatedUser.toObject() : updatedUser;
@@ -527,10 +575,16 @@ router.put('/profile', upload.single('profile_image'), async (req, res) => {
         
         await new Promise((resolve, reject) => {
             req.session.save((err) => {
-                if (err) reject(err);
-                else resolve();
+                if (err) {
+                    console.error('Session save error:', err);
+                    reject(err);
+                } else {
+                    resolve();
+                }
             });
         });
+        
+        console.log('Session updated successfully');
         
         res.json({
             success: true,
@@ -551,7 +605,9 @@ router.put('/profile', upload.single('profile_image'), async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error updating profile:', error);
+        console.error('=== Profile Update Error ===');
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
         res.status(500).json({ 
             success: false, 
             message: 'Failed to update profile',

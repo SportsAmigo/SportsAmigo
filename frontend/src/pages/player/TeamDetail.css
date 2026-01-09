@@ -1,0 +1,134 @@
+/* Team Detail Page Styles */
+.team-detail-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 20px;
+}
+
+.team-detail-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.team-detail-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 40px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.team-detail-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+
+.team-sport-badge {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 1rem;
+    margin-top: 10px;
+}
+
+.team-detail-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.team-detail-main,
+.team-detail-sidebar {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+}
+
+.team-detail-section {
+    margin-bottom: 30px;
+}
+
+.team-detail-section h2 {
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+    color: #333;
+    border-bottom: 3px solid #667eea;
+    padding-bottom: 10px;
+}
+
+.team-stat-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.team-stat-card h3 {
+    font-size: 1rem;
+    margin-bottom: 10px;
+    opacity: 0.9;
+}
+
+.team-stat-card .stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.team-members-list {
+    list-style: none;
+    padding: 0;
+}
+
+.team-member-item {
+    padding: 15px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+}
+
+.team-member-item:last-child {
+    border-bottom: none;
+}
+
+.member-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 1.2rem;
+    margin-right: 15px;
+}
+
+.member-info h4 {
+    margin: 0 0 5px 0;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.member-info p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+@media (max-width: 968px) {
+    .team-detail-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .team-detail-header h1 {
+        font-size: 2rem;
+    }
+}

@@ -28,6 +28,23 @@ const CreateTeam = () => {
         e.preventDefault();
         setLoading(true);
         setErrors({});
+        
+        // Frontend validation: Team name cannot be only numbers
+        const teamNameOnlyNumbers = /^\d+$/;
+        if (teamNameOnlyNumbers.test(formData.name.trim())) {
+            setErrors({ name: 'Team name cannot contain only numbers. Please include at least one letter.' });
+            setLoading(false);
+            return;
+        }
+        
+        // Team name must contain at least one letter
+        const hasLetter = /[a-zA-Z]/;
+        if (!hasLetter.test(formData.name.trim())) {
+            setErrors({ name: 'Team name must contain at least one letter.' });
+            setLoading(false);
+            return;
+        }
+        
         try {
             const response = await axios.post('http://localhost:5000/api/manager/create-team', formData, { withCredentials: true });
             if (response.data.success) {

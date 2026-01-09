@@ -356,7 +356,8 @@
   gap: 1.5rem;
   padding: 2.5rem;
   max-width: 1400px;
-  margin: 0 auto;
+  margin: 0;
+  margin-left: 0;
 }
 
 .stat-card {

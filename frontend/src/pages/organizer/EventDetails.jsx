@@ -246,20 +246,6 @@ const EventDetails = () => {
                                 </h2>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <p className="text-sm text-gray-500 font-medium">Start Date</p>
-                                        <p className="text-lg text-gray-800 font-semibold">
-                                            <i className="fa fa-calendar text-orange-600 mr-2"></i>
-                                            {new Date(event.start_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                                        </p>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <p className="text-sm text-gray-500 font-medium">End Date</p>
-                                        <p className="text-lg text-gray-800 font-semibold">
-                                            <i className="fa fa-calendar-check text-orange-600 mr-2"></i>
-                                            {new Date(event.end_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                                        </p>
-                                    </div>
-                                    <div className="space-y-2">
                                         <p className="text-sm text-gray-500 font-medium">Location</p>
                                         <p className="text-lg text-gray-800 font-semibold">
                                             <i className="fa fa-map-marker-alt text-orange-600 mr-2"></i>
@@ -270,7 +256,7 @@ const EventDetails = () => {
                                         <p className="text-sm text-gray-500 font-medium">Registration Deadline</p>
                                         <p className="text-lg text-gray-800 font-semibold">
                                             <i className="fa fa-clock text-orange-600 mr-2"></i>
-                                            {event.registration_deadline ? new Date(event.registration_deadline).toLocaleDateString() : 'Not set'}
+                                            {event.registration_deadline ? new Date(event.registration_deadline).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not set'}
                                         </p>
                                     </div>
                                 </div>
