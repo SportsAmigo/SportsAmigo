@@ -147,6 +147,38 @@ export const authService = {
             throw error.response?.data || { success: false, message: 'Failed to reset password' };
         }
     },
+
+    /**
+     * Send OTP for login verification
+     * @param {string} email 
+     * @param {string} password 
+     * @param {string} role 
+     * @returns {Promise}
+     */
+    sendLoginOTP: async (email, password, role) => {
+        try {
+            const response = await api.post('/auth/send-login-otp', { email, password, role });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || { success: false, message: 'Failed to send login OTP' };
+        }
+    },
+
+    /**
+     * Verify login OTP and complete login
+     * @param {string} email 
+     * @param {string} otp 
+     * @param {string} role 
+     * @returns {Promise}
+     */
+    verifyLoginOTP: async (email, otp, role) => {
+        try {
+            const response = await api.post('/auth/verify-login-otp', { email, otp, role });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || { success: false, message: 'Failed to verify login OTP' };
+        }
+    },
 };
 
 export default authService;

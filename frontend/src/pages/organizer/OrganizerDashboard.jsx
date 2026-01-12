@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectUser, logoutUser } from '../../store/slices/authSlice';
+import OrganizerLayout from '../../components/layout/OrganizerLayout';
 import axios from 'axios';
 import './OrganizerDashboard.css';
 
@@ -17,7 +18,6 @@ const OrganizerDashboard = () => {
     });
     const [recentEvents, setRecentEvents] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [sidebarOpen, setSidebarOpen] = useState(true);
 
     useEffect(() => {
         fetchDashboardData();
@@ -50,67 +50,10 @@ const OrganizerDashboard = () => {
     };
 
     return (
-        <div className="organizer-dashboard">
-            <div className="organizer-dashboard-content">
-                {/* Sidebar */}
-                <div className={`organizer-sidebar ${sidebarOpen ? '' : 'collapsed'}`}>
-                    <div className="sidebar-header">
-                        <Link to="/" className="sidebar-logo">
-                            <div className="sidebar-logo-icon">
-                                <i className="fa fa-trophy"></i>
-                            </div>
-                            <span>SportsAmigo</span>
-                        </Link>
-                    </div>
-
-                    <div className="sidebar-user-profile">
-                        <div className="sidebar-user-avatar">
-                            {user?.profile_image ? (
-                                <img src={`http://localhost:5000${user.profile_image}`} alt="Profile" />
-                            ) : (
-                                <i className="fa fa-user"></i>
-                            )}
-                        </div>
-                        <div className="sidebar-user-name">{user?.organization || user?.first_name || 'Organizer'}</div>
-                        <div className="sidebar-user-role">Event Organizer</div>
-                    </div>
-
-                    <nav className="sidebar-nav">
-                        <Link to="/organizer/dashboard" className="sidebar-nav-item active">
-                            <i className="fa fa-tachometer-alt"></i>
-                            Dashboard
-                        </Link>
-                        <Link to="/organizer/my-events" className="sidebar-nav-item">
-                            <i className="fa fa-calendar-alt"></i>
-                            My Events
-                        </Link>
-                        <Link to="/organizer/create-event" className="sidebar-nav-item">
-                            <i className="fa fa-plus-circle"></i>
-                            Create Event
-                        </Link>
-                        <Link to="/organizer/profile" className="sidebar-nav-item">
-                            <i className="fa fa-user"></i>
-                            Profile
-                        </Link>
-                    </nav>
-
-                    <div className="sidebar-footer">
-                        <button onClick={handleLogout} className="sidebar-logout-btn">
-                            <i className="fa fa-sign-out-alt"></i>
-                            Logout
-                        </button>
-                    </div>
-                </div>
-
-                {/* Main Content */}
-                <div className={`organizer-main-content ${sidebarOpen ? '' : 'expanded'}`}>
-                    {/* Sidebar Toggle Button */}
-                    <button className="sidebar-toggle-btn" onClick={() => setSidebarOpen(!sidebarOpen)}>
-                        <i className={`fa fa-${sidebarOpen ? 'times' : 'bars'}`}></i>
-                    </button>
-
-                    {/* Header Section with Overlay */}
-                    <div className="dashboard-header-section">
+        <OrganizerLayout>
+            <div className="organizer-main-content">
+                {/* Header Section with background styling from CSS */}
+                <div className="dashboard-header-section">
                         <div className="dashboard-welcome-card">
                             <div className="welcome-text">
                                 <h1>Welcome back, {user?.organization || user?.first_name || 'Organizer'}!</h1>
@@ -225,8 +168,7 @@ const OrganizerDashboard = () => {
                         )}
                     </div>
                 </div>
-            </div>
-        </div>
+        </OrganizerLayout>
     );
 };
 

@@ -43,48 +43,48 @@ const ScheduleMatches = () => {
                 console.log('🔒 Schedule finalized:', eventData.schedule_finalized);
                 console.log('👥 Team registrations:', eventData.team_registrations);
 
-                // CRITICAL FIX: Accept ANY status if no confirmed teams exist
-                let confirmedTeams = [];
+                // Extract teams that are approved or confirmed
+                let approvedTeams = [];
                 
                 if (eventData.team_registrations && eventData.team_registrations.length > 0) {
-                    // First, try to get confirmed teams
-                    confirmedTeams = eventData.team_registrations
+                    approvedTeams = eventData.team_registrations
                         .filter(reg => {
-                            console.log('Checking registration:', {
+                            const isApproved = reg.status === 'approved' || reg.status === 'confirmed';
+                            console.log('Team registration:', {
+                                team_name: reg.team_name,
                                 status: reg.status,
+                                isApproved: isApproved,
                                 team_id: reg.team_id
                             });
-                            return reg.status === 'confirmed' || reg.status === 'approved';
+                            return isApproved;
                         })
                         .map(reg => {
+                            // Handle both populated and non-populated team_id
                             const teamData = reg.team_id;
                             if (typeof teamData === 'object' && teamData !== null) {
                                 return {
-                                    id: teamData._id,
-                                    name: teamData.name
+                                    id: teamData._id || teamData.id,
+                                    name: teamData.name || reg.team_name
+                                };
+                            } else if (teamData) {
+                                // If team_id is just a string ID, use team_name from registration
+                                return {
+                                    id: teamData,
+                                    name: reg.team_name
                                 };
                             }
                             return null;
                         })
                         .filter(team => team !== null);
-                    
-                    // FALLBACK: If no confirmed teams, accept ALL teams with valid team_id
-                    if (confirmedTeams.length === 0) {
-                        console.warn('⚠️ No confirmed teams, accepting all registered teams');
-                        confirmedTeams = eventData.team_registrations
-                            .filter(reg => reg.team_id && typeof reg.team_id === 'object')
-                            .map(reg => ({
-                                id: reg.team_id._id,
-                                name: reg.team_id.name
-                            }));
-                    }
                 }
                 
-                console.log('✅ Final teams array:', confirmedTeams);
-                setTeams(confirmedTeams);
+                console.log('✅ Approved teams for scheduling:', approvedTeams);
+                setTeams(approvedTeams);
 
-                if (confirmedTeams.length === 0) {
-                    console.warn('⚠️ No confirmed teams found!');
+                if (approvedTeams.length === 0) {
+                    console.warn('⚠️ No approved/confirmed teams found!');
+                } else {
+                    console.log(`✅ Found ${approvedTeams.length} approved teams`);
                 }
             }
         } catch (error) {

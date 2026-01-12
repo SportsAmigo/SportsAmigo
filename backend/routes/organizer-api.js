@@ -454,6 +454,40 @@ router.delete('/event/:id', async (req, res) => {
     }
 });
 
+// PUT /api/organizer/event/:id/cancel - Cancel event (marks as cancelled)
+router.put('/event/:id/cancel', async (req, res) => {
+    try {
+        const Event = require('../models/event');
+        const event = await Event.getEventById(req.params.id);
+        
+        if (!event) {
+            return res.status(404).json({ success: false, message: 'Event not found' });
+        }
+        
+        // Check permission
+        if (event.organizer_id.toString() !== req.session.user._id.toString()) {
+            return res.status(403).json({ 
+                success: false, 
+                message: 'You do not have permission to cancel this event' 
+            });
+        }
+        
+        await Event.cancelEvent(req.params.id);
+        
+        res.json({
+            success: true,
+            message: 'Event cancelled successfully'
+        });
+    } catch (error) {
+        console.error('Error cancelling event:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to cancel event',
+            error: error.message 
+        });
+    }
+});
+
 // GET /api/organizer/profile - Get organizer profile
 router.get('/profile', async (req, res) => {
     try {

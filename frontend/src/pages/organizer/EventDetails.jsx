@@ -88,6 +88,25 @@ const EventDetails = () => {
         }
     };
 
+    const handleCancelEvent = async () => {
+        if (!window.confirm(`Are you sure you want to cancel "${event?.name}"? This will mark the event as cancelled.`)) {
+            return;
+        }
+
+        try {
+            const response = await axios.put(`http://localhost:5000/api/organizer/event/${id}/cancel`, {}, {
+                withCredentials: true
+            });
+
+            if (response.data.success) {
+                setMessage({ type: 'success', text: 'Event cancelled successfully' });
+                fetchEventDetails(); // Refresh to show updated status
+            }
+        } catch (error) {
+            setMessage({ type: 'error', text: 'Failed to cancel event' });
+        }
+    };
+
     const handleDeleteEvent = async () => {
         if (!window.confirm(`Are you sure you want to delete "${event?.name}"? This action cannot be undone.`)) {
             return;
@@ -140,6 +159,8 @@ const EventDetails = () => {
             case 'upcoming': return 'bg-green-100 text-green-800';
             case 'ongoing': return 'bg-blue-100 text-blue-800';
             case 'completed': return 'bg-gray-100 text-gray-800';
+            case 'cancelled': return 'bg-red-100 text-red-800';
+            case 'draft': return 'bg-yellow-100 text-yellow-800';
             default: return 'bg-yellow-100 text-yellow-800';
         }
     };
@@ -197,9 +218,15 @@ const EventDetails = () => {
                                 <Link
                                     to={`/organizer/edit-event/${event._id}`}
                                     className="bg-white text-orange-600 px-6 py-3 rounded-lg font-semibold hover:bg-orange-50 transition-all duration-200 shadow-lg"
-                                >
-                                    <i className="fa fa-edit mr-2"></i>Edit Event
+                                >                                    <i className="fa fa-edit mr-2"></i>Edit Event
                                 </Link>
+                                <button
+                                    onClick={handleCancelEvent}
+                                    className="bg-yellow-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-yellow-700 transition-all duration-200 shadow-lg"
+                                    disabled={event.status === 'cancelled' || event.status === 'completed'}
+                                >
+                                    <i className="fa fa-ban mr-2"></i>Cancel Event
+                                </button>
                                 <button
                                     onClick={handleDeleteEvent}
                                     className="bg-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700 transition-all duration-200 shadow-lg"

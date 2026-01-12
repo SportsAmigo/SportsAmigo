@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import OrganizerLayout from '../../components/layout/OrganizerLayout';
 import './EventLeaderboard.css';
 
 const EventLeaderboard = () => {
@@ -73,15 +74,18 @@ const EventLeaderboard = () => {
 
     if (loading) {
         return (
+            <OrganizerLayout>
             <div className="organizer-dashboard">
                 <div className="container">
                     <div className="loading">Loading leaderboard...</div>
                 </div>
             </div>
+            </OrganizerLayout>
         );
     }
 
     return (
+        <OrganizerLayout>
         <div className="organizer-dashboard">
             <div className="container">
                 <div className="page-header">
@@ -202,6 +206,7 @@ const EventLeaderboard = () => {
                 </div>
             </div>
         </div>
+        </OrganizerLayout>
     );
 };
 
