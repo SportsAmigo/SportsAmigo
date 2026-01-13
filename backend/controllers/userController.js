@@ -588,5 +588,149 @@ module.exports = {
                 message: 'Failed to reset password. Please try again.' 
             });
         }
+    },
+
+    /**
+     * Send OTP for login verification
+     * @param {Object} req - Request object
+     * @param {Object} res - Response object
+     */
+    sendLoginOTP: async (req, res) => {
+        const { email, password, role } = req.body;
+
+        try {
+            // Authenticate user first
+            const user = await User.authenticate(email, password);
+            
+            if (!user) {
+                return res.status(401).json({ 
+                    success: false, 
+                    message: 'Invalid email or password' 
+                });
+            }
+
+            // Check role if provided
+            if (role && user.role !== role) {
+                return res.status(403).json({ 
+                    success: false, 
+                    message: `You are registered as a ${user.role}, not a ${role}` 
+                });
+            }
+
+            // Check if email is verified (only for new users with OTP field)
+            if (user.isEmailVerified === false && user.otp) {
+                return res.status(403).json({ 
+                    success: false, 
+                    message: 'Please verify your email before logging in' 
+                });
+            }
+
+            // Generate login OTP with 10-minute expiry
+            const { otp, expiresAt } = generateOTPWithExpiry(10);
+
+            // Save login OTP (reusing the same OTP field)
+            await User.saveOTP(email, otp, expiresAt);
+
+            // Send OTP email
+            const userName = `${user.first_name} ${user.last_name}`.trim();
+            await sendOTPEmail(email, otp, userName);
+
+            console.log(`Login OTP sent to ${email}: ${otp}`); // Remove in production
+
+            return res.status(200).json({ 
+                success: true, 
+                message: 'OTP sent to your email. Please check your inbox.',
+                expiresIn: '10 minutes'
+            });
+
+        } catch (err) {
+            console.error('Error sending login OTP:', err);
+            return res.status(500).json({ 
+                success: false, 
+                message: 'Failed to send OTP. Please try again.' 
+            });
+        }
+    },
+
+    /**
+     * Verify login OTP and complete login
+     * @param {Object} req - Request object
+     * @param {Object} res - Response object
+     */
+    verifyLoginOTP: async (req, res) => {
+        const { email, otp, role } = req.body;
+
+        try {
+            // Verify OTP
+            const verification = await User.verifyOTP(email, otp);
+
+            if (!verification.valid) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: verification.message 
+                });
+            }
+
+            const user = verification.user;
+
+            // Check role match again
+            if (role && user.role !== role) {
+                return res.status(403).json({ 
+                    success: false, 
+                    message: `You are registered as a ${user.role}, not a ${role}` 
+                });
+            }
+
+            // Get fresh user data
+            const freshUserData = await User.getUserById(user._id);
+            
+            if (!freshUserData) {
+                return res.status(500).json({ 
+                    success: false, 
+                    message: 'Failed to retrieve user data' 
+                });
+            }
+
+            // Create session
+            const sessionUser = freshUserData.toObject ? freshUserData.toObject() : freshUserData;
+            sessionUser.name = sessionUser.first_name + (sessionUser.last_name ? ' ' + sessionUser.last_name : '');
+            
+            req.session.user = sessionUser;
+
+            req.session.save(err => {
+                if (err) {
+                    return res.status(500).json({ 
+                        success: false, 
+                        message: 'Session error' 
+                    });
+                }
+
+                return res.json({ 
+                    success: true, 
+                    message: 'Login successful!', 
+                    user: { 
+                        id: sessionUser._id, 
+                        name: sessionUser.name, 
+                        email: sessionUser.email, 
+                        role: sessionUser.role, 
+                        first_name: sessionUser.first_name, 
+                        last_name: sessionUser.last_name, 
+                        phone: sessionUser.phone,
+                        age: sessionUser.profile?.age || '',
+                        address: sessionUser.profile?.address || '',
+                        bio: sessionUser.bio || '',
+                        organization: sessionUser.profile?.organization_name || '',
+                        profile_image: sessionUser.profile_image 
+                    } 
+                });
+            });
+
+        } catch (err) {
+            console.error('Error verifying login OTP:', err);
+            return res.status(500).json({ 
+                success: false, 
+                message: 'Failed to verify OTP. Please try again.' 
+            });
+        }
     }
 }; 

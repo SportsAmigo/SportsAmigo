@@ -1016,13 +1016,13 @@ router.post('/event/:id/delete', async (req, res) => {
     }
 });
 
-// Cancel event route (uses the same deleteEvent functionality)
+// Cancel event route (marks event as cancelled without deleting)
 router.post('/event/:id/cancel', async (req, res) => {
     try {
-        const eventId = req.params.id; // Use string ID directly, don't convert to integer
+        const eventId = req.params.id;
         const reason = req.body.reason || '';
         
-        console.log(`Canceling/deleting event ${eventId} by organizer ${req.session.user._id}`);
+        console.log(`Canceling event ${eventId} by organizer ${req.session.user._id}`);
         
         // Get the event to check if current user is the organizer
         const Event = require('../models/event');
@@ -1045,8 +1045,8 @@ router.post('/event/:id/cancel', async (req, res) => {
             return res.redirect('/organizer/manage-events');
         }
         
-        // Delete the event using the direct async function instead of callback
-        await Event.deleteEvent(eventId);
+        // Cancel the event (marks as cancelled)
+        await Event.cancelEvent(eventId);
         console.log(`Successfully canceled event ${eventId}`);
         
         // Success message

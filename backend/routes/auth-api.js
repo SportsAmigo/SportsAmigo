@@ -126,6 +126,20 @@ router.post('/send-otp', userController.sendOTP);
 router.post('/verify-otp', userController.verifyOTP);
 
 /**
+ * Send OTP for login verification
+ * POST /api/auth/send-login-otp
+ * Body: { email, password, role }
+ */
+router.post('/send-login-otp', userController.sendLoginOTP);
+
+/**
+ * Verify login OTP and complete login
+ * POST /api/auth/verify-login-otp
+ * Body: { email, otp, role }
+ */
+router.post('/verify-login-otp', userController.verifyLoginOTP);
+
+/**
  * Initiate forgot password - send reset OTP
  * POST /api/auth/forgot-password
  * Body: { email }

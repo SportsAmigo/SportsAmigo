@@ -8,11 +8,13 @@ const Login = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     
+    const [loginStep, setLoginStep] = useState(1); // 1: Enter credentials, 2: Enter OTP
     const [formData, setFormData] = useState({
         email: '',
         password: '',
         role: 'player',
-        remember: false
+        remember: false,
+        otp: ''
     });
     
     const [errors, setErrors] = useState({});
@@ -51,22 +53,50 @@ const Login = () => {
         setMessage('');
         setLoading(true);
 
-        try {
-            const result = await dispatch(loginUser({ 
-                email: formData.email, 
-                password: formData.password, 
-                role: formData.role 
-            })).unwrap();
-            
-            navigate(`/${result.user.role}/dashboard`);
-        } catch (error) {
-            console.error('Login error:', error);
-            setMessage(error.message || 'Login failed');
-            if (error.errors) {
-                setErrors(error.errors);
+        if (loginStep === 1) {
+            // Step 1: Send login OTP
+            try {
+                const result = await authService.sendLoginOTP(formData.email, formData.password, formData.role);
+                setSuccessMessage(result.message || 'OTP sent to your email! Please check your inbox.');
+                setLoginStep(2);
+            } catch (error) {
+                console.error('Login OTP error:', error);
+                setMessage(error.message || 'Login failed');
+                if (error.errors) {
+                    setErrors(error.errors);
+                }
+            } finally {
+                setLoading(false);
             }
-        } finally {
-            setLoading(false);
+        } else {
+            // Step 2: Verify OTP and complete login
+            if (!formData.otp || formData.otp.length !== 6) {
+                setErrors({ otp: 'Please enter the 6-digit OTP' });
+                setMessage('Please enter a valid OTP');
+                setLoading(false);
+                return;
+            }
+
+            try {
+                const result = await authService.verifyLoginOTP(formData.email, formData.otp, formData.role);
+                
+                // Manually update Redux state with the user data
+                await dispatch(loginUser({ 
+                    email: formData.email, 
+                    password: formData.password, 
+                    role: formData.role 
+                })).unwrap();
+                
+                navigate(`/${result.user.role}/dashboard`);
+            } catch (error) {
+                console.error('OTP verification error:', error);
+                setMessage(error.message || 'Failed to verify OTP');
+                if (error.errors) {
+                    setErrors(error.errors);
+                }
+            } finally {
+                setLoading(false);
+            }
         }
     };
 
@@ -155,6 +185,28 @@ const Login = () => {
     };
 
     const handleResendOTP = async () => {
+        setLoading(true);
+        setMessage('');
+        setSuccessMessage('');
+        
+        try {
+            const result = await authService.sendLoginOTP(formData.email, formData.password, formData.role);
+            setSuccessMessage(result.message || 'New OTP sent to your email!');
+        } catch (error) {
+            setMessage(error.message || 'Failed to resend OTP. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleBackToLogin = () => {
+        setLoginStep(1);
+        setFormData(prev => ({ ...prev, otp: '' }));
+        setMessage('');
+        setSuccessMessage('');
+    };
+
+    const handleResendResetOTP = async () => {
         setLoading(true);
         setMessage('');
         setSuccessMessage('');
@@ -256,61 +308,138 @@ const Login = () => {
                         
                         {/* Login Form */}
                         <div className="login-form">
-                            <h2>Login as <span id="selected-role">
-                                {formData.role.charAt(0).toUpperCase() + formData.role.slice(1)}
-                            </span></h2>
+                            <h2>
+                                {loginStep === 1 ? (
+                                    <>Login as <span id="selected-role">
+                                        {formData.role.charAt(0).toUpperCase() + formData.role.slice(1)}
+                                    </span></>
+                                ) : (
+                                    'Verify Your Identity'
+                                )}
+                            </h2>
+                            
+                            {successMessage && (
+                                <div className="alert alert-success" style={{ marginBottom: '15px' }}>
+                                    {successMessage}
+                                </div>
+                            )}
+                            
                             <form onSubmit={handleSubmit}>
                                 <input type="hidden" name="role" value={formData.role} />
-                                <div className="form-group">
-                                    <label htmlFor="email">Email Address</label>
-                                    <input 
-                                        type="email" 
-                                        id="email" 
-                                        name="email" 
-                                        placeholder="Enter your email" 
-                                        value={formData.email}
-                                        onChange={handleChange}
-                                        required 
-                                    />
-                                    {errors.email && <span className="error-text">{errors.email}</span>}
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor="password">Password</label>
-                                    <input 
-                                        type="password" 
-                                        id="password" 
-                                        name="password" 
-                                        placeholder="Enter your password"
-                                        value={formData.password}
-                                        onChange={handleChange}
-                                        required 
-                                    />
-                                    {errors.password && <span className="error-text">{errors.password}</span>}
-                                </div>
+                                
+                                {loginStep === 1 ? (
+                                    <>
+                                        <div className="form-group">
+                                            <label htmlFor="email">Email Address</label>
+                                            <input 
+                                                type="email" 
+                                                id="email" 
+                                                name="email" 
+                                                placeholder="Enter your email" 
+                                                value={formData.email}
+                                                onChange={handleChange}
+                                                required 
+                                            />
+                                            {errors.email && <span className="error-text">{errors.email}</span>}
+                                        </div>
+                                        <div className="form-group">
+                                            <label htmlFor="password">Password</label>
+                                            <input 
+                                                type="password" 
+                                                id="password" 
+                                                name="password" 
+                                                placeholder="Enter your password"
+                                                value={formData.password}
+                                                onChange={handleChange}
+                                                required 
+                                            />
+                                            {errors.password && <span className="error-text">{errors.password}</span>}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <p style={{ textAlign: 'center', marginBottom: '20px', color: '#666' }}>
+                                            We've sent a 6-digit verification code to <strong>{formData.email}</strong>
+                                        </p>
+                                        <div className="form-group">
+                                            <label htmlFor="otp">Verification Code</label>
+                                            <input 
+                                                type="text" 
+                                                id="otp" 
+                                                name="otp" 
+                                                placeholder="Enter 6-digit code" 
+                                                value={formData.otp}
+                                                onChange={handleChange}
+                                                maxLength="6"
+                                                required 
+                                                style={{ textAlign: 'center', fontSize: '20px', letterSpacing: '5px' }}
+                                            />
+                                            {errors.otp && <span className="error-text">{errors.otp}</span>}
+                                        </div>
+                                        <div style={{ textAlign: 'center', marginBottom: '15px' }}>
+                                            <button 
+                                                type="button"
+                                                onClick={handleResendOTP}
+                                                disabled={loading}
+                                                style={{
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    color: '#007bff',
+                                                    cursor: 'pointer',
+                                                    textDecoration: 'underline',
+                                                    fontSize: '14px'
+                                                }}
+                                            >
+                                                Resend Code
+                                            </button>
+                                        </div>
+                                        <div style={{ textAlign: 'center', marginBottom: '15px' }}>
+                                            <button 
+                                                type="button"
+                                                onClick={handleBackToLogin}
+                                                style={{
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    color: '#6c757d',
+                                                    cursor: 'pointer',
+                                                    fontSize: '14px'
+                                                }}
+                                            >
+                                                ← Back to Login
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                                
                                 <div className="form-group">
                                     <button type="submit" className="hero-btn login-btn" disabled={loading}>
-                                        {loading ? 'Logging in...' : 'Login'}
+                                        {loading ? (loginStep === 1 ? 'Sending OTP...' : 'Verifying...') : (loginStep === 1 ? 'Continue' : 'Verify & Login')}
                                     </button>
                                 </div>
-                                <div className="forgot-password-link" style={{ textAlign: 'center', marginTop: '10px' }}>
-                                    <button 
-                                        type="button"
-                                        onClick={handleForgotPasswordClick}
-                                        style={{
-                                            background: 'none',
-                                            border: 'none',
-                                            color: '#007bff',
-                                            cursor: 'pointer',
-                                            textDecoration: 'underline',
-                                            fontSize: '14px'
-                                        }}
-                                    >
-                                        Forgot Password?
-                                    </button>
-                                </div>
-                                <div className="register-link">
-                                    <p>New to SportsAmigo? <Link to={`/signup?role=${formData.role}`}>Register Now</Link></p>
-                                </div>
+                                
+                                {loginStep === 1 && (
+                                    <>
+                                        <div className="forgot-password-link" style={{ textAlign: 'center', marginTop: '10px' }}>
+                                            <button 
+                                                type="button"
+                                                onClick={handleForgotPasswordClick}
+                                                style={{
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    color: '#007bff',
+                                                    cursor: 'pointer',
+                                                    textDecoration: 'underline',
+                                                    fontSize: '14px'
+                                                }}
+                                            >
+                                                Forgot Password?
+                                            </button>
+                                        </div>
+                                        <div className="register-link">
+                                            <p>New to SportsAmigo? <Link to={`/signup?role=${formData.role}`}>Register Now</Link></p>
+                                        </div>
+                                    </>
+                                )}
                             </form>
                         </div>
                     </div>

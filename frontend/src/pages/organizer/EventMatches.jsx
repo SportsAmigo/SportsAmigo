@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import OrganizerLayout from '../../components/layout/OrganizerLayout';
 import './EventMatches.css';
 
 const EventMatches = () => {
@@ -211,18 +212,21 @@ const EventMatches = () => {
 
     if (loading) {
         return (
-            <div className="organizer-dashboard">
-                <div className="container">
-                    <div className="loading">Loading matches...</div>
+            <OrganizerLayout>
+                <div className="organizer-dashboard">
+                    <div className="container">
+                        <div className="loading">Loading matches...</div>
+                    </div>
                 </div>
-            </div>
+            </OrganizerLayout>
         );
     }
 
     const currentMatches = matches[activeTab] || [];
 
     return (
-        <div className="organizer-dashboard">
+        <OrganizerLayout>
+            <div className="organizer-dashboard">
             <div className="container">
                 <div className="page-header">
                     <button className="btn-back" onClick={() => navigate(-1)}>
@@ -335,7 +339,8 @@ const EventMatches = () => {
                     </div>
                 </div>
             )}
-        </div>
+            </div>
+        </OrganizerLayout>
     );
 };
 

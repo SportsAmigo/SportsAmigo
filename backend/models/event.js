@@ -8,6 +8,33 @@ const User = require('./schemas/userSchema');
 // const Registration = require('../models/registration'); 
 
 /**
+ * Helper function to determine event status based on dates
+ */
+function determineEventStatus(event) {
+  const now = new Date();
+  const registrationDeadline = event.registration_deadline ? new Date(event.registration_deadline) : null;
+  const eventDate = new Date(event.event_date);
+  
+  // If manually cancelled, keep that status
+  if (event.status === 'cancelled') {
+    return 'cancelled';
+  }
+  
+  // If event date has passed, mark as completed
+  if (eventDate < now) {
+    return 'completed';
+  }
+  
+  // If registration deadline has passed but event hasn't happened yet
+  if (registrationDeadline && registrationDeadline < now && eventDate >= now) {
+    return 'upcoming';
+  }
+  
+  // Otherwise use existing status or default to upcoming
+  return event.status || 'upcoming';
+}
+
+/**
  * Event model for event management
  */
 module.exports = {
@@ -169,9 +196,22 @@ module.exports = {
         throw new Error('Organizer ID is required');
       }
       
-      return await Event.find({ organizer_id: organizerId })
+      const events = await Event.find({ organizer_id: organizerId })
           .sort({ event_date: 1 })
           .exec();
+      
+      // Auto-update event statuses based on dates
+      const updatedEvents = [];
+      for (const event of events) {
+        const newStatus = determineEventStatus(event);
+        if (newStatus !== event.status) {
+          event.status = newStatus;
+          await event.save();
+        }
+        updatedEvents.push(event);
+      }
+      
+      return updatedEvents;
     } catch (err) {
       console.error('Error getting events by organizer:', err);
       throw err;
@@ -209,6 +249,34 @@ module.exports = {
       ).exec();
     } catch (err) {
       console.error('Error updating event:', err);
+      throw err;
+    }
+  },
+  
+  /**
+   * Cancel an event
+   * @param {string} eventId - Event ID
+   * @returns {Promise<object>} - Promise resolving to the updated event
+   */
+  cancelEvent: async function(eventId) {
+    try {
+      if (!eventId) {
+        throw new Error('Event ID is required');
+      }
+      
+      const event = await Event.findByIdAndUpdate(
+        eventId,
+        { $set: { status: 'cancelled' } },
+        { new: true }
+      ).exec();
+      
+      if (!event) {
+        throw new Error('Event not found');
+      }
+      
+      return event;
+    } catch (err) {
+      console.error('Error cancelling event:', err);
       throw err;
     }
   },
