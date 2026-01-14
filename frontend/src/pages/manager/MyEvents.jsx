@@ -101,7 +101,7 @@ const MyEvents = () => {
                                             <div className="event-info-grid">
                                                 <div className="info-item">
                                                     <i className="fa fa-users"></i>
-                                                    <span>Team: {event.team_name}</span>
+                                                    <span>{event.team_name}</span>
                                                 </div>
                                                 <div className="info-item">
                                                     <i className="fa fa-futbol"></i>
@@ -116,7 +116,7 @@ const MyEvents = () => {
 
                                         <div className="event-status">
                                             <span className={`status-badge ${new Date(event.event_date || event.start_date) > new Date() ? 'upcoming' : 'past'}`}>
-                                                {new Date(event.event_date || event.start_date) > new Date() ? 'Upcoming' : 'Completed'}
+                                                {new Date(event.event_date || event.start_date) > new Date() ? 'Upcoming' : 'Past'}
                                             </span>
                                         </div>
                                     </div>

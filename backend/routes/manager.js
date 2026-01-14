@@ -12,6 +12,14 @@ function isManager(req, res, next) {
     if (req.session.user && req.session.user.role === 'manager') {
         next();
     } else {
+        // Check if this is an API request (expects JSON response)
+        if (req.xhr || req.headers.accept?.indexOf('json') > -1 || req.path.startsWith('/api/')) {
+            return res.status(401).json({
+                success: false,
+                message: 'Authentication required. Please log in as a manager.'
+            });
+        }
+        // For browser requests, redirect to login
         res.redirect('/login');
     }
 }
@@ -1267,21 +1275,28 @@ router.post('/event/:id/register', async (req, res) => {
     
         console.log(`Attempting to register a team for event ${eventId}`);
         console.log('Request body:', req.body);
+        console.log('Session user:', req.session.user);
+    
+        // Verify user is authenticated
+        if (!req.session.user || !req.session.user._id) {
+            return res.status(401).json({
+                success: false,
+                message: 'You must be logged in to register for events'
+            });
+        }
     
         if (!eventId) {
-            req.session.message = {
-                type: 'danger',
-                text: 'Event ID is missing from the request'
-            };
-            return res.redirect('/manager/browse-events');
+            return res.status(400).json({
+                success: false,
+                message: 'Event ID is missing from the request'
+            });
         }
         
         if (!teamId) {
-            req.session.message = {
-                type: 'danger',
-                text: 'Team ID is required for registration. Please select a valid team.'
-            };
-            return res.redirect(`/manager/event/${eventId}/details`);
+            return res.status(400).json({
+                success: false,
+                message: 'Team ID is required for registration. Please select a valid team.'
+            });
         }
         
         // Verify that the event exists
@@ -1289,11 +1304,10 @@ router.post('/event/:id/register', async (req, res) => {
         const event = await Event.getEventById(eventId);
         
         if (!event) {
-            req.session.message = {
-                type: 'danger',
-                text: 'Event not found'
-            };
-            return res.redirect('/manager/browse-events');
+            return res.status(404).json({
+                success: false,
+                message: 'Event not found'
+            });
         }
         
         // Verify that the team belongs to the current manager
@@ -1301,20 +1315,18 @@ router.post('/event/:id/register', async (req, res) => {
         const team = await Team.getTeamById(teamId);
         
         if (!team) {
-            req.session.message = {
-                type: 'danger',
-                text: 'Team not found'
-            };
-            return res.redirect(`/manager/event/${eventId}/details`);
+            return res.status(404).json({
+                success: false,
+                message: 'Team not found'
+            });
         }
         
         const managerId = req.session.user._id;
         if (team.manager_id.toString() !== managerId.toString()) {
-            req.session.message = {
-                type: 'danger',
-                text: 'You do not have permission to register this team'
-            };
-            return res.redirect(`/manager/event/${eventId}/details`);
+            return res.status(403).json({
+                success: false,
+                message: 'You do not have permission to register this team'
+            });
         }
         
         console.log(`Verified team ${teamId} belongs to manager ${managerId}`);
