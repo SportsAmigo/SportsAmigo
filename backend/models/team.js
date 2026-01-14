@@ -513,6 +513,18 @@ module.exports = {
                 throw new Error('Team not found');
             }
             
+            // BUSINESS RULE: Check if player is already in another team of the same sport
+            const existingTeamInSport = await Team.findOne({
+                sport_type: team.sport_type,
+                'members.player_id': playerId,
+                'members.status': 'active',
+                _id: { $ne: teamId } // Exclude current team
+            }).exec();
+            
+            if (existingTeamInSport) {
+                throw new Error(`This player is already a member of team "${existingTeamInSport.name}" in ${team.sport_type}. A player can only join one team per sport.`);
+            }
+            
             const existingMember = team.members.find(m => m.player_id.toString() === playerId.toString());
             if (existingMember) {
                 // If they exist but are inactive, update to active
@@ -614,6 +626,17 @@ module.exports = {
             
             if (isMember) {
                 throw new Error('Player is already a member of this team');
+            }
+            
+            // BUSINESS RULE: Check if player is already in another team of the same sport
+            const existingTeamInSport = await Team.findOne({
+                sport_type: team.sport_type,
+                'members.player_id': playerId,
+                'members.status': 'active'
+            }).exec();
+            
+            if (existingTeamInSport) {
+                throw new Error(`You are already a member of team "${existingTeamInSport.name}" in ${team.sport_type}. A player can only join one team per sport.`);
             }
             
             // Check if player has already submitted a request
@@ -734,6 +757,18 @@ module.exports = {
             // If approved, add player to the team members
             if (status === 'approved') {
                 console.log(`Approving join request: adding player ${request.player_id} to team ${team._id}`);
+                
+                // BUSINESS RULE: Check if player is already in another team of the same sport
+                const existingTeamInSport = await Team.findOne({
+                    sport_type: team.sport_type,
+                    'members.player_id': request.player_id,
+                    'members.status': 'active',
+                    _id: { $ne: team._id } // Exclude current team
+                }).exec();
+                
+                if (existingTeamInSport) {
+                    throw new Error(`This player is already a member of team "${existingTeamInSport.name}" in ${team.sport_type}. A player can only join one team per sport.`);
+                }
                 
                 // Check if player is already a member
                 const isMember = team.members.some(member => 

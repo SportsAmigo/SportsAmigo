@@ -42,20 +42,22 @@
 .events-wrapper {
     position: relative;
     z-index: 1;
-    padding: 2.5rem;
+    padding: 2.5rem 0;
     max-width: 1400px;
     margin: 0 auto;
+    margin-left: 2.5rem;
+    margin-right: 2.5rem;
 }
 
 /* Page Header */
 .page-header {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 20px;
     padding: 2.5rem;
     margin-bottom: 2rem;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
 }
 
 .page-title {
@@ -152,21 +154,21 @@
 }
 
 .event-card {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 20px;
     overflow: hidden;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
     display: flex;
     flex-direction: column;
 }
 
 .event-card:hover {
-    border-color: rgba(37, 99, 235, 0.3);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-    transform: translateY(-4px);
+    border-color: var(--primary);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.18);
+    transform: translateY(-8px);
 }
 
 .event-main {
@@ -313,11 +315,11 @@
 .empty-state {
     text-align: center;
     padding: 4rem 2rem;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
 }
 
 .empty-icon {
@@ -367,7 +369,9 @@
 
 @media (max-width: 768px) {
     .events-wrapper {
-        padding: 1.5rem;
+        padding: 1.5rem 0;
+        margin-left: 1.5rem;
+        margin-right: 1.5rem;
     }
 
     .page-header {

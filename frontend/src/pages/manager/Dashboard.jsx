@@ -182,91 +182,105 @@ const ManagerDashboard = () => {
                     {/* Header Section with Overlay */}
                     <div className="dashboard-header-section">
                         <div className="dashboard-welcome-card">
-                            <div className="welcome-text">
-                                <h1>Welcome back, {user?.first_name || 'Manager'}!</h1>
-                                <p>Manage your teams and compete in exciting events</p>
+                            <div className="welcome-content">
+                                <div className="welcome-text">
+                                    <h1>Welcome back, <span className="highlight">{user?.first_name || 'Manager'}</span>!</h1>
+                                    <p>Manage your teams and compete in exciting events</p>
+                                    <div className="welcome-stats-mini">
+                                        <div className="mini-stat">
+                                            <i className="fa fa-users"></i>
+                                            <span>{dashboardData.teamCount} {dashboardData.teamCount === 1 ? 'Team' : 'Teams'}</span>
+                                        </div>
+                                        <div className="mini-stat">
+                                            <i className="fa fa-trophy"></i>
+                                            <span>{dashboardData.wins} Wins</span>
+                                        </div>
+                                        <div className="mini-stat">
+                                            <i className="fa fa-calendar-check"></i>
+                                            <span>{dashboardData.eventCount} Events</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <Link to="/manager/create-team" className="create-team-btn">
+                                    <i className="fa fa-plus-circle"></i>
+                                    <span>Create New Team</span>
+                                </Link>
                             </div>
-                            <Link to="/manager/create-team" className="create-team-btn">
-                                <i className="fa fa-plus-circle"></i>
-                                Create New Team
-                            </Link>
                         </div>
                     </div>
 
                     {/* Stats Grid */}
-                    <div className="stats-grid">
-                        <div className="stat-card">
-                            <div className="stat-card-content">
-                                <div className="stat-icon blue">
-                                    <i className="fa fa-users"></i>
+                    <div className="dashboard-stats-section">
+                        <div className="stats-grid">
+                            <Link to="/manager/my-teams" className="stat-card stat-card-teams">
+                                <div className="stat-card-header">
+                                    <div className="stat-icon-wrapper blue">
+                                        <i className="fa fa-users"></i>
+                                    </div>
+                                    <div className="stat-trend">
+                                        <i className="fa fa-arrow-up"></i>
+                                    </div>
                                 </div>
-                                <div className="stat-info">
-                                    <div className="stat-label">My Teams</div>
+                                <div className="stat-content">
+                                    <div className="stat-label">MY TEAMS</div>
                                     <div className="stat-value">{dashboardData.teamCount}</div>
+                                    <div className="stat-description">Active teams</div>
                                 </div>
-                            </div>
-                            <Link to="/manager/my-teams" className="stat-link">
-                                Manage teams <i className="fa fa-arrow-right"></i>
                             </Link>
-                        </div>
 
-                        <div className="stat-card">
-                            <div className="stat-card-content">
-                                <div className="stat-icon green">
-                                    <i className="fa fa-trophy"></i>
+                            <div className="stat-card stat-card-wins">
+                                <div className="stat-card-header">
+                                    <div className="stat-icon-wrapper green">
+                                        <i className="fa fa-trophy"></i>
+                                    </div>
                                 </div>
-                                <div className="stat-info">
-                                    <div className="stat-label">Wins</div>
+                                <div className="stat-content">
+                                    <div className="stat-label">WINS</div>
                                     <div className="stat-value">{dashboardData.wins}</div>
+                                    <div className="stat-description">Total victories</div>
                                 </div>
                             </div>
-                            <div className="stat-link" style={{cursor: 'default'}}>
-                                Total victories
-                            </div>
-                        </div>
 
-                        <div className="stat-card">
-                            <div className="stat-card-content">
-                                <div className="stat-icon red">
-                                    <i className="fa fa-times-circle"></i>
+                            <div className="stat-card stat-card-losses">
+                                <div className="stat-card-header">
+                                    <div className="stat-icon-wrapper red">
+                                        <i className="fa fa-times-circle"></i>
+                                    </div>
                                 </div>
-                                <div className="stat-info">
-                                    <div className="stat-label">Losses</div>
+                                <div className="stat-content">
+                                    <div className="stat-label">LOSSES</div>
                                     <div className="stat-value">{dashboardData.losses}</div>
+                                    <div className="stat-description">Total defeats</div>
                                 </div>
                             </div>
-                            <div className="stat-link" style={{cursor: 'default'}}>
-                                Total defeats
-                            </div>
-                        </div>
 
-                        <div className="stat-card">
-                            <div className="stat-card-content">
-                                <div className="stat-icon yellow">
-                                    <i className="fa fa-handshake"></i>
+                            <div className="stat-card stat-card-draws">
+                                <div className="stat-card-header">
+                                    <div className="stat-icon-wrapper yellow">
+                                        <i className="fa fa-handshake"></i>
+                                    </div>
                                 </div>
-                                <div className="stat-info">
-                                    <div className="stat-label">Draws</div>
+                                <div className="stat-content">
+                                    <div className="stat-label">DRAWS</div>
                                     <div className="stat-value">{dashboardData.draws}</div>
+                                    <div className="stat-description">Tied matches</div>
                                 </div>
                             </div>
-                            <div className="stat-link" style={{cursor: 'default'}}>
-                                Tied matches
-                            </div>
-                        </div>
 
-                        <div className="stat-card">
-                            <div className="stat-card-content">
-                                <div className="stat-icon purple">
-                                    <i className="fa fa-calendar-check"></i>
+                            <Link to="/manager/browse-events" className="stat-card stat-card-events">
+                                <div className="stat-card-header">
+                                    <div className="stat-icon-wrapper purple">
+                                        <i className="fa fa-calendar-check"></i>
+                                    </div>
+                                    <div className="stat-trend">
+                                        <i className="fa fa-arrow-right"></i>
+                                    </div>
                                 </div>
-                                <div className="stat-info">
-                                    <div className="stat-label">Registered Events</div>
+                                <div className="stat-content">
+                                    <div className="stat-label">REGISTERED EVENTS</div>
                                     <div className="stat-value">{dashboardData.eventCount}</div>
+                                    <div className="stat-description">Browse more events</div>
                                 </div>
-                            </div>
-                            <Link to="/manager/browse-events" className="stat-link">
-                                Browse events <i className="fa fa-arrow-right"></i>
                             </Link>
                         </div>
                     </div>
