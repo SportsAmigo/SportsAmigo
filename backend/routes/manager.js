@@ -1322,20 +1322,49 @@ router.post('/event/:id/register', async (req, res) => {
         }
         
         const managerId = req.session.user._id;
-        if (team.manager_id.toString() !== managerId.toString()) {
+        const teamManagerId =
+    team.manager_id?._id ||
+    team.manager_id;
+
+if (!teamManagerId) {
+    return res.status(400).json({
+        success: false,
+        message: 'Team has no manager assigned'
+    });
+}
+
+if (teamManagerId.toString() !== managerId.toString()) {
+    return res.status(403).json({
+        success: false,
+        message: 'You do not have permission to register this team'
+    });
+} 
+            
+            {
             return res.status(403).json({
                 success: false,
                 message: 'You do not have permission to register this team'
             });
         }
-        
+        console.log(
+    'Existing registrations:',
+    event.team_registrations.map(r => r.team_id)
+);
+
         console.log(`Verified team ${teamId} belongs to manager ${managerId}`);
         
         // Check if THIS SPECIFIC TEAM is already registered (allow multiple teams per manager)
         if (event.team_registrations && event.team_registrations.length > 0) {
-            const alreadyRegistered = event.team_registrations.some(reg => 
-                reg.team_id.toString() === teamId.toString()
-            );
+            const alreadyRegistered = event.team_registrations.some(reg => {
+    const regTeamId =
+        reg.team_id?._id ||
+        reg.team_id;
+
+    if (!regTeamId) return false;
+
+    return regTeamId.toString() === teamId.toString();
+});
+
             
             if (alreadyRegistered) {
                 return res.status(400).json({
@@ -1344,7 +1373,7 @@ router.post('/event/:id/register', async (req, res) => {
                 });
             }
         }
-        
+        console.log('Team manager fields:', team.manager_id, team.manager);
         // Register the team for the event
         const registerData = {
             team_id: teamId,
