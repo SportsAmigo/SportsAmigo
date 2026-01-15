@@ -52,12 +52,34 @@ const TeamDetail = () => {
                 setRequestStatus('pending');
             }
         } catch (error) {
-            setMessage({ 
-                type: 'error', 
-                text: error.response?.data?.message || 'Failed to send join request' 
+            setMessage({
+                type: 'error',
+                text: error.response?.data?.message || 'Failed to send join request'
             });
         }
     };
+
+    const handleLeaveTeam = async () => {
+        if (!window.confirm('Are you sure you want to leave this team?')) return;
+
+        try {
+            const response = await axios.post(
+                `http://localhost:5000/api/player/teams/leave/${teamId}`,
+                {},
+                { withCredentials: true }
+            );
+
+            if (response.data.success) {
+                navigate('/player/my-teams');
+            }
+        } catch (error) {
+            setMessage({
+                type: 'error',
+                text: error.response?.data?.message || 'Failed to leave team'
+            });
+        }
+    };
+
 
     if (loading) {
         return (
@@ -92,8 +114,42 @@ const TeamDetail = () => {
         );
     }
 
+    const current = Number(team.current_members)
+        || (Array.isArray(team.members) ? team.members.length : 0);
+
+    const max = Number(team.max_members) || 0;
+
     const isFull = team.current_members >= team.max_members;
-    const isAlreadyMember = team.already_joined;
+    const isAlreadyMember = team.is_member === true;
+
+    // Manager display: try many possible shapes the backend might return
+    const managerDisplay =
+        team.manager_name ||
+        (team.manager && (
+            team.manager.name ||
+            [team.manager.firstName, team.manager.lastName].filter(Boolean).join(' ')
+        )) ||
+        team.manager ||
+        team.manager_email ||
+        'Team Manager';
+
+    // Normalize members so rendering becomes predictable
+    const membersProcessed = (team.members || []).map(m => {
+        const name =
+            m.name ||
+            m.player_name ||
+            m.fullName ||
+            (m.player && (m.player.name || `${m.player.firstName || ''} ${m.player.lastName || ''}`.trim())) ||
+            m.email ||
+            (m.player_id && m.player_id.name) ||
+            'Team Member';
+
+        const role = m.role || m.position || m.designation || 'Player';
+
+        return { ...m, displayName: name, displayRole: role };
+    });
+
+
 
     return (
         <PlayerLayout>
@@ -151,16 +207,16 @@ const TeamDetail = () => {
                                     <i className="fa fa-users text-orange-600 mr-3"></i>
                                     Team Members ({team.current_members})
                                 </h2>
-                                {team.members && team.members.length > 0 ? (
+                                {membersProcessed.length > 0 ? (
                                     <div className="space-y-3">
-                                        {team.members.map((member, index) => (
+                                        {membersProcessed.map((member, index) => (
                                             <div key={index} className="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                                                 <div className="w-10 h-10 rounded-full bg-gradient-to-r from-orange-500 to-red-500 flex items-center justify-center text-white font-bold mr-4">
-                                                    {member.name ? member.name.charAt(0).toUpperCase() : 'P'}
+                                                    {member.displayName ? member.displayName.charAt(0).toUpperCase() : 'P'}
                                                 </div>
                                                 <div className="flex-1">
-                                                    <p className="font-semibold text-gray-800">{member.name || 'Team Member'}</p>
-                                                    <p className="text-sm text-gray-600">{member.role || 'Player'}</p>
+                                                    <p className="font-semibold text-gray-800">{member.displayName}</p>
+                                                    <p className="text-sm text-gray-600">{member.displayRole}</p>
                                                 </div>
                                             </div>
                                         ))}
@@ -187,11 +243,10 @@ const TeamDetail = () => {
                                                     </div>
                                                     <div className="text-center">
                                                         <p className="text-lg font-bold text-gray-800">{match.score}</p>
-                                                        <span className={`text-xs px-2 py-1 rounded-full ${
-                                                            match.result === 'win' ? 'bg-green-100 text-green-800' :
+                                                        <span className={`text-xs px-2 py-1 rounded-full ${match.result === 'win' ? 'bg-green-100 text-green-800' :
                                                             match.result === 'loss' ? 'bg-red-100 text-red-800' :
-                                                            'bg-gray-100 text-gray-800'
-                                                        }`}>
+                                                                'bg-gray-100 text-gray-800'
+                                                            }`}>
                                                             {match.result}
                                                         </span>
                                                     </div>
@@ -204,74 +259,82 @@ const TeamDetail = () => {
                         </div>
 
                         {/* Side Stats */}
-                        <div className="space-y-6">
-                            <div className="bg-white rounded-xl shadow-lg p-6">
-                                <h3 className="text-xl font-bold text-gray-800 mb-6">Team Info</h3>
-                                <div className="space-y-4">
-                                    <div className="p-4 bg-blue-50 rounded-lg">
-                                        <p className="text-sm text-blue-600 font-medium mb-1">Manager</p>
-                                        <p className="text-lg font-bold text-blue-700">{team.manager_name || team.manager_email}</p>
-                                    </div>
-                                    <div className="p-4 bg-green-50 rounded-lg">
-                                        <p className="text-sm text-green-600 font-medium mb-1">Members</p>
-                                        <p className="text-lg font-bold text-green-700">{team.current_members} / {team.max_members}</p>
-                                    </div>
-                                    {team.wins !== undefined && (
-                                        <div className="p-4 bg-purple-50 rounded-lg">
-                                            <p className="text-sm text-purple-600 font-medium mb-1">Wins</p>
-                                            <p className="text-lg font-bold text-purple-700">{team.wins || 0}</p>
-                                        </div>
-                                    )}
-                                    {team.losses !== undefined && (
-                                        <div className="p-4 bg-red-50 rounded-lg">
-                                            <p className="text-sm text-red-600 font-medium mb-1">Losses</p>
-                                            <p className="text-lg font-bold text-red-700">{team.losses || 0}</p>
-                                        </div>
-                                    )}
+                        <div className="bg-white rounded-xl shadow-lg p-6">
+                            <h3 className="text-xl font-bold text-gray-800 mb-6">Team Info</h3>
+
+                            <div className="space-y-4">
+                                <div className="p-4 bg-blue-50 rounded-lg">
+                                    <p className="text-sm text-blue-600 font-medium mb-1">Manager</p>
+                                    <p className="text-lg font-bold text-blue-700">{managerDisplay}</p>
                                 </div>
 
-                                <div className="mt-6 pt-6 border-t border-gray-200">
-                                    <p className="text-sm text-gray-600 mb-2">Team Capacity</p>
-                                    <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
-                                        <div
-                                            className="bg-gradient-to-r from-orange-500 to-red-500 h-3 rounded-full transition-all duration-500"
-                                            style={{ width: `${(team.current_members / team.max_members * 100)}%` }}
-                                        ></div>
-                                    </div>
-                                    <p className="text-xs text-gray-600 text-right">
-                                        {Math.round(team.current_members / team.max_members * 100)}% Full
-                                    </p>
+                                <div className="p-4 bg-green-50 rounded-lg">
+                                    <p className="text-sm text-green-600 font-medium mb-1">Members</p>
+                                    <p className="text-lg font-bold text-green-700">{current} / {max || '—'}</p>
                                 </div>
 
-                                {/* Join Button */}
-                                {!isAlreadyMember && (
-                                    <div className="mt-6">
-                                        {requestStatus === 'pending' ? (
-                                            <button
-                                                disabled
-                                                className="w-full bg-yellow-500 text-white px-6 py-3 rounded-lg font-semibold cursor-not-allowed"
-                                            >
-                                                <i className="fa fa-clock mr-2"></i>Request Pending
-                                            </button>
-                                        ) : isFull ? (
-                                            <button
-                                                disabled
-                                                className="w-full bg-gray-400 text-white px-6 py-3 rounded-lg font-semibold cursor-not-allowed"
-                                            >
-                                                <i className="fa fa-times mr-2"></i>Team Full
-                                            </button>
-                                        ) : (
-                                            <button
-                                                onClick={handleJoinRequest}
-                                                className="w-full bg-gradient-to-r from-orange-600 to-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all"
-                                            >
-                                                <i className="fa fa-user-plus mr-2"></i>Request to Join
-                                            </button>
-                                        )}
+                                {team.wins !== undefined && (
+                                    <div className="p-4 bg-purple-50 rounded-lg">
+                                        <p className="text-sm text-purple-600 font-medium mb-1">Wins</p>
+                                        <p className="text-lg font-bold text-purple-700">{team.wins || 0}</p>
+                                    </div>
+                                )}
+                                {team.losses !== undefined && (
+                                    <div className="p-4 bg-red-50 rounded-lg">
+                                        <p className="text-sm text-red-600 font-medium mb-1">Losses</p>
+                                        <p className="text-lg font-bold text-red-700">{team.losses || 0}</p>
                                     </div>
                                 )}
                             </div>
+
+                            <div className="mt-6 pt-6 border-t border-gray-200">
+                                <p className="text-sm text-gray-600 mb-2">Team Capacity</p>
+
+                                <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                                    <div
+                                        className="bg-blue-600 h-3 rounded-full"
+                                        style={{ width: `${max > 0 ? (current / max) * 100 : 0}%` }}
+                                    />
+                                </div>
+
+                                <p className="text-xs text-gray-600 text-right">
+                                    {max > 0 ? Math.round((current / max) * 100) : 0}% Full
+                                </p>
+                            </div>
+
+                            <div className="mt-6">
+                                {isAlreadyMember ? (
+                                    <button
+                                        onClick={handleLeaveTeam}
+                                        className="w-full py-3 rounded-lg font-semibold bg-red-100 text-red-700 hover:bg-red-200 transition-all"
+                                    >
+                                        Leave Team
+                                    </button>
+                                ) : team.request_status === 'pending' ? (
+                                    <button
+                                        disabled
+                                        className="w-full py-3 rounded-lg font-semibold bg-yellow-100 text-yellow-700 cursor-not-allowed"
+                                    >
+                                        Request Pending
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={handleJoinRequest}
+                                        disabled={isFull}
+                                        className={`w-full py-3 rounded-lg font-semibold transition-all
+                ${isFull
+                                                ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                                                : 'bg-gradient-to-r from-orange-600 to-red-600 text-white hover:shadow-lg'
+                                            }`}
+                                    >
+                                        {isFull ? 'Team Full' : 'Join Team'}
+                                    </button>
+                                )}
+                            </div>
+
                         </div>
+
+
                     </div>
                 </div>
             </div>

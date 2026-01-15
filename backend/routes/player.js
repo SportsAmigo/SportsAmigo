@@ -30,12 +30,12 @@ router.use(isPlayer);
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         const uploadDir = path.join(__dirname, '../public/uploads/profile');
-        
+
         // Create directory if it doesn't exist
         if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });
         }
-        
+
         cb(null, uploadDir);
     },
     filename: function (req, file, cb) {
@@ -55,8 +55,8 @@ const fileFilter = (req, file, cb) => {
     }
 };
 
-const upload = multer({ 
-    storage: storage, 
+const upload = multer({
+    storage: storage,
     fileFilter: fileFilter,
     limits: {
         fileSize: 5 * 1024 * 1024 // 5MB max file size
@@ -75,12 +75,12 @@ router.get('/dashboard', async (req, res) => {
 
         // Get player's team events
         const playerEvents = await Event.getPlayerEventsViaTeams(playerId);
-        
+
         // Get player's teams
         const teams = await Team.getPlayerTeams(playerId);
-        
+
         console.log(`Player dashboard: ${teams.length} teams, ${playerEvents.length} events`);
-        
+
         // Return JSON for API calls
         res.json({
             success: true,
@@ -118,9 +118,9 @@ router.get('/my-events', async (req, res) => {
         // Get player's team-based events
         const playerId = req.session.user._id;
         const playerEvents = await Event.getPlayerEventsViaTeams(playerId);
-        
+
         console.log(`Player my-events: Found ${playerEvents.length} events`);
-        
+
         // Format events consistently
         const formattedEvents = playerEvents.map(event => ({
             id: event._id || event.event_id,
@@ -137,7 +137,7 @@ router.get('/my-events', async (req, res) => {
             team_id: event.team_id || '',
             registration_date: event.registration_date || event.joined_date
         }));
-        
+
         // Return JSON for API calls
         res.json({
             success: true,
@@ -158,9 +158,9 @@ router.get('/browse-events', async (req, res) => {
     try {
         // Get all upcoming events
         const events = await Event.getAllEvents();
-        
+
         console.log(`Player browse-events: Found ${events.length} total events`);
-        
+
         // Format events for display (don't filter by status on backend, let frontend handle it)
         const formattedEvents = events.map(event => ({
             id: event._id,
@@ -180,9 +180,9 @@ router.get('/browse-events', async (req, res) => {
             organizer: event.organizer_name || `${event.organizer_first_name || ''} ${event.organizer_last_name || ''}`.trim() || 'Unknown',
             team_registrations: event.team_registrations || []
         }));
-        
+
         console.log(`Formatted ${formattedEvents.length} events for player`);
-        
+
         // Return JSON for API calls
         res.json({
             success: true,
@@ -198,63 +198,23 @@ router.get('/browse-events', async (req, res) => {
     }
 });
 
-// Teams routes
-router.get('/teams', async (req, res) => {
-    try {
-        const playerId = req.session.user._id;
-        const teams = await Team.getPlayerTeams(playerId);
-        
-        // Format teams for display
-        const formattedTeams = teams.map(team => ({
-            id: team._id,
-            name: team.name,
-            sport: team.sport_type,
-            manager_name: team.manager_name || 'Team Manager',
-            manager_email: team.manager_email || '',
-            current_members: team.members ? team.members.length : 0,
-            members: team.max_members || 20,
-            status: 'Active',
-            role: 'Player',
-            team_members: team.members || []
-        }));
-        
-        res.render('player/my-teams', {
-            title: 'My Teams',
-            user: req.session.user,
-            teams: formattedTeams,
-            messages: req.session.flashMessage || {},
-            layout: 'layouts/sidebar-dashboard',
-            path: '/player/my-teams'
-        });
-        
-        // Clear flash messages
-        delete req.session.flashMessage;
-    } catch (err) {
-        console.error('Error fetching player teams:', err);
-        res.status(500).render('error', { 
-            title: 'Error',
-            message: 'Failed to retrieve your teams', 
-            error: err,
-            layout: 'layouts/main'
-        });
-    }
-});
+
 
 // Add a route for my-teams to fix 404 error
 router.get('/my-teams', async (req, res) => {
     try {
         const playerId = req.session.user._id;
         const teams = await Team.getPlayerTeams(playerId);
-        
+
         console.log(`Player my-teams: Found ${teams.length} teams for player ${playerId}`);
-        
+
         // Format teams for display - don't override team_members!
         const formattedTeams = teams.map(team => ({
             id: team._id,
             name: team.name || 'Unnamed Team',
             sport: team.sport_type || 'General',
             sport_type: team.sport_type || 'General',
-            manager_name: team.manager_name || 'Team Manager',
+            manager_name: team.manager?.name || 'Team Manager',
             manager_email: team.manager_email || '',
             current_members: team.members ? team.members.length : 0,
             members: team.max_members || 20,
@@ -263,7 +223,7 @@ router.get('/my-teams', async (req, res) => {
             role: 'Player',
             team_members: team.team_members || [] // Use the populated team_members from the model
         }));
-        
+
         // Return JSON for API calls
         res.json({
             success: true,
@@ -279,42 +239,107 @@ router.get('/my-teams', async (req, res) => {
     }
 });
 
+router.get('/team/:teamId', async (req, res) => {
+    try {
+        const { teamId } = req.params;
+        const playerId = req.session.user._id;
+
+        const team = await Team.getTeamById(teamId);
+        if (!team) {
+            return res.status(404).json({
+                success: false,
+                message: 'Team not found'
+            });
+        }
+
+        const isMember = team.members.some(
+            m => m.id.toString() === playerId.toString()
+        );
+
+        const pendingRequest = team.join_requests?.some(
+            r =>
+                r.player_id.toString() === playerId.toString() &&
+                r.status === 'pending'
+        );
+
+        res.json({
+            success: true,
+            team: {
+                ...team,
+                is_member: isMember,
+                request_status: pendingRequest ? 'pending' : null
+            }
+        });
+
+    } catch (err) {
+        console.error('Error fetching team details:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching team details'
+        });
+    }
+});
+
+
 // Browse all teams
 router.get('/browse-teams', async (req, res) => {
     try {
         // Get all active teams
         const teams = await Team.getAllTeams();
-        
+
         const playerId = req.session.user._id;
-        
+
         // Get array of team IDs for membership check
         const teamIds = teams.map(team => team._id.toString());
-        
+
         // Check which teams the player is a member of
         const membershipMap = await Team.isPlayerInTeams(playerId, teamIds);
-        
+
         // Format teams for display, checking actual membership status from database
-        const formattedTeams = teams.map(team => ({
-            id: team._id,
-            name: team.name || 'Unnamed Team',
-            sport_type: team.sport_type || 'General',
-            sport: team.sport_type || 'General',
-            manager_name: team.manager_name || 'Team Manager',
-            manager_email: team.manager_email || '',
-            current_members: team.members ? team.members.length : 0,
-            max_members: team.max_members || 20,
-            members: team.max_members || 20,
-            description: team.description || '',
-            already_joined: membershipMap[team._id.toString()] === true
-        }));
-        
+        const formattedTeams = teams.map(team => {
+
+
+            const memberCount = Array.isArray(team.members)
+                ? team.members.length
+                : 0;
+
+            return {
+                id: team._id,
+                name: team.name || 'Unnamed Team',
+                sport: team.sport_type || 'General',
+                sport_type: team.sport_type || 'General',
+
+                // manager details
+                manager_name: team.manager?.name || 'Team Manager',
+                manager_email: team.manager_id?.email || team.manager_email || '',
+
+                // member stats
+                current_members: memberCount,
+                max_members: team.max_members || 20,
+
+                // full members list (OPTIONAL for my-teams, but you asked for all details)
+                members: team.members.map(m => ({
+                    id: m.player_id?._id,
+                    name: m.player_id?.name || m.player_id?.email || 'Player',
+                    email: m.player_id?.email,
+                    role: m.role || 'Player'
+                })),
+
+                description: team.description || '',
+                already_joined: membershipMap[team._id.toString()] === true
+            };
+        });
+
+
         console.log(`Player browse-teams: Found ${formattedTeams.length} teams`);
-        
+
         // Return JSON for API calls
         res.json({
             success: true,
+            teamCount: formattedTeams.length,
             teams: formattedTeams
         });
+
     } catch (err) {
         console.error('Error fetching teams:', err);
         res.status(500).json({
@@ -325,73 +350,18 @@ router.get('/browse-teams', async (req, res) => {
     }
 });
 
-// View team details
-router.get('/team/:id', async (req, res) => {
-    try {
-        const teamId = req.params.id;
-        
-        // Get team details
-        const team = await Team.getTeamById(teamId);
-        
-        if (!team) {
-            req.session.flashMessage = {
-                type: 'error',
-                text: 'Team not found'
-            };
-            return res.redirect('/player/browse-teams');
-        }
-        
-        // Check if player is a member
-        const playerId = req.session.user._id;
-        const isMember = team.members && team.members.some(
-            member => member.player_id.toString() === playerId.toString()
-        );
-        
-        // Format team for display
-        const formattedTeam = {
-            id: team._id,
-            name: team.name,
-            sport: team.sport_type,
-            manager: team.manager_name || 'Team Manager',
-            manager_id: team.manager_id,
-            members: team.members || [],
-            description: team.description || 'No description available',
-            achievements: team.achievements || [],
-            is_member: isMember,
-            upcoming_events: team.upcoming_events || []
-        };
-        
-        res.render('player/team-details', {
-            title: team.name,
-            user: req.session.user,
-            team: formattedTeam,
-            messages: req.session.flashMessage || {},
-            layout: 'layouts/sidebar-dashboard',
-            path: '/player/team-details'
-        });
-        
-        // Clear flash messages
-        delete req.session.flashMessage;
-    } catch (err) {
-        console.error('Error fetching team details:', err);
-        req.session.flashMessage = {
-            type: 'error',
-            text: 'Error loading team details'
-        };
-        res.redirect('/player/browse-teams');
-    }
-});
+
 
 // Request to join a team
 router.post('/teams/:id/join', async (req, res) => {
     try {
         const teamId = req.params.id;
         const playerId = req.session.user._id;
-        
+
         console.log(`Player ${playerId} requesting to join team ${teamId}`);
-        
+
         await Team.addJoinRequest(teamId, playerId);
-        
+
         res.json({
             success: true,
             message: 'Join request sent successfully!'
@@ -410,11 +380,11 @@ router.post('/teams/leave/:id', async (req, res) => {
     try {
         const teamId = req.params.id;
         const playerId = req.session.user._id;
-        
+
         console.log(`Player ${playerId} leaving team ${teamId}`);
-        
+
         await Team.removePlayerFromTeam(teamId, playerId);
-        
+
         res.json({
             success: true,
             message: 'You have left the team successfully'
@@ -433,39 +403,39 @@ router.get('/teams/leave/:id', async (req, res) => {
     try {
         const teamId = req.params.id;
         const playerId = req.session.user._id;
-        
+
         // Get team info for the success message
         const team = await Team.getTeamById(teamId);
         const teamName = team ? team.name : 'the team';
-        
+
         // Fully remove the player from the team using removePlayerFromTeam
         await Team.removePlayerFromTeam(teamId, playerId);
-        
+
         // Clear any pending request status for this team in session
         if (req.session.teamRequestStatuses && req.session.teamRequestStatuses[teamId]) {
             delete req.session.teamRequestStatuses[teamId];
         }
-        
+
         // Add flash message to this player's session
         req.session.flashMessage = {
             type: 'success',
             text: `You have successfully left ${teamName}`
         };
-        
+
         // Also notify the team manager about this action
         try {
             const managerId = team.manager_id;
             const mongoose = require('mongoose');
             const sessionCollection = mongoose.connection.collection('sessions');
-            
+
             // Look for manager's session
             const sessions = await sessionCollection.find({}).toArray();
-            
+
             for (const sessionDoc of sessions) {
                 try {
                     // Parse the session data
                     let sessionData = JSON.parse(sessionDoc.session);
-                    
+
                     // Check if this session belongs to the manager
                     if (sessionData.user && sessionData.user._id === managerId.toString()) {
                         // Add notification to manager's session
@@ -473,13 +443,13 @@ router.get('/teams/leave/:id', async (req, res) => {
                             type: 'info',
                             text: `${req.session.user.first_name} ${req.session.user.last_name} has left your team: ${teamName}`
                         };
-                        
+
                         // Update the session in the database
                         await sessionCollection.updateOne(
                             { _id: sessionDoc._id },
                             { $set: { session: JSON.stringify(sessionData) } }
                         );
-                        
+
                         console.log(`Updated session for manager ${managerId} with player leaving notification`);
                         break;
                     }
@@ -492,7 +462,7 @@ router.get('/teams/leave/:id', async (req, res) => {
             console.error('Unable to notify team manager:', sessionErr);
             // Continue even if manager notification fails
         }
-        
+
         res.redirect('/player/my-teams');
     } catch (err) {
         console.error('Error leaving team:', err);
@@ -522,13 +492,13 @@ router.put('/profile', upload.single('profile_image'), async (req, res) => {
                 message: 'User not authenticated'
             });
         }
-        
+
         const userId = req.session.user._id;
-        
+
         console.log('Player Profile Update - Session User:', req.session.user);
         console.log('Received profile update:', req.body);
         console.log('Received file:', req.file);
-        
+
         // Create the updated profile object
         const updatedProfile = {
             first_name: req.body.first_name || '',
@@ -537,43 +507,43 @@ router.put('/profile', upload.single('profile_image'), async (req, res) => {
             phone: req.body.phone || '',
             bio: req.body.bio || ''
         };
-        
+
         // If a new image was uploaded, add the path
         if (req.file) {
             updatedProfile.profile_image = '/uploads/profile/' + req.file.filename;
         }
-        
+
         console.log('Updating profile with data:', updatedProfile);
-        
+
         // Update the user in the database
         const updatedUser = await User.updateUser(userId, updatedProfile);
-        
+
         if (!updatedUser) {
             return res.status(500).json({
                 success: false,
                 message: 'Failed to update user in database'
             });
         }
-        
+
         // Fetch fresh user data
         const freshUserData = await User.getUserById(userId);
-        
+
         if (!freshUserData) {
             return res.status(500).json({
                 success: false,
                 message: 'Failed to retrieve updated user data'
             });
         }
-        
+
         // Create complete user object for session
         const sessionUser = freshUserData.toObject ? freshUserData.toObject() : freshUserData;
         sessionUser.name = sessionUser.first_name + (sessionUser.last_name ? ' ' + sessionUser.last_name : '');
-        
+
         // Update the session
         req.session.user = sessionUser;
-        
+
         console.log('Profile updated successfully:', sessionUser);
-        
+
         // Return success with updated user data
         res.json({
             success: true,
@@ -593,7 +563,7 @@ router.put('/profile', upload.single('profile_image'), async (req, res) => {
 router.get('/event/:id', async (req, res) => {
     try {
         const eventId = req.params.id;
-        
+
         // Get event details
         const event = await Event.getEventById(eventId);
         if (!event) {
@@ -603,11 +573,11 @@ router.get('/event/:id', async (req, res) => {
             };
             return res.redirect('/player/browse-events');
         }
-        
+
         // Get player's teams
         const playerId = req.session.user._id;
         const teams = await Team.getPlayerTeams(playerId);
-        
+
         // Format event for display
         const formattedEvent = {
             _id: event._id,
@@ -628,14 +598,14 @@ router.get('/event/:id', async (req, res) => {
             organizer_email: event.organizer_email,
             team_registrations: event.team_registrations || []
         };
-        
+
         // Check if player's team is registered
         let isRegistered = false;
         let registeredTeam = null;
-        
+
         if (teams.length > 0 && event.team_registrations && event.team_registrations.length > 0) {
             const teamIds = teams.map(team => team._id.toString());
-            
+
             for (const reg of event.team_registrations) {
                 if (teamIds.includes(reg.team_id.toString())) {
                     isRegistered = true;
@@ -644,10 +614,10 @@ router.get('/event/:id', async (req, res) => {
                 }
             }
         }
-        
+
         formattedEvent.isRegistered = isRegistered;
         formattedEvent.registeredTeam = registeredTeam ? registeredTeam.name : null;
-        
+
         res.render('player/event-details', {
             title: event.title,
             user: req.session.user,
@@ -657,7 +627,7 @@ router.get('/event/:id', async (req, res) => {
             layout: 'layouts/sidebar-dashboard',
             path: '/player/browse-events'
         });
-        
+
         // Clear flash messages
         delete req.session.flashMessage;
     } catch (err) {
@@ -676,7 +646,7 @@ router.post('/event/:id/register', async (req, res) => {
         const eventId = req.params.id;
         const teamId = req.body.team_id;
         const notes = req.body.notes || '';
-        
+
         if (!teamId) {
             req.session.flashMessage = {
                 type: 'error',
@@ -686,28 +656,28 @@ router.post('/event/:id/register', async (req, res) => {
         }
 
         console.log(`Registering team ${teamId} for event ${eventId}`);
-        
+
         // Get team and event details for better messages
         const team = await Team.getTeamById(teamId);
         const event = await Event.getEventById(eventId);
-        
+
         const teamName = team ? team.name : 'your team';
         const eventName = event ? event.title : 'the event';
-        
+
         // Register the team for the event
         const registrationData = {
             team_id: teamId,
             status: 'confirmed',
             notes: notes
         };
-        
+
         await Event.registerTeamForEvent(eventId, registrationData);
-        
+
         req.session.flashMessage = {
             type: 'success',
             text: `You've successfully registered ${teamName} for ${eventName}!`
         };
-        
+
         res.redirect(`/player/event/${eventId}`);
     } catch (err) {
         console.error('Error registering for event:', err);
@@ -724,10 +694,10 @@ router.get('/teams/browse', isPlayer, (req, res) => {
     Team.getAllTeams((err, teams) => {
         if (err) {
             console.error('Error fetching teams:', err);
-            return res.render('player/browse-teams', { 
-                profile: req.session.user, 
+            return res.render('player/browse-teams', {
+                profile: req.session.user,
                 teams: [],
-                error: 'Failed to load teams. Please try again later.' 
+                error: 'Failed to load teams. Please try again later.'
             });
         }
         res.render('player/browse-teams', { profile: req.session.user, teams: teams });
@@ -735,56 +705,56 @@ router.get('/teams/browse', isPlayer, (req, res) => {
 });
 
 // Get team details
-router.get('/teams/details/:id', isPlayer, async (req, res) => {
-    try {
-        const teamId = req.params.id;
-        const userId = req.session.user.id;
-        
-        // Get team details
-        const team = await Team.getTeamById(teamId);
-        
-        if (!team) {
-            req.session.error = 'Team not found or error loading team details.';
-            return res.redirect('/player/browse-teams');
-        }
-        
-        // Get team members
-        const members = await Team.getTeamMembers(teamId);
-        team.members_list = members || [];
-        
-        // Check if user is a member of this team
-        const isTeamMember = members.some(member => member.id === userId);
-        
-        // Get player's join requests to show status
-        const joinRequests = await Team.getPlayerJoinRequests(userId);
-        
-        // Find if there's a request for this team
-        const teamRequest = joinRequests.find(req => req.team_id === parseInt(teamId));
-        const requestStatus = teamRequest ? teamRequest.status : undefined;
-        
-        res.render('player/team-details', { 
-            profile: req.session.user, 
-            team: team,
-            isTeamMember: isTeamMember,
-            requestStatus: requestStatus,
-            layout: 'layouts/dashboard',
-            path: '/player/browse-teams'
-        });
-    } catch (err) {
-        console.error('Error fetching team details:', err);
-        req.session.error = 'Error loading team details.';
-        res.redirect('/player/browse-teams');
-    }
-});
+// router.get('/teams/details/:id', isPlayer, async (req, res) => {
+//     try {
+//         const teamId = req.params.id;
+//         const userId = req.session.user.id;
+
+//         // Get team details
+//         const team = await Team.getTeamById(teamId);
+
+//         if (!team) {
+//             req.session.error = 'Team not found or error loading team details.';
+//             return res.redirect('/player/browse-teams');
+//         }
+
+//         // Get team members
+//         const members = await Team.getTeamMembers(teamId);
+//         team.members_list = members || [];
+
+//         // Check if user is a member of this team
+//         const isTeamMember = members.some(member => member.id === userId);
+
+//         // Get player's join requests to show status
+//         const joinRequests = await Team.getPlayerJoinRequests(userId);
+
+//         // Find if there's a request for this team
+//         const teamRequest = joinRequests.find(req => req.team_id === parseInt(teamId));
+//         const requestStatus = teamRequest ? teamRequest.status : undefined;
+
+//         res.render('player/team-details', { 
+//             profile: req.session.user, 
+//             team: team,
+//             isTeamMember: isTeamMember,
+//             requestStatus: requestStatus,
+//             layout: 'layouts/dashboard',
+//             path: '/player/browse-teams'
+//         });
+//     } catch (err) {
+//         console.error('Error fetching team details:', err);
+//         req.session.error = 'Error loading team details.';
+//         res.redirect('/player/browse-teams');
+//     }
+// });
 
 // Profile update route
 router.post('/update-profile', isPlayer, async (req, res) => {
     try {
         // Get user ID from session
         const userId = req.session.user._id;
-        
+
         console.log('Profile update request received:', req.body);
-        
+
         // Extract all possible profile fields directly
         const updatedProfile = {
             // Handle both single name field and first/last name fields
@@ -799,52 +769,52 @@ router.post('/update-profile', isPlayer, async (req, res) => {
             organization: req.body.organization || '',
             preferred_sports: req.body.sports || req.body.preferred_sports || []
         };
-        
+
         console.log('Sending profile update to database:', updatedProfile);
-        
+
         // Update the user profile in the database
         const updatedUser = await User.updateUser(userId, updatedProfile);
-        
+
         if (!updatedUser) {
             throw new Error('Failed to update user in database');
         }
-        
+
         // Fetch fresh user data from database to ensure we have all fields
         const freshUserData = await User.getUserById(userId);
-        
+
         if (!freshUserData) {
             throw new Error('Failed to retrieve updated user data');
         }
-        
+
         // Create complete user object for session
         const sessionUser = freshUserData.toObject ? freshUserData.toObject() : freshUserData;
-        
+
         // Add UI-friendly name format
         sessionUser.name = sessionUser.first_name + (sessionUser.last_name ? ' ' + sessionUser.last_name : '');
-        
+
         console.log('Updating session with complete user data:', {
             name: sessionUser.name,
             email: sessionUser.email,
             profile_image: sessionUser.profile_image,
             age: sessionUser.age,
-            address: sessionUser.address, 
+            address: sessionUser.address,
             bio: sessionUser.bio
         });
-        
+
         // Update the session with complete user data
         req.session.user = sessionUser;
-        
+
         // Save session to ensure persistence
         req.session.save(err => {
             if (err) {
                 console.error('Error saving session after profile update:', err);
             }
-            
+
             req.session.flashMessage = {
                 type: 'success',
                 text: 'Profile updated successfully!'
             };
-            
+
             res.redirect('/player/profile');
         });
     } catch (err) {
@@ -862,9 +832,9 @@ router.post('/change-password', isPlayer, async (req, res) => {
     try {
         const userId = req.session.user._id;
         const { currentPassword, newPassword, confirmPassword } = req.body;
-        
+
         console.log('Password change request received');
-        
+
         // Validate password match
         if (newPassword !== confirmPassword) {
             req.session.flashMessage = {
@@ -873,18 +843,18 @@ router.post('/change-password', isPlayer, async (req, res) => {
             };
             return res.redirect('/player/profile');
         }
-        
+
         // Get user from database
         const user = await User.getUserById(userId);
-        
+
         if (!user) {
             throw new Error('User not found');
         }
-        
+
         // Verify current password using bcrypt
         const bcrypt = require('bcrypt');
         const isMatch = await bcrypt.compare(currentPassword, user.password);
-        
+
         if (!isMatch) {
             req.session.flashMessage = {
                 type: 'error',
@@ -892,17 +862,17 @@ router.post('/change-password', isPlayer, async (req, res) => {
             };
             return res.redirect('/player/profile');
         }
-        
+
         // Hash new password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(newPassword, salt);
-        
+
         // Update password directly in the database
         user.password = hashedPassword;
         await user.save();
-        
+
         console.log('Password updated successfully');
-        
+
         req.session.flashMessage = {
             type: 'success',
             text: 'Password changed successfully!'
@@ -922,7 +892,7 @@ router.post('/change-password', isPlayer, async (req, res) => {
 router.post('/update-notifications', isPlayer, (req, res) => {
     const userId = req.session.user.id;
     const { emailNotif, smsNotif, eventReminder, teamUpdates, marketingEmails } = req.body;
-    
+
     const notificationSettings = {
         emailNotif: emailNotif === 'on',
         smsNotif: smsNotif === 'on',
@@ -930,7 +900,7 @@ router.post('/update-notifications', isPlayer, (req, res) => {
         teamUpdates: teamUpdates === 'on',
         marketingEmails: marketingEmails === 'on'
     };
-    
+
     // In a real app, you would save these settings to the database
     // For demo purposes, we'll just update the session
     req.session.user.notificationSettings = notificationSettings;
@@ -941,27 +911,27 @@ router.post('/update-notifications', isPlayer, (req, res) => {
 // Add route for updating sports preferences
 router.post('/update-sports', isPlayer, (req, res) => {
     const userId = req.session.user.id;
-    
+
     // Handle both array and single value 
     let sports = req.body.sports;
     if (!Array.isArray(sports)) {
         sports = sports ? [sports] : [];
     }
-    
+
     console.log('Updating sports preferences:', sports);
-    
+
     // Save sports preferences to the database
     const updatedProfile = {
         preferred_sports: sports.join(',') // Store as comma-separated string
     };
-    
+
     User.updateUser(userId, updatedProfile, (err, updatedUser) => {
         if (err) {
             console.error('Error updating sports preferences:', err);
             req.session.error = 'Error updating sports preferences. Please try again.';
             return res.redirect('/player/profile');
         }
-        
+
         // Update session with updated sports data
         if (updatedUser) {
             req.session.user = updatedUser;
@@ -970,7 +940,7 @@ router.post('/update-sports', isPlayer, (req, res) => {
             req.session.user.preferred_sports = sports.join(',');
             req.session.user.preferredSports = sports; // For UI compatibility
         }
-        
+
         req.session.success = 'Sports preferences updated successfully!';
         res.redirect('/player/profile');
     });
@@ -988,48 +958,48 @@ router.post('/update-photo', isPlayer, upload.single('photo'), async (req, res) 
         }
 
         const userId = req.session.user._id;
-        
+
         // Set the path to the uploaded file - ensure it starts with a slash for consistency
         const profileImagePath = `/uploads/profile/${req.file.filename}`;
-        
+
         // Update user in database using the updateUser method from our model
         const updatedUser = await User.updateUser(userId, {
             profile_image: profileImagePath
         });
-        
+
         if (!updatedUser) {
             throw new Error('Failed to update user record');
         }
-        
+
         // Fetch the latest user data from database to ensure we have all fields
         const latestUserData = await User.getUserById(userId);
-        
+
         if (!latestUserData) {
             throw new Error('Failed to retrieve updated user data');
         }
-        
+
         // Create complete user object for session
         const sessionUser = latestUserData.toObject ? latestUserData.toObject() : latestUserData;
-        
+
         // Add UI-friendly name format
         sessionUser.name = sessionUser.first_name + (sessionUser.last_name ? ' ' + sessionUser.last_name : '');
-        
+
         console.log('Profile picture updated successfully:', profileImagePath);
-        
+
         // Update the complete session with the latest user data
         req.session.user = sessionUser;
-        
+
         // Save the session to ensure changes are persisted
         req.session.save((err) => {
             if (err) {
                 console.error('Error saving session after profile update:', err);
             }
-            
+
             req.session.message = {
                 type: 'success',
                 text: 'Profile picture updated successfully!'
             };
-            
+
             res.redirect('/player/profile');
         });
     } catch (err) {
@@ -1047,7 +1017,7 @@ router.post('/request-join-team/:teamId', async (req, res) => {
     try {
         const teamId = req.params.teamId; // Get team ID from URL parameter
         const playerId = req.session.user._id;
-        
+
         if (!teamId || !playerId) {
             req.session.flashMessage = {
                 type: 'error',
@@ -1055,27 +1025,27 @@ router.post('/request-join-team/:teamId', async (req, res) => {
             };
             return res.redirect('/player/browse-teams');
         }
-        
+
         console.log(`Player ${playerId} is requesting to join team ${teamId}`);
-        
+
         // Call Team model method to add join request
         const result = await Team.addJoinRequest(teamId, playerId);
-        
+
         // Get team details for the success message
         const team = await Team.getTeamById(teamId);
         const teamName = team ? team.name : 'the team';
-        
+
         req.session.flashMessage = {
             type: 'success',
             text: `Your request to join ${teamName} has been sent to the team manager. You will be notified when it's approved.`
         };
-        
+
         // Store the request status in session to update UI
         if (!req.session.teamRequestStatuses) {
             req.session.teamRequestStatuses = {};
         }
         req.session.teamRequestStatuses[teamId] = 'pending';
-        
+
         res.redirect('/player/browse-teams');
     } catch (err) {
         console.error('Error requesting to join team:', err);
@@ -1092,20 +1062,20 @@ router.post('/request-join-team/:teamId', async (req, res) => {
 // API route to get all events for browse page
 router.get('/api/events/browse', async (req, res) => {
     try {
-        const events = await EventSchema.find({ 
+        const events = await EventSchema.find({
             status: 'upcoming',
             registrationDeadline: { $gte: new Date() }
         }).sort({ eventDate: 1 });
-        
-        res.json({ 
-            success: true, 
-            events: events 
+
+        res.json({
+            success: true,
+            events: events
         });
     } catch (error) {
         console.error('Error fetching events:', error);
-        res.json({ 
-            success: false, 
-            message: 'Failed to load events' 
+        res.json({
+            success: false,
+            message: 'Failed to load events'
         });
     }
 });
@@ -1114,11 +1084,11 @@ router.get('/api/events/browse', async (req, res) => {
 router.get('/api/events/search', async (req, res) => {
     try {
         const { search, category } = req.query;
-        let query = { 
+        let query = {
             status: 'upcoming',
             registrationDeadline: { $gte: new Date() }
         };
-        
+
         // Add search term filter
         if (search) {
             query.$or = [
@@ -1127,24 +1097,24 @@ router.get('/api/events/search', async (req, res) => {
                 { location: { $regex: search, $options: 'i' } }
             ];
         }
-        
+
         // Add category filter
         if (category) {
             query.category = { $regex: category, $options: 'i' };
         }
-        
+
         const events = await EventSchema.find(query).sort({ eventDate: 1 });
-        
-        res.json({ 
-            success: true, 
+
+        res.json({
+            success: true,
             events: events,
             count: events.length
         });
     } catch (error) {
         console.error('Error searching events:', error);
-        res.json({ 
-            success: false, 
-            message: 'Search failed. Please try again.' 
+        res.json({
+            success: false,
+            message: 'Search failed. Please try again.'
         });
     }
 });
@@ -1153,19 +1123,19 @@ router.get('/api/events/search', async (req, res) => {
 router.get('/api/player/events', async (req, res) => {
     try {
         const userId = req.session.user._id;
-        const events = await EventSchema.find({ 
-            participants: userId 
+        const events = await EventSchema.find({
+            participants: userId
         }).sort({ eventDate: 1 });
-        
-        res.json({ 
-            success: true, 
-            events: events 
+
+        res.json({
+            success: true,
+            events: events
         });
     } catch (error) {
         console.error('Error fetching player events:', error);
-        res.json({ 
-            success: false, 
-            message: 'Failed to load your events' 
+        res.json({
+            success: false,
+            message: 'Failed to load your events'
         });
     }
 });
@@ -1175,54 +1145,54 @@ router.post('/api/events/:eventId/join', async (req, res) => {
     try {
         const eventId = req.params.eventId;
         const userId = req.session.user._id;
-        
+
         const event = await EventSchema.findById(eventId);
         if (!event) {
-            return res.json({ 
-                success: false, 
-                message: 'Event not found' 
+            return res.json({
+                success: false,
+                message: 'Event not found'
             });
         }
-        
+
         // Check if already joined
         if (event.participants.includes(userId)) {
-            return res.json({ 
-                success: false, 
-                message: 'You are already registered for this event' 
+            return res.json({
+                success: false,
+                message: 'You are already registered for this event'
             });
         }
-        
+
         // Check if event is full
         if (event.participants.length >= event.maxParticipants) {
-            return res.json({ 
-                success: false, 
-                message: 'Event is full' 
+            return res.json({
+                success: false,
+                message: 'Event is full'
             });
         }
-        
+
         // Check if registration deadline has passed
         if (new Date() > event.registrationDeadline) {
-            return res.json({ 
-                success: false, 
-                message: 'Registration deadline has passed' 
+            return res.json({
+                success: false,
+                message: 'Registration deadline has passed'
             });
         }
-        
+
         // Add participant
         event.participants.push(userId);
         await event.save();
-        
-        res.json({ 
-            success: true, 
+
+        res.json({
+            success: true,
             message: 'Successfully joined the event!',
             participantCount: event.participants.length
         });
-        
+
     } catch (error) {
         console.error('Error joining event:', error);
-        res.json({ 
-            success: false, 
-            message: 'Failed to join event. Please try again.' 
+        res.json({
+            success: false,
+            message: 'Failed to join event. Please try again.'
         });
     }
 });
@@ -1233,7 +1203,7 @@ router.get('/api/teams/search', async (req, res) => {
         console.log('Team search API called with query:', req.query);
         const { search, sport } = req.query;
         let query = {};
-        
+
         // Add search term filter
         if (search) {
             query.$or = [
@@ -1242,31 +1212,31 @@ router.get('/api/teams/search', async (req, res) => {
                 { location: { $regex: search, $options: 'i' } }
             ];
         }
-        
+
         // Add sport filter
         if (sport) {
             query.sport_type = { $regex: sport, $options: 'i' };
         }
-        
+
         console.log('Team search query:', query);
-        
+
         const teams = await TeamSchema.find(query)
             .populate('manager_id', 'first_name last_name email')
             .populate('members', 'first_name last_name')
             .sort({ name: 1 });
-        
+
         console.log('Found teams:', teams.length);
-        
-        res.json({ 
-            success: true, 
+
+        res.json({
+            success: true,
             teams: teams,
             count: teams.length
         });
     } catch (error) {
         console.error('Error searching teams:', error);
-        res.json({ 
-            success: false, 
-            message: 'Search failed. Please try again.' 
+        res.json({
+            success: false,
+            message: 'Search failed. Please try again.'
         });
     }
 });
@@ -1276,37 +1246,37 @@ router.post('/api/teams/:teamId/join', async (req, res) => {
     try {
         const teamId = req.params.teamId;
         const playerId = req.session.user._id;
-        
+
         console.log('Team join API called:', { teamId, playerId });
-        
+
         if (!teamId || !playerId) {
-            return res.json({ 
-                success: false, 
-                message: 'Team ID and player ID are required' 
+            return res.json({
+                success: false,
+                message: 'Team ID and player ID are required'
             });
         }
-        
+
         console.log(`Player ${playerId} is requesting to join team ${teamId} via AJAX`);
-        
+
         // Call Team model method to add join request
         const result = await Team.addJoinRequest(teamId, playerId);
-        
+
         // Get team details for the success message
         const team = await Team.getTeamById(teamId);
         const teamName = team ? team.name : 'the team';
-        
+
         console.log('Team join successful:', { teamId, teamName });
-        
-        res.json({ 
-            success: true, 
+
+        res.json({
+            success: true,
             message: `Your request to join ${teamName} has been sent to the team manager. You will be notified when it's approved.`
         });
-        
+
     } catch (error) {
         console.error('Error requesting to join team via AJAX:', error);
-        res.json({ 
-            success: false, 
-            message: `Error requesting to join team: ${error.message}` 
+        res.json({
+            success: false,
+            message: `Error requesting to join team: ${error.message}`
         });
     }
 });
@@ -1320,11 +1290,11 @@ router.post('/api/teams/:teamId/join', async (req, res) => {
 router.get('/my-matches', async (req, res) => {
     try {
         const playerId = req.session.user._id;
-        
+
         // Get player's teams
         const teams = await Team.getPlayerTeams(playerId);
         const teamIds = teams.map(t => t._id);
-        
+
         // Get matches for those teams
         const MatchModel = require('../models/schemas/matchSchema');
         const matches = await MatchModel.find({
@@ -1334,33 +1304,33 @@ router.get('/my-matches', async (req, res) => {
             ],
             status: 'verified'
         })
-        .populate('team_a', 'name')
-        .populate('team_b', 'name')
-        .populate('event_id', 'title')
-        .sort({ match_date: -1 })
-        .limit(20)
-        .exec();
-        
+            .populate('team_a', 'name')
+            .populate('team_b', 'name')
+            .populate('event_id', 'title')
+            .sort({ match_date: -1 })
+            .limit(20)
+            .exec();
+
         // Transform matches to add player context
         const transformedMatches = matches.map(match => {
             const isTeamA = teamIds.some(id => id.toString() === match.team_a._id.toString());
-            
+
             let result, playerTeam, opponentTeam;
-            
+
             if (isTeamA) {
                 playerTeam = match.team_a;
                 opponentTeam = match.team_b;
-                result = match.score_a > match.score_b ? 'won' 
-                    : match.score_a < match.score_b ? 'lost' 
-                    : 'draw';
+                result = match.score_a > match.score_b ? 'won'
+                    : match.score_a < match.score_b ? 'lost'
+                        : 'draw';
             } else {
                 playerTeam = match.team_b;
                 opponentTeam = match.team_a;
-                result = match.score_b > match.score_a ? 'won' 
-                    : match.score_b < match.score_a ? 'lost' 
-                    : 'draw';
+                result = match.score_b > match.score_a ? 'won'
+                    : match.score_b < match.score_a ? 'lost'
+                        : 'draw';
             }
-            
+
             return {
                 ...match.toObject(),
                 player_result: result,
@@ -1368,7 +1338,7 @@ router.get('/my-matches', async (req, res) => {
                 opponent_team: opponentTeam
             };
         });
-        
+
         res.json({
             success: true,
             matches: transformedMatches
@@ -1390,16 +1360,16 @@ router.get('/my-matches', async (req, res) => {
 router.get('/stats', async (req, res) => {
     try {
         const playerId = req.session.user._id;
-        
+
         // Get player's teams
         const teams = await Team.getPlayerTeams(playerId);
-        
+
         // Aggregate stats across all teams
         let total_matches_played = 0;
         let total_wins = 0;
         let total_losses = 0;
         let total_draws = 0;
-        
+
         teams.forEach(team => {
             const member = team.members.find(m => m.player_id.toString() === playerId.toString());
             if (member && member.stats) {
@@ -1409,11 +1379,11 @@ router.get('/stats', async (req, res) => {
                 total_draws += member.stats.matches_drawn || 0;
             }
         });
-        
-        const win_rate = total_matches_played > 0 
-            ? ((total_wins / total_matches_played) * 100).toFixed(1) 
+
+        const win_rate = total_matches_played > 0
+            ? ((total_wins / total_matches_played) * 100).toFixed(1)
             : 0;
-        
+
         // Get recent form (last 5 matches)
         const teamIds = teams.map(t => t._id);
         const MatchModel = require('../models/schemas/matchSchema');
@@ -1424,24 +1394,24 @@ router.get('/stats', async (req, res) => {
             ],
             status: 'verified'
         })
-        .sort({ match_date: -1 })
-        .limit(5)
-        .exec();
-        
+            .sort({ match_date: -1 })
+            .limit(5)
+            .exec();
+
         const recent_form = recentMatches.map(match => {
             const isTeamA = teamIds.some(id => id.toString() === match.team_a.toString());
-            
+
             if (isTeamA) {
-                return match.score_a > match.score_b ? 'W' 
-                    : match.score_a < match.score_b ? 'L' 
-                    : 'D';
+                return match.score_a > match.score_b ? 'W'
+                    : match.score_a < match.score_b ? 'L'
+                        : 'D';
             } else {
-                return match.score_b > match.score_a ? 'W' 
-                    : match.score_b < match.score_a ? 'L' 
-                    : 'D';
+                return match.score_b > match.score_a ? 'W'
+                    : match.score_b < match.score_a ? 'L'
+                        : 'D';
             }
         });
-        
+
         const stats = {
             total_matches_played,
             total_wins,
@@ -1451,7 +1421,7 @@ router.get('/stats', async (req, res) => {
             teams_count: teams.length,
             recent_form
         };
-        
+
         res.json({
             success: true,
             stats
@@ -1474,32 +1444,32 @@ router.get('/teams/:teamId/performance', async (req, res) => {
     try {
         const { teamId } = req.params;
         const playerId = req.session.user._id;
-        
+
         // Get team
         const team = await Team.getTeamById(teamId);
         const member = team.members.find(m => m.player_id.toString() === playerId.toString());
-        
+
         if (!member) {
             return res.status(403).json({
                 success: false,
                 message: 'You are not a member of this team'
             });
         }
-        
+
         const stats = member.stats || {
             matches_played: 0,
             matches_won: 0,
             matches_lost: 0,
             matches_drawn: 0
         };
-        
-        const win_rate = stats.matches_played > 0 
-            ? ((stats.matches_won / stats.matches_played) * 100).toFixed(1) 
+
+        const win_rate = stats.matches_played > 0
+            ? ((stats.matches_won / stats.matches_played) * 100).toFixed(1)
             : 0;
-        
+
         const Match = require('../models/match');
         const matches = await Match.getMatchesByTeam(teamId);
-        
+
         res.json({
             success: true,
             team: {
@@ -1536,11 +1506,11 @@ router.get('/my-matches', async (req, res) => {
     try {
         const playerId = req.session.user._id;
         const Match = require('../models/match');
-        
+
         // Get all teams player belongs to
         const teams = await Team.getPlayerTeams(playerId);
         const teamIds = teams.map(t => t._id);
-        
+
         if (teamIds.length === 0) {
             return res.json({
                 success: true,
@@ -1548,7 +1518,7 @@ router.get('/my-matches', async (req, res) => {
                 stats: { total: 0, won: 0, lost: 0, drawn: 0, winRate: 0 }
             });
         }
-        
+
         // Get all matches involving these teams
         const MatchSchema = require('../models/schemas/matchSchema');
         const matches = await MatchSchema.find({
@@ -1558,19 +1528,19 @@ router.get('/my-matches', async (req, res) => {
             ],
             status: { $in: ['completed', 'verified'] }
         })
-        .populate('team_a', 'name')
-        .populate('team_b', 'name')
-        .populate('event_id', 'title')
-        .sort({ match_date: -1 })
-        .limit(50)
-        .lean();
-        
+            .populate('team_a', 'name')
+            .populate('team_b', 'name')
+            .populate('event_id', 'title')
+            .sort({ match_date: -1 })
+            .limit(50)
+            .lean();
+
         // Calculate player statistics
         let won = 0, lost = 0, drawn = 0;
-        
+
         matches.forEach(match => {
             const isTeamA = teamIds.some(id => id.toString() === match.team_a._id.toString());
-            
+
             if (match.winner === 'draw') {
                 drawn++;
             } else if (
@@ -1582,7 +1552,7 @@ router.get('/my-matches', async (req, res) => {
                 lost++;
             }
         });
-        
+
         res.json({
             success: true,
             matches: matches,
@@ -1594,7 +1564,7 @@ router.get('/my-matches', async (req, res) => {
                 winRate: matches.length > 0 ? ((won / matches.length) * 100).toFixed(1) : 0
             }
         });
-        
+
     } catch (error) {
         console.error('Error fetching player matches:', error);
         res.status(500).json({
@@ -1610,11 +1580,11 @@ router.get('/stats', async (req, res) => {
         const playerId = req.session.user._id;
         const Match = require('../models/match');
         const MatchSchema = require('../models/schemas/matchSchema');
-        
+
         // Get teams
         const teams = await Team.getPlayerTeams(playerId);
         const teamIds = teams.map(t => t._id);
-        
+
         // Aggregate statistics
         const totalMatches = await MatchSchema.countDocuments({
             $or: [
@@ -1623,7 +1593,7 @@ router.get('/stats', async (req, res) => {
             ],
             status: { $in: ['completed', 'verified'] }
         });
-        
+
         // Get recent matches for form
         const recentMatches = await MatchSchema.find({
             $or: [
@@ -1632,21 +1602,21 @@ router.get('/stats', async (req, res) => {
             ],
             status: { $in: ['completed', 'verified'] }
         })
-        .sort({ match_date: -1 })
-        .limit(5)
-        .populate('team_a team_b')
-        .lean();
-        
+            .sort({ match_date: -1 })
+            .limit(5)
+            .populate('team_a team_b')
+            .lean();
+
         // Calculate form (W/L/D for last 5 matches)
         const form = recentMatches.map(match => {
             const isTeamA = teamIds.some(id => id.toString() === match.team_a._id.toString());
-            
+
             if (match.winner === 'draw') return 'D';
-            if ((isTeamA && match.winner === 'team_a') || 
+            if ((isTeamA && match.winner === 'team_a') ||
                 (!isTeamA && match.winner === 'team_b')) return 'W';
             return 'L';
         });
-        
+
         res.json({
             success: true,
             stats: {
@@ -1656,7 +1626,7 @@ router.get('/stats', async (req, res) => {
             },
             teams: teams
         });
-        
+
     } catch (error) {
         console.error('Error fetching player stats:', error);
         res.status(500).json({
@@ -1666,127 +1636,31 @@ router.get('/stats', async (req, res) => {
     }
 });
 
-/**
- * Get team details
- * GET /player/team/:teamId
- */
-router.get('/team/:teamId', async (req, res) => {
-    try {
-        const { teamId } = req.params;
-        const playerId = req.session.user._id;
-        
-        const team = await Team.getTeamById(teamId);
-        
-        if (!team) {
-            return res.status(404).json({
-                success: false,
-                message: 'Team not found'
-            });
-        }
-        
-        // Check if player is a member or has a pending request
-        const isMember = team.members.some(m => m.player_id.toString() === playerId.toString());
-        
-        // Check for pending join request
-        const Registration = require('../models/registration');
-        const pendingRequest = await Registration.findOne({
-            player_id: playerId,
-            team_id: teamId,
-            status: 'pending'
-        });
-        
-        // Get team matches
-        const MatchSchema = require('../models/schemas/matchSchema');
-        const matches = await MatchSchema.find({
-            $or: [{ team_a: teamId }, { team_b: teamId }],
-            status: 'verified'
-        })
-        .populate('team_a team_b')
-        .sort({ match_date: -1 })
-        .limit(10)
-        .lean();
-        
-        // Format matches
-        const formattedMatches = matches.map(match => {
-            const isTeamA = match.team_a._id.toString() === teamId;
-            const opponent = isTeamA ? match.team_b : match.team_a;
-            const teamScore = isTeamA ? match.score_a : match.score_b;
-            const oppScore = isTeamA ? match.score_b : match.score_a;
-            
-            let result = 'draw';
-            if (teamScore > oppScore) result = 'win';
-            else if (teamScore < oppScore) result = 'loss';
-            
-            return {
-                opponent: opponent.name,
-                score: `${teamScore} - ${oppScore}`,
-                result: result,
-                date: match.match_date
-            };
-        });
-        
-        res.json({
-            success: true,
-            team: {
-                id: team._id,
-                name: team.name,
-                sport_type: team.sport_type,
-                description: team.description,
-                manager_name: team.manager_name,
-                manager_email: team.manager_email,
-                current_members: team.members ? team.members.length : 0,
-                max_members: team.max_members,
-                wins: team.stats?.wins || 0,
-                losses: team.stats?.losses || 0,
-                members: team.members.map(m => ({
-                    name: `${m.first_name || ''} ${m.last_name || ''}`.trim() || 'Player',
-                    role: m.role || 'Player'
-                })),
-                matches: formattedMatches,
-                already_joined: isMember
-            },
-            requestStatus: pendingRequest ? 'pending' : null
-        });
-        
-    } catch (error) {
-        console.error('Error fetching team details:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching team details',
-            error: error.message
-        });
-    }
-});
-
-/**
- * Get event details
- * GET /player/event/:eventId
- */
 router.get('/event/:eventId', async (req, res) => {
     try {
         const { eventId } = req.params;
         const playerId = req.session.user._id;
-        
+
         const Event = require('../models/event');
         const event = await Event.getEventById(eventId);
-        
+
         if (!event) {
             return res.status(404).json({
                 success: false,
                 message: 'Event not found'
             });
         }
-        
+
         // Get player's teams
         const playerTeams = await Team.getPlayerTeams(playerId);
         const playerTeamIds = playerTeams.map(t => t._id.toString());
-        
+
         // Find which team is participating
-        const participatingTeam = event.team_registrations.find(reg => 
-            playerTeamIds.includes(reg.team_id.toString()) && 
+        const participatingTeam = event.team_registrations.find(reg =>
+            playerTeamIds.includes(reg.team_id.toString()) &&
             (reg.status === 'confirmed' || reg.status === 'approved')
         );
-        
+
         // Get all confirmed teams
         const confirmedTeams = event.team_registrations
             .filter(reg => reg.status === 'confirmed' || reg.status === 'approved')
@@ -1795,14 +1669,14 @@ router.get('/event/:eventId', async (req, res) => {
                 manager: reg.manager_name,
                 is_my_team: participatingTeam && reg.team_id.toString() === participatingTeam.team_id.toString()
             }));
-        
+
         // Get fixtures/matches
         const MatchSchema = require('../models/schemas/matchSchema');
         const fixtures = await MatchSchema.find({ event_id: eventId })
             .populate('team_a team_b')
             .sort({ match_date: 1 })
             .lean();
-        
+
         const formattedFixtures = fixtures.map(match => ({
             team_a: match.team_a.name,
             team_b: match.team_b.name,
@@ -1810,7 +1684,7 @@ router.get('/event/:eventId', async (req, res) => {
             score: match.status === 'verified' ? `${match.score_a} - ${match.score_b}` : null,
             status: match.status
         }));
-        
+
         res.json({
             success: true,
             event: {
@@ -1831,7 +1705,7 @@ router.get('/event/:eventId', async (req, res) => {
                 completed_matches: fixtures.filter(f => f.status === 'verified').length
             }
         });
-        
+
     } catch (error) {
         console.error('Error fetching event details:', error);
         res.status(500).json({

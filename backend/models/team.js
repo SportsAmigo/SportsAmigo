@@ -38,88 +38,59 @@ module.exports = {
      * @param {string} teamId - Team ID
      * @returns {Promise<object>} - Promise resolving to the team object
      */
-    getTeamById: async function(teamId) {
-        try {
-            if (!teamId) {
-                throw new Error('Team ID is required');
-            }
-            
-            // Get team with members populated
-            const team = await Team.findById(teamId).exec();
-                
-                if (!team) {
-                throw new Error('Team not found');
-            }
-            
-            // Get manager information
-            const manager = await User.findById(team.manager_id)
-                .select('first_name last_name email')
-                .exec();
-            
-            // Create team object with manager info
-                    const teamWithManager = {
-                ...team.toObject(),
-                        manager_first_name: manager ? manager.first_name : '',
-                        manager_last_name: manager ? manager.last_name : '',
-                manager_email: manager ? manager.email : '',
-                member_count: team.members ? team.members.length : 0
+    getTeamById: async function (teamId) {
+    if (!teamId) throw new Error('Team ID is required');
+
+    const team = await Team.findById(teamId).lean();
+    if (!team) return null;
+
+    // Manager
+    const manager = await User.findById(team.manager_id)
+        .select('first_name last_name email')
+        .lean();
+
+    // Members
+    const memberIds = team.members.map(m => m.player_id);
+    const users = await User.find({ _id: { $in: memberIds } })
+        .select('first_name last_name email')
+        .lean();
+
+    const userMap = Object.fromEntries(
+        users.map(u => [u._id.toString(), u])
+    );
+
+    return {
+        id: team._id,
+        name: team.name,
+        sport_type: team.sport_type,
+        description: team.description || '',
+
+        manager: {
+            id: team.manager_id,
+            name: manager
+                ? `${manager.first_name} ${manager.last_name}`.trim()
+                : 'Team Manager',
+            email: manager?.email || ''
+        },
+
+        members: team.members.map(m => {
+            const u = userMap[m.player_id.toString()];
+            return {
+                id: m.player_id,
+                name: u
+                    ? `${u.first_name} ${u.last_name}`.trim()
+                    : u?.email || 'Player',
+                email: u?.email || '',
+                role: m.role || 'Player'
             };
-            
-            // Get user information for team members
-            if (team.members && team.members.length > 0) {
-                const memberIds = team.members.map(member => member.player_id);
-                const users = await User.find({ _id: { $in: memberIds } })
-                    .select('first_name last_name email')
-                    .exec();
-                
-                // Create a map of user info by ID
-                const usersMap = users.reduce((map, user) => {
-                    map[user._id.toString()] = user;
-                    return map;
-                }, {});
-                
-                // Add user info to members
-                teamWithManager.members = team.members.map(member => {
-                    const user = usersMap[member.player_id.toString()];
-                    return {
-                        ...member.toObject(),
-                        first_name: user ? user.first_name : '',
-                        last_name: user ? user.last_name : '',
-                        email: user ? user.email : ''
-                    };
-                });
-            }
-            
-            // Get user information for join requests
-            if (team.join_requests && team.join_requests.length > 0) {
-                const requestPlayerIds = team.join_requests.map(req => req.player_id);
-                const requestUsers = await User.find({ _id: { $in: requestPlayerIds } })
-                    .select('first_name last_name email')
-                    .exec();
-                
-                // Create a map of user info by ID
-                const requestUsersMap = requestUsers.reduce((map, user) => {
-                    map[user._id.toString()] = user;
-                    return map;
-                }, {});
-                
-                // Add user info to join requests
-                teamWithManager.join_requests = team.join_requests.map(request => {
-                    const user = requestUsersMap[request.player_id.toString()];
-                    return {
-                        ...request.toObject(),
-                        player_name: user ? `${user.first_name} ${user.last_name}` : '',
-                        player_email: user ? user.email : ''
-                    };
-                });
-            }
-            
-            return teamWithManager;
-        } catch (err) {
-            console.error('Error getting team by ID:', err);
-            throw err;
-        }
-    },
+        }),
+
+        member_count: team.members.length,
+        max_members: team.max_members || 20,
+        join_requests: team.join_requests || []
+    };
+}
+,
     
     /**
      * Get all teams
@@ -614,6 +585,26 @@ module.exports = {
                 throw new Error('Team ID and player ID are required');
             }
             
+            const targetTeam = await Team.findById(teamId);
+if (!targetTeam) {
+    throw new Error('Team not found');
+}
+
+const conflictTeam = await Team.findOne({
+    sport_type: targetTeam.sport_type,
+    $or: [
+        { 'members.player_id': playerId },
+        { 'join_requests.player_id': playerId }
+    ]
+});
+
+if (conflictTeam) {
+    throw new Error(
+        `You can only be part of one ${targetTeam.sport_type} team at a time`
+    );
+}
+
+
             // Check if team exists
             const team = await Team.findById(teamId).exec();
             if (!team) {
