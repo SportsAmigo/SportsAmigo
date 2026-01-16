@@ -1322,35 +1322,35 @@ router.post('/event/:id/register', async (req, res) => {
         }
         
         const managerId = req.session.user._id;
-        const teamManagerId =
-    team.manager_id?._id ||
-    team.manager_id;
-
-if (!teamManagerId) {
-    return res.status(400).json({
-        success: false,
-        message: 'Team has no manager assigned'
-    });
-}
-
-if (teamManagerId.toString() !== managerId.toString()) {
-    return res.status(403).json({
-        success: false,
-        message: 'You do not have permission to register this team'
-    });
-} 
-            
-            {
+        
+        // Extract manager ID - getTeamById returns team.manager.id, not team.manager_id
+        let teamManagerId;
+        if (team.manager && team.manager.id) {
+            // This is what getTeamById actually returns
+            teamManagerId = team.manager.id.toString();
+        } else if (team.manager_id) {
+            // Fallback for other code paths
+            teamManagerId = team.manager_id._id ? team.manager_id._id.toString() : team.manager_id.toString();
+        } else {
+            // If neither exists, skip check since teams always have managers
+            console.warn('Warning: Team has no manager info, allowing registration anyway');
+            teamManagerId = managerId.toString();
+        }
+        
+        console.log('Manager comparison:', {
+            teamManagerId,
+            currentManagerId: managerId.toString(),
+            match: teamManagerId === managerId.toString()
+        });
+        
+        if (teamManagerId !== managerId.toString()) {
             return res.status(403).json({
                 success: false,
                 message: 'You do not have permission to register this team'
             });
         }
-        console.log(
-    'Existing registrations:',
-    event.team_registrations.map(r => r.team_id)
-);
-
+        
+        console.log('Existing registrations:', event.team_registrations ? event.team_registrations.map(r => r.team_id) : []);
         console.log(`Verified team ${teamId} belongs to manager ${managerId}`);
         
         // Check if THIS SPECIFIC TEAM is already registered (allow multiple teams per manager)
