@@ -241,6 +241,8 @@
   min-height: 100vh;
   transition: margin-left 0.3s ease;
   position: relative;
+  padding: 0 1.5rem; /* Add horizontal padding to prevent overflow */
+  box-sizing: border-box; /* Ensure padding doesn't add to width */
 }
 
 .manager-main-content.expanded {
@@ -582,10 +584,9 @@
   border: 2px solid rgba(255, 255, 255, 0.5);
   border-radius: 20px;
   padding: 2rem;
-  max-width: 1400px;
+  max-width: calc(100vw - 323px); /* Account for sidebar (280px) + main padding (3rem total) */
+  width: 100%;
   margin: 0 auto 2rem auto;
-  margin-left: 2.5rem;
-  margin-right: 2.5rem;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   transition: all 0.3s ease;
 }
@@ -697,7 +698,9 @@
   border-radius: 16px;
   padding: 4rem 2rem;
   text-align: center;
-  max-width: 1400px;
+  max-width: calc(100vw - 323px); /* Account for sidebar (280px) + main padding (3rem total) */
+  width: 100%;
+  margin: 0 auto 2rem auto;
   margin: 0 auto 2.5rem auto;
   margin-left: 2.5rem;
   margin-right: 2.5rem;
@@ -988,8 +991,9 @@
   .no-teams-section,
   .match-history-section,
   .upcoming-matches-section {
-    margin-left: 2.5rem;
-    margin-right: 2.5rem;
+    max-width: calc(100vw - 303px);
+    margin-left: auto;
+    margin-right: auto;
   }
 }
 
@@ -1005,6 +1009,7 @@
 
   .manager-main-content {
     margin-left: 0;
+    padding: 0 1rem; /* Reduce padding on mobile */
   }
 
   .stats-grid {
@@ -1026,8 +1031,9 @@
   .no-teams-section,
   .match-history-section,
   .upcoming-matches-section {
-    margin-left: 1.5rem;
-    margin-right: 1.5rem;
+    max-width: calc(100vw - 2rem); /* Only account for main content padding on mobile */
+    margin-left: auto;
+    margin-right: auto;
     padding: 1.5rem;
   }
 

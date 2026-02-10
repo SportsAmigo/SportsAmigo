@@ -588,7 +588,7 @@ router.put('/team/:id', async (req, res) => {
         }
         
         // Check if the current user is the team manager
-        if (team.manager_id.toString() !== managerId.toString()) {
+        if (team.manager.id.toString() !== managerId.toString()) {
             return res.status(403).json({
                 success: false,
                 message: 'You do not have permission to update this team'
@@ -667,7 +667,7 @@ router.get('/team/:id', async (req, res) => {
         }
         
         // Make sure the manager owns this team (convert to string for comparison)
-        if (team.manager_id.toString() !== req.session.user._id.toString()) {
+        if (team.manager.id.toString() !== req.session.user._id.toString()) {
             return res.status(403).json({
                 success: false,
                 message: 'You do not have permission to manage this team'
@@ -1782,7 +1782,7 @@ router.post('/event/:id/withdraw', async (req, res) => {
         } else {
             // Verify the team belongs to this manager
             const team = await Team.getTeamById(registeredTeamId);
-            if (team && team.manager_id.toString() === managerId.toString()) {
+            if (team && team.manager.id.toString() === managerId.toString()) {
                 teamName = team.name;
                 console.log(`Using provided team: ${teamName} (${registeredTeamId})`);
             } else {
@@ -1907,7 +1907,7 @@ router.get('/teams/:id', async (req, res) => {
         }
         
         // Verify ownership
-        if (team.manager_id.toString() !== req.session.user._id.toString()) {
+        if (team.manager.id.toString() !== req.session.user._id.toString()) {
             req.session.flashMessage = {
                 type: 'error',
                 text: 'You do not have permission to view this team'
@@ -1950,7 +1950,7 @@ router.get('/teams/:id/edit', async (req, res) => {
         }
         
         // Verify ownership
-        if (team.manager_id.toString() !== req.session.user._id.toString()) {
+        if (team.manager.id.toString() !== req.session.user._id.toString()) {
             req.session.flashMessage = {
                 type: 'error',
                 text: 'You do not have permission to edit this team'
@@ -1999,7 +1999,7 @@ router.get('/teams/:id/requests', async (req, res) => {
         }
         
         // Verify ownership
-        if (team.manager_id.toString() !== req.session.user._id.toString()) {
+        if (team.manager.id.toString() !== req.session.user._id.toString()) {
             req.session.flashMessage = {
                 type: 'error',
                 text: 'You do not have permission to manage this team'
@@ -2169,7 +2169,7 @@ router.get('/team/:id/manage', async (req, res) => {
         const team = await Team.getTeamById(teamId);
         
         // Verify this manager owns the team
-        if (!team || team.manager_id.toString() !== managerId.toString()) {
+        if (!team || team.manager.id.toString() !== managerId.toString()) {
             req.session.flashMessage = {
                 type: 'error',
                 text: 'You do not have permission to manage this team'
@@ -2263,7 +2263,7 @@ router.post('/team/:id/handle-request', async (req, res) => {
         const team = await Team.getTeamById(teamId);
         
         // Verify this manager owns the team
-        if (!team || team.manager_id.toString() !== managerId.toString()) {
+        if (!team || team.manager.id.toString() !== managerId.toString()) {
             req.session.flashMessage = {
                 type: 'error',
                 text: 'You do not have permission to manage this team'
@@ -2310,7 +2310,7 @@ router.post('/team/:id/remove-member', async (req, res) => {
         const team = await Team.getTeamById(teamId);
         
         // Verify this manager owns the team
-        if (!team || team.manager_id.toString() !== managerId.toString()) {
+        if (!team || team.manager.id.toString() !== managerId.toString()) {
             req.session.messages = {
                 error: 'You do not have permission to manage this team'
             };
@@ -2405,7 +2405,7 @@ router.post('/team/:teamId/match/record', async (req, res) => {
         
         // Verify manager owns the team
         const team = await Team.getTeamById(teamId);
-        if (team.manager_id.toString() !== managerId.toString()) {
+        if (team.manager.id.toString() !== managerId.toString()) {
             return res.status(403).json({
                 success: false,
                 message: 'You are not authorized to record matches for this team'
@@ -2474,7 +2474,7 @@ router.get('/team/:teamId/matches', async (req, res) => {
         
         // Verify manager owns the team
         const team = await Team.getTeamById(teamId);
-        if (team.manager_id.toString() !== managerId.toString()) {
+        if (team.manager.id.toString() !== managerId.toString()) {
             return res.status(403).json({
                 success: false,
                 message: 'You are not authorized to view matches for this team'
@@ -2510,7 +2510,7 @@ router.put('/team/:teamId/match/:matchId', async (req, res) => {
         
         // Verify manager owns the team
         const team = await Team.getTeamById(teamId);
-        if (team.manager_id.toString() !== managerId.toString()) {
+        if (team.manager.id.toString() !== managerId.toString()) {
             return res.status(403).json({
                 success: false,
                 message: 'You are not authorized to update matches for this team'
@@ -2563,7 +2563,7 @@ router.delete('/team/:teamId/match/:matchId', async (req, res) => {
         
         // Verify manager owns the team
         const team = await Team.getTeamById(teamId);
-        if (team.manager_id.toString() !== managerId.toString()) {
+        if (team.manager.id.toString() !== managerId.toString()) {
             return res.status(403).json({
                 success: false,
                 message: 'You are not authorized to delete matches for this team'
@@ -2615,7 +2615,7 @@ router.get('/team/:teamId/analytics', async (req, res) => {
         
         // Verify manager owns the team
         const team = await Team.getTeamById(teamId);
-        if (team.manager_id.toString() !== managerId.toString()) {
+        if (team.manager.id.toString() !== managerId.toString()) {
             return res.status(403).json({
                 success: false,
                 message: 'You are not authorized to view analytics for this team'
@@ -2700,7 +2700,7 @@ router.get('/team/:teamId/scheduled-matches', async (req, res) => {
             });
         }
         
-        if (team.manager_id.toString() !== managerId.toString()) {
+        if (team.manager.id.toString() !== managerId.toString()) {
             return res.status(403).json({
                 success: false,
                 message: 'You are not authorized to view matches for this team'
@@ -2879,7 +2879,7 @@ router.get('/team/:teamId/matches', async (req, res) => {
             });
         }
         
-        if (team.manager_id.toString() !== req.session.user._id.toString()) {
+        if (team.manager.id.toString() !== req.session.user._id.toString()) {
             return res.status(403).json({
                 success: false,
                 message: 'Not authorized to view this team\'s matches'
@@ -2932,7 +2932,7 @@ router.post('/team/:teamId/match/record', async (req, res) => {
         
         // Verify manager owns team
         const team = await Team.getTeamById(teamId);
-        if (!team || team.manager_id.toString() !== req.session.user._id.toString()) {
+        if (!team || team.manager.id.toString() !== req.session.user._id.toString()) {
             return res.status(403).json({
                 success: false,
                 message: 'Not authorized'
@@ -3004,7 +3004,7 @@ router.put('/team/:teamId/match/:matchId', async (req, res) => {
         
         // Verify ownership
         const team = await Team.getTeamById(teamId);
-        if (!team || team.manager_id.toString() !== req.session.user._id.toString()) {
+        if (!team || team.manager.id.toString() !== req.session.user._id.toString()) {
             return res.status(403).json({
                 success: false,
                 message: 'Not authorized'
@@ -3079,7 +3079,7 @@ router.delete('/team/:teamId/match/:matchId', async (req, res) => {
         
         // Verify ownership
         const team = await Team.getTeamById(teamId);
-        if (!team || team.manager_id.toString() !== req.session.user._id.toString()) {
+        if (!team || team.manager.id.toString() !== req.session.user._id.toString()) {
             return res.status(403).json({
                 success: false,
                 message: 'Not authorized'
@@ -3126,7 +3126,7 @@ router.get('/team/:teamId/analytics', async (req, res) => {
         
         // Verify ownership
         const team = await Team.getTeamById(teamId);
-        if (!team || team.manager_id.toString() !== req.session.user._id.toString()) {
+        if (!team || team.manager.id.toString() !== req.session.user._id.toString()) {
             return res.status(403).json({
                 success: false,
                 message: 'Not authorized'
