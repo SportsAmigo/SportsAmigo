@@ -59,11 +59,24 @@ module.exports = {
         users.map(u => [u._id.toString(), u])
     );
 
+    // Populate player details for join requests
+    const joinRequests = team.join_requests || [];
+    const requestPlayerIds = joinRequests.map(r => r.player_id);
+    const requestUsers = requestPlayerIds.length > 0
+        ? await User.find({ _id: { $in: requestPlayerIds } })
+            .select('first_name last_name email')
+            .lean()
+        : [];
+    const requestUserMap = Object.fromEntries(
+        requestUsers.map(u => [u._id.toString(), u])
+    );
+
     return {
         id: team._id,
         name: team.name,
         sport_type: team.sport_type,
         description: team.description || '',
+        created_at: team.created_at,
 
         manager: {
             id: team.manager_id,
@@ -87,7 +100,19 @@ module.exports = {
 
         member_count: team.members.length,
         max_members: team.max_members || 20,
-        join_requests: team.join_requests || []
+        join_requests: joinRequests.map(r => {
+            const u = requestUserMap[r.player_id.toString()];
+            return {
+                _id: r._id,
+                player_id: r.player_id,
+                player_name: u
+                    ? `${u.first_name} ${u.last_name}`.trim()
+                    : null,
+                player_email: u?.email || null,
+                request_date: r.request_date,
+                status: r.status
+            };
+        })
     };
 }
 ,
