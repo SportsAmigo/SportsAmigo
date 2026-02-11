@@ -9,136 +9,218 @@ const User = require('../models/user');
 const Team = require('../models/team');
 const Event = require('../models/event');
 
-// Middleware to ensure admin user session exists
-const ensureAdminSession = (req, res, next) => {
-    // Create default admin user session if it doesn't exist
-    if (!req.session.user || req.session.user.role !== 'admin') {
-        req.session.user = {
-            id: 'admin-default',
-            email: 'admin@sportsamigo.com',
-            role: 'admin',
-            first_name: 'Admin',
-            last_name: 'User'
-        };
-        console.log('Created default admin session');
+// Middleware to ensure admin authentication
+const ensureAdminAuth = (req, res, next) => {
+    // Check if user is logged in and has admin role
+    if (!req.session.user) {
+        console.log('Admin auth failed: No session user');
+        return res.status(401).json({ 
+            success: false, 
+            message: 'Authentication required. Please log in as admin.' 
+        });
     }
+    
+    if (req.session.user.role !== 'admin') {
+        console.log('Admin auth failed: User role is', req.session.user.role);
+        return res.status(403).json({ 
+            success: false, 
+            message: 'Access denied. Admin privileges required.' 
+        });
+    }
+    
+    console.log('Admin authenticated:', req.session.user.email);
     next();
 };
 
-// Apply admin session middleware to all routes
-router.use(ensureAdminSession);
+// Apply admin authentication middleware to all routes
+router.use(ensureAdminAuth);
 
-// Admin dashboard
-router.get('/', async (req, res) => {
+// Admin dashboard - JSON API for React frontend
+router.get('/dashboard', async (req, res) => {
     try {
-        console.log('Admin dashboard ("/") - session user:', req.session.user);
+        console.log('API: Admin dashboard requested by:', req.session.user.email);
         
         // Get stats from admin controller
         const stats = await adminController.getDashboardStats();
         
         // Get recent activities for activity feed
-        const recentActivities = await adminController.getRecentActivities(4);
+        const recentActivities = await adminController.getRecentActivities(10);
         
         // Get upcoming events
-        const upcomingEvents = await adminController.getUpcomingEvents(4);
+        const upcomingEvents = await adminController.getUpcomingEvents(10);
         
-        // Calculate weekly change (this would ideally come from a time-series database)
-        // For now, we'll use placeholder values or calculate from available data
-        const weeklyUserChange = Math.floor(stats.users.total * 0.05); // Assume 5% weekly growth
-        const weeklyEventChange = Math.floor(stats.events.total * 0.1); // Assume 10% weekly growth
-        const weeklyTeamChange = Math.floor(stats.teams.total * 0.08); // Assume 8% weekly growth
-        
-        // Calculate total revenue (placeholder - would come from a payment system in production)
-        // For demo purposes, assume each event generates ₹5000 on average
-        const totalRevenue = stats.events.total * 5000;
-        const weeklyRevenueChange = Math.floor(totalRevenue * 0.04); // Assume 4% weekly growth
-        
-        res.render('admin/dashboard', {
-            title: 'Admin Dashboard',
-            user: req.session.user,
+        return res.json({
+            success: true,
             counts: {
                 users: stats.users.total,
+                players: stats.users.players,
+                managers: stats.users.managers,
+                organizers: stats.users.organizers,
                 teams: stats.teams.total,
                 events: stats.events.total
             },
-            weeklyChanges: {
-                users: weeklyUserChange,
-                teams: weeklyTeamChange,
-                events: weeklyEventChange,
-                revenue: weeklyRevenueChange
-            },
-            revenue: totalRevenue,
             activities: recentActivities,
-            upcomingEvents: upcomingEvents,
-            pendingApprovals: stats.users.total > 10 ? 5 : 0, // Placeholder - would come from approvals system
-            reportedIssues: 3, // Placeholder - would come from issues tracking system
-            layout: 'layouts/dashboard',
-            path: '/admin'
+            upcomingEvents: upcomingEvents
         });
     } catch (err) {
         console.error('Error loading admin dashboard:', err);
-        res.status(500).render('error', {
+        return res.status(500).json({
+            success: false,
             message: 'Failed to load admin dashboard',
-            error: err
+            error: err.message
         });
     }
 });
 
-// Admin dashboard direct access route
-router.get('/dashboard', async (req, res) => {
-  try {
-    console.log('Loading admin dashboard ("/dashboard") for user:', req.session.user.email);
-    console.log('User role:', req.session.user.role);
-    
-    // Get stats from admin controller
-    const stats = await adminController.getDashboardStats();
-    
-    // Get recent activities for activity feed
-    const recentActivities = await adminController.getRecentActivities(4);
-    
-    // Get upcoming events
-    const upcomingEvents = await adminController.getUpcomingEvents(4);
-    
-    // Calculate weekly change (this would ideally come from a time-series database)
-    // For now, we'll use placeholder values or calculate from available data
-    const weeklyUserChange = Math.floor(stats.users.total * 0.05); // Assume 5% weekly growth
-    const weeklyEventChange = Math.floor(stats.events.total * 0.1); // Assume 10% weekly growth
-    const weeklyTeamChange = Math.floor(stats.teams.total * 0.08); // Assume 8% weekly growth
-    
-    // Calculate total revenue (placeholder - would come from a payment system in production)
-    // For demo purposes, assume each event generates ₹5000 on average
-    const totalRevenue = stats.events.total * 5000;
-    const weeklyRevenueChange = Math.floor(totalRevenue * 0.04); // Assume 4% weekly growth
-    
-    res.render('admin/dashboard', {
-      title: 'Admin Dashboard',
-      user: req.session.user,
-      counts: {
-        users: stats.users.total,
-        teams: stats.teams.total,
-        events: stats.events.total
-      },
-      weeklyChanges: {
-        users: weeklyUserChange,
-        teams: weeklyTeamChange,
-        events: weeklyEventChange,
-        revenue: weeklyRevenueChange
-      },
-      revenue: totalRevenue,
-      activities: recentActivities,
-      upcomingEvents: upcomingEvents,
-      pendingApprovals: stats.users.total > 10 ? 5 : 0, // Placeholder - would come from approvals system
-      reportedIssues: 3, // Placeholder - would come from issues tracking system
-      layout: 'layouts/dashboard',
-      path: '/admin/dashboard'
-    });
-  } catch (err) {
-    console.error('Error loading admin dashboard:', err);
-    res.status(500).render('error', {
-      message: 'Failed to load admin dashboard',
-      error: err
-    });
-  }
+// Get all users by role - JSON API
+router.get('/users/:role', async (req, res) => {
+    try {
+        const { role } = req.params;
+        
+        if (!['player', 'manager', 'organizer'].includes(role)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid role. Must be player, manager, or organizer.'
+            });
+        }
+        
+        console.log(`API: Fetching all ${role}s`);
+        const users = await adminController.getAllUsersByRole(role);
+        
+        return res.json({
+            success: true,
+            role: role,
+            count: users.length,
+            users: users
+        });
+    } catch (err) {
+        console.error(`Error fetching ${req.params.role}s:`, err);
+        return res.status(500).json({
+            success: false,
+            message: `Failed to fetch ${req.params.role}s`,
+            error: err.message
+        });
+    }
+});
+
+// Get all users (unified view) - JSON API
+router.get('/users', async (req, res) => {
+    try {
+        console.log('API: Fetching all users (unified)');
+        
+        // Fetch all user types
+        const [players, managers, organizers] = await Promise.all([
+            adminController.getAllUsersByRole('player'),
+            adminController.getAllUsersByRole('manager'),
+            adminController.getAllUsersByRole('organizer')
+        ]);
+        
+        // Combine all users
+        const allUsers = [...players, ...managers, ...organizers];
+        
+        return res.json({
+            success: true,
+            total: allUsers.length,
+            breakdown: {
+                players: players.length,
+                managers: managers.length,
+                organizers: organizers.length
+            },
+            users: allUsers
+        });
+    } catch (err) {
+        console.error('Error fetching all users:', err);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to fetch users',
+            error: err.message
+        });
+    }
+});
+
+// Get all teams - JSON API
+router.get('/teams', async (req, res) => {
+    try {
+        console.log('API: Fetching all teams');
+        const teams = await Team.getAllTeams();
+        
+        return res.json({
+            success: true,
+            count: teams.length,
+            teams: teams || []
+        });
+    } catch (err) {
+        console.error('Error fetching teams:', err);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to fetch teams',
+            error: err.message
+        });
+    }
+});
+
+// Get all events - JSON API
+router.get('/events', async (req, res) => {
+    try {
+        console.log('API: Fetching all events');
+        const events = await Event.getAllEvents();
+        
+        return res.json({
+            success: true,
+            count: events.length,
+            events: events || []
+        });
+    } catch (err) {
+        console.error('Error fetching events:', err);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to fetch events',
+            error: err.message
+        });
+    }
+});
+
+// Get all matches - JSON API
+router.get('/matches', async (req, res) => {
+    try {
+        console.log('API: Fetching all matches');
+        // Import Match model
+        const Match = require('../models/match');
+        const MatchSchema = require('../models/schemas/matchSchema');
+        
+        // Get all matches with populated team and event data
+        const matches = await MatchSchema.find({})
+            .populate('event_id', 'name sport')
+            .populate('team_a', 'name')
+            .populate('team_b', 'name')
+            .sort({ match_date: -1 })
+            .lean();
+        
+        // Format matches for frontend
+        const formattedMatches = matches.map(match => ({
+            id: match._id,
+            team1_name: match.team_a?.name || 'TBD',
+            team2_name: match.team_b?.name || 'TBD',
+            team1_score: match.team_a_score,
+            team2_score: match.team_b_score,
+            event_name: match.event_id?.name || 'N/A',
+            match_date: match.match_date,
+            status: match.status || 'scheduled'
+        }));
+        
+        return res.json({
+            success: true,
+            count: formattedMatches.length,
+            matches: formattedMatches
+        });
+    } catch (err) {
+        console.error('Error fetching matches:', err);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to fetch matches',
+            error: err.message
+        });
+    }
 });
 
 // System stats
@@ -548,7 +630,7 @@ router.get('/api/organizers/:id', async (req, res) => {
 });
 
 // Delete routes for users
-router.delete('/managers/:id', async (req, res) => {
+router.delete('/users/manager/:id', async (req, res) => {
   const managerId = req.params.id;
   
   console.log(`Attempting to delete manager with ID: ${managerId}`);
@@ -586,7 +668,7 @@ router.delete('/managers/:id', async (req, res) => {
   }
 });
 
-router.delete('/organizers/:id', async (req, res) => {
+router.delete('/users/organizer/:id', async (req, res) => {
   const organizerId = req.params.id;
   
   console.log(`Attempting to delete organizer with ID: ${organizerId}`);
@@ -625,7 +707,7 @@ router.delete('/organizers/:id', async (req, res) => {
 });
 
 // Delete player
-router.delete('/players/:id', async (req, res) => {
+router.delete('/users/player/:id', async (req, res) => {
   const playerId = req.params.id;
   
   console.log(`Attempting to delete player with ID: ${playerId}`);
@@ -730,55 +812,7 @@ router.delete('/events/:id', async (req, res) => {
   }
 });
 
-// Direct admin login endpoint for troubleshooting 
-router.get('/direct-login', async (req, res) => {
-  try {
-    // Get admin by email
-    const adminEmail = 'admin@sportsapp.com';
-    const admin = await User.getUserByEmail(adminEmail);
-    
-    if (!admin || admin.role !== 'admin') {
-      return res.status(404).send('Admin account not found. Please run the create-admin-user.js script first.');
-    }
-    
-    // Set up session
-    req.session.user = {
-      id: admin._id,
-      email: admin.email,
-      role: admin.role,
-      first_name: admin.first_name,
-      last_name: admin.last_name
-    };
-    
-    console.log('Direct admin login successful for:', admin.email);
-    
-    // Redirect to dashboard
-    res.redirect('/admin/dashboard');
-  } catch (err) {
-    console.error('Direct admin login error:', err);
-    res.status(500).send('Direct admin login error: ' + err.message);
-  }
-});
-
-// Test route for admin authentication
-router.get('/test-auth', async (req, res) => {
-  try {
-    // Find all admins
-    const admins = await User.getAllUsers({ role: 'admin' });
-    
-    return res.json({
-      count: admins.length,
-      admins: admins.map(admin => ({
-        id: admin._id,
-        email: admin.email,
-        name: `${admin.first_name} ${admin.last_name}`,
-        login_url: `/admin/direct-login`
-      }))
-    });
-  } catch (err) {
-    console.error('Admin test auth error:', err);
-    res.status(500).send('Admin test auth error: ' + err.message);
-  }
-});
+// REMOVED: Direct login bypass routes for security
+// Admin users must login through the proper authentication flow
 
 module.exports = router; 
