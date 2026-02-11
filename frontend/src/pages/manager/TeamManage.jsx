@@ -191,7 +191,7 @@ const TeamManage = () => {
                                 <i className="fa fa-users"></i>
                                 <div>
                                     <span className="info-label">Members</span>
-                                    <span className="info-value">{team.current_members || 0} / {team.max_members}</span>
+                                    <span className="info-value">{team.member_count || 0} / {team.max_members}</span>
                                 </div>
                             </div>
                             <div className="info-item">
@@ -206,11 +206,13 @@ const TeamManage = () => {
                                 <div>
                                     <span className="info-label">Created</span>
                                     <span className="info-value">
-                                        {new Date(team.created_at).toLocaleDateString('en-US', {
-                                            month: 'short',
-                                            day: 'numeric',
-                                            year: 'numeric'
-                                        })}
+                                        {team.created_at
+                                            ? new Date(team.created_at).toLocaleDateString('en-US', {
+                                                month: 'short',
+                                                day: 'numeric',
+                                                year: 'numeric'
+                                            })
+                                            : 'N/A'}
                                     </span>
                                 </div>
                             </div>
@@ -229,7 +231,7 @@ const TeamManage = () => {
                         <div className="section-header">
                             <h2>
                                 <i className="fa fa-users"></i>
-                                Team Members ({team.current_members || 0})
+                                Team Members ({team.member_count || 0})
                             </h2>
                         </div>
 
