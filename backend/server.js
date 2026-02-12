@@ -206,14 +206,15 @@ const csrfProtection = csrf({
     ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] // Don't require CSRF for safe methods
 });
 
-// Apply CSRF protection to all routes except health check and GET requests
+// Apply CSRF protection to all routes except health check and authentication endpoints
 // Note: Frontend needs to fetch token via GET /api/csrf-token and include it in POST/PUT/DELETE requests
 app.use((req, res, next) => {
-    // Skip CSRF for health check, login, and registration endpoints
+    // Skip CSRF for health check and all authentication routes
     if (req.path === '/api/health' || 
         req.path === '/api/csrf-token' ||
-        req.path.includes('/api/auth/login') ||
-        req.path.includes('/api/auth/register')) {
+        req.path.startsWith('/auth/') ||           // All /auth/* routes
+        req.path.startsWith('/api/auth/') ||       // All /api/auth/* routes (login, signup, OTP, etc.)
+        req.path.startsWith('/api/shop-login/')) { // Shop login routes
         return next();
     }
     csrfProtection(req, res, next);
