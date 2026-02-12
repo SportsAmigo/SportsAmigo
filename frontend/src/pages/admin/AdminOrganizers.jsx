@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/layout/AdminLayout';
+import ViewModal from '../../components/admin/ViewModal';
 import axios from 'axios';
 
 const AdminOrganizers = () => {
@@ -8,6 +9,11 @@ const AdminOrganizers = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(7);
+    
+    // View Modal State
+    const [viewModalOpen, setViewModalOpen] = useState(false);
+    const [selectedOrganizer, setSelectedOrganizer] = useState(null);
+    const [loadingView, setLoadingView] = useState(false);
 
     useEffect(() => {
         fetchOrganizers();
@@ -27,17 +33,34 @@ const AdminOrganizers = () => {
         }
     };
 
+    const handleView = async (organizerId) => {
+        try {
+            setLoadingView(true);
+            const response = await axios.get(`http://localhost:5000/api/admin/api/organizers/${organizerId}`, { withCredentials: true });
+            if (response.data.success) {
+                setSelectedOrganizer(response.data.data);
+                setViewModalOpen(true);
+            }
+        } catch (error) {
+            console.error('Error fetching organizer details:', error);
+            alert('Failed to load organizer details');
+        } finally {
+            setLoadingView(false);
+        }
+    };
+
     const handleDelete = async (organizerId, organizerName) => {
-        if (!window.confirm(`Are you sure you want to delete ${organizerName}?`)) return;
+        if (!window.confirm(`Are you sure you want to delete ${organizerName}? This action cannot be undone and will permanently remove this organizer from the entire system.`)) return;
         try {
             const response = await axios.delete(`http://localhost:5000/api/admin/users/organizer/${organizerId}`, { withCredentials: true });
             if (response.data.success) {
+                // Update state immediately - remove deleted organizer from list
+                setOrganizers(prevOrganizers => prevOrganizers.filter(organizer => organizer.id !== organizerId));
                 alert('Organizer deleted successfully');
-                fetchOrganizers();
             }
         } catch (error) {
             console.error('Error deleting organizer:', error);
-            alert('Failed to delete organizer');
+            alert('Failed to delete organizer: ' + (error.response?.data?.message || 'Server error'));
         }
     };
 
@@ -66,6 +89,14 @@ const AdminOrganizers = () => {
 
     return (
         <AdminLayout>
+            {/* View Modal */}
+            <ViewModal 
+                isOpen={viewModalOpen}
+                onClose={() => setViewModalOpen(false)}
+                data={selectedOrganizer}
+                type="user"
+            />
+            
             <div className="p-6">
                 <div className="mb-6">
                     <h1 className="text-3xl font-bold text-gray-800 mb-2">Organizer Management</h1>
@@ -144,8 +175,9 @@ const AdminOrganizers = () => {
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center gap-2">
                                                     <button
-                                                        onClick={() => window.alert('View feature coming soon!')}
-                                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                        onClick={() => handleView(organizer.id)}
+                                                        disabled={loadingView}
+                                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
                                                     >
                                                         <i className="fas fa-eye"></i>
                                                     </button>
