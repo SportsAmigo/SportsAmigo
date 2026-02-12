@@ -144,10 +144,16 @@ router.get('/teams', async (req, res) => {
         console.log('API: Fetching all teams');
         const teams = await Team.getAllTeams();
         
+        // Transform _id to id for frontend compatibility
+        const formattedTeams = teams.map(team => ({
+            ...team,
+            id: team._id.toString()
+        }));
+        
         return res.json({
             success: true,
-            count: teams.length,
-            teams: teams || []
+            count: formattedTeams.length,
+            teams: formattedTeams || []
         });
     } catch (err) {
         console.error('Error fetching teams:', err);
@@ -165,10 +171,16 @@ router.get('/events', async (req, res) => {
         console.log('API: Fetching all events');
         const events = await Event.getAllEvents();
         
+        // Transform _id to id for frontend compatibility
+        const formattedEvents = events.map(event => ({
+            ...event,
+            id: event._id.toString()
+        }));
+        
         return res.json({
             success: true,
-            count: events.length,
-            events: events || []
+            count: formattedEvents.length,
+            events: formattedEvents || []
         });
     } catch (err) {
         console.error('Error fetching events:', err);
@@ -294,22 +306,27 @@ router.get('/tournaments', async (req, res) => {
     }
 });
 
-// Activity Logs
+// Activity Logs - JSON API for React frontend
 router.get('/activity-logs', async (req, res) => {
     try {
-        // Get recent activities
-        const activities = await adminController.getRecentActivities(50); // Get more logs for this page
+        const limit = parseInt(req.query.limit) || 50;
+        console.log(`API: Fetching ${limit} recent activities`);
         
-        res.render('admin/activity-logs', {
-            title: 'Activity Logs',
-            layout: 'layouts/dashboard',
-            user: req.session.user,
-            activities: activities,
-            path: '/admin/activity-logs'
+        // Get recent activities
+        const activities = await adminController.getRecentActivities(limit);
+        
+        return res.json({
+            success: true,
+            count: activities.length,
+            activities: activities
         });
     } catch (error) {
-        console.error('Error in activity logs route:', error);
-        res.status(500).send('An error occurred while fetching activity logs');
+        console.error('Error fetching activity logs:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to fetch activity logs',
+            error: error.message
+        });
     }
 });
 
@@ -626,6 +643,86 @@ router.get('/api/organizers/:id', async (req, res) => {
   } catch (error) {
     console.error('Error in organizer details API:', error);
     res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// API endpoint for team details
+router.get('/api/teams/:id', async (req, res) => {
+  try {
+    const teamId = req.params.id;
+    console.log(`Fetching team details for ID: ${teamId}`);
+    
+    // Get team data using Team model (already returns fully formatted data)
+    const team = await Team.getTeamById(teamId);
+    
+    if (!team) {
+      return res.status(404).json({ success: false, message: 'Team not found' });
+    }
+    
+    // Team.getTeamById already returns formatted data with id, manager, members
+    // Just need to add a few extra fields for the ViewModal
+    const teamDetails = {
+      ...team,
+      manager_name: team.manager?.name || 'Unknown Manager',
+      manager_id: team.manager?.id,
+      current_members: team.members ? team.members.length : 0,
+      status: team.status || 'Active'
+    };
+    
+    return res.json({ success: true, data: teamDetails });
+  } catch (error) {
+    console.error('Error in team details API:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// API endpoint for event details
+router.get('/api/events/:id', async (req, res) => {
+  try {
+    const eventId = req.params.id;
+    console.log(`Fetching event details for ID: ${eventId}`);
+    
+    // Get event data using Event model
+    const event = await Event.getEventById(eventId);
+    
+    if (!event) {
+      return res.status(404).json({ success: false, message: 'Event not found' });
+    }
+    
+    // Format event details for ViewModal
+    const eventDetails = {
+      id: event._id?.toString() || event.id,
+      title: event.title || event.name,
+      name: event.name || event.title,
+      sport_type: event.sport_type,
+      event_date: event.event_date,
+      location: event.location,
+      organizer_id: event.organizer_id,
+      organizer_name: event.organizer_first_name && event.organizer_last_name 
+        ? `${event.organizer_first_name} ${event.organizer_last_name}`.trim() 
+        : 'Unknown Organizer',
+      description: event.description,
+      status: event.status,
+      max_teams: event.max_teams,
+      registered_teams: event.team_registrations ? event.team_registrations.length : 0,
+      team_registrations: (event.team_registrations || []).map(reg => ({
+        team_name: reg.team_name || 'Unknown Team',
+        team_id: reg.team_id,
+        registration_date: reg.registered_at || reg.registration_date,
+        status: reg.status
+      })),
+      registration_start: event.registration_start,
+      registration_end: event.registration_end || event.registration_deadline,
+      entry_fee: event.entry_fee,
+      prize_pool: event.prize_pool,
+      rules: event.rules,
+      created_at: event.created_at
+    };
+    
+    return res.json({ success: true, data: eventDetails });
+  } catch (error) {
+    console.error('Error in event details API:', error);
+    res.status(500).json({ success: false, message: 'Server error', errorDetails: error.message });
   }
 });
 

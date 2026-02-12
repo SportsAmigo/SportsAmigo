@@ -15,79 +15,20 @@ const AdminActivityLogs = () => {
     const fetchActivities = async () => {
         try {
             setLoading(true);
-            const response = await axios.get('http://localhost:5000/api/admin/dashboard', { withCredentials: true });
+            // Fetch real activity logs from dedicated endpoint
+            const response = await axios.get('http://localhost:5000/api/admin/activity-logs', { 
+                withCredentials: true,
+                params: { limit: 100 } // Get more activities for comprehensive view
+            });
             if (response.data.success) {
-                // Generate sample activities with specific user actions
-                const sampleActivities = generateSampleActivities();
-                setActivities([...sampleActivities, ...(response.data.activities || [])]);
+                setActivities(response.data.activities || []);
             }
         } catch (error) {
             console.error('Error fetching activities:', error);
+            setActivities([]);
         } finally {
             setLoading(false);
         }
-    };
-
-    const generateSampleActivities = () => {
-        const now = new Date();
-        return [
-            {
-                type: 'team_creation',
-                description: 'created team "Thunder Warriors"',
-                userName: 'Alice Johnson',
-                userRole: 'Manager',
-                timestamp: new Date(now - 5 * 60000).toISOString()
-            },
-            {
-                type: 'user_approval',
-                description: 'approved player registration',
-                userName: 'Dr. Smith',
-                userRole: 'Manager',
-                timestamp: new Date(now - 15 * 60000).toISOString()
-            },
-            {
-                type: 'event_update',
-                description: 'updated event "Summer League 2026"',
-                userName: 'John Martinez',
-                userRole: 'Organizer',
-                timestamp: new Date(now - 30 * 60000).toISOString()
-            },
-            {
-                type: 'login',
-                description: 'logged into the system',
-                userName: 'Sarah Williams',
-                userRole: 'Player',
-                timestamp: new Date(now - 45 * 60000).toISOString()
-            },
-            {
-                type: 'event_creation',
-                description: 'created event "Winter Championship"',
-                userName: 'Mike Chen',
-                userRole: 'Organizer',
-                timestamp: new Date(now - 60 * 60000).toISOString()
-            },
-            {
-                type: 'team_update',
-                description: 'updated team roster for "Eagles FC"',
-                userName: 'Robert Davis',
-                userRole: 'Manager',
-                timestamp: new Date(now - 90 * 60000).toISOString()
-            },
-            {
-                type: 'registration',
-                description: 'registered as a new player',
-                userName: 'Emily Brown',
-                userRole: 'Player',
-                timestamp: new Date(now - 120 * 60000).toISOString()
-            },
-            {
-                type: 'match_update',
-                description: 'updated match scores',
-                userName: 'James Wilson',
-                userRole: 'Organizer',
-                timestamp: new Date(now - 150 * 60000).toISOString()
-            }
-        ];
     };
 
     const getActivityIcon = (type) => {

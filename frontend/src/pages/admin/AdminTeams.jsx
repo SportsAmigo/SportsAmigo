@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/layout/AdminLayout';
+import ViewModal from '../../components/admin/ViewModal';
 import axios from 'axios';
 
 const AdminTeams = () => {
     const [teams, setTeams] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    
+    // View Modal State
+    const [viewModalOpen, setViewModalOpen] = useState(false);
+    const [selectedTeam, setSelectedTeam] = useState(null);
+    const [loadingView, setLoadingView] = useState(false);
 
     useEffect(() => {
         fetchTeams();
@@ -25,16 +31,34 @@ const AdminTeams = () => {
         }
     };
 
+    const handleView = async (teamId) => {
+        try {
+            setLoadingView(true);
+            const response = await axios.get(`http://localhost:5000/api/admin/api/teams/${teamId}`, { withCredentials: true });
+            if (response.data.success) {
+                setSelectedTeam(response.data.data);
+                setViewModalOpen(true);
+            }
+        } catch (error) {
+            console.error('Error fetching team details:', error);
+            alert('Failed to load team details');
+        } finally {
+            setLoadingView(false);
+        }
+    };
+
     const handleDelete = async (teamId, teamName) => {
-        if (!window.confirm(`Delete team: ${teamName}?`)) return;
+        if (!window.confirm(`Delete team: ${teamName}? This action cannot be undone and will permanently remove this team from the entire system.`)) return;
         try {
             const response = await axios.delete(`http://localhost:5000/api/admin/teams/${teamId}`, { withCredentials: true });
             if (response.data.success) {
+                // Update state immediately - remove deleted team from list
+                setTeams(prevTeams => prevTeams.filter(team => team.id !== teamId));
                 alert('Team deleted successfully');
-                fetchTeams();
             }
         } catch (error) {
-            alert('Failed to delete team');
+            console.error('Error deleting team:', error);
+            alert('Failed to delete team: ' + (error.response?.data?.message || 'Server error'));
         }
     };
 
@@ -44,6 +68,14 @@ const AdminTeams = () => {
 
     return (
         <AdminLayout>
+            {/* View Modal */}
+            <ViewModal 
+                isOpen={viewModalOpen}
+                onClose={() => setViewModalOpen(false)}
+                data={selectedTeam}
+                type="team"
+            />
+            
             <div className="p-6">
                 <div className="mb-6">
                     <h1 className="text-3xl font-bold text-gray-800 mb-2">Team Management</h1>
@@ -111,12 +143,23 @@ const AdminTeams = () => {
                                             </td>
                                             <td className="px-6 py-4 text-gray-600 text-sm">{team.createdAt || 'N/A'}</td>
                                             <td className="px-6 py-4">
-                                                <button
-                                                    onClick={() => handleDelete(team.id, team.name)}
-                                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                                                >
-                                                    <i className="fas fa-trash"></i>
-                                                </button>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => handleView(team.id)}
+                                                        disabled={loadingView}
+                                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
+                                                        title="View Details"
+                                                    >
+                                                        <i className="fas fa-eye"></i>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(team.id, team.name)}
+                                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                        title="Delete Team"
+                                                    >
+                                                        <i className="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}

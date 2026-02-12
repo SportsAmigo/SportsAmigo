@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/layout/AdminLayout';
+import ViewModal from '../../components/admin/ViewModal';
 import axios from 'axios';
 
 const AdminEvents = () => {
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    
+    // View Modal State
+    const [viewModalOpen, setViewModalOpen] = useState(false);
+    const [selectedEvent, setSelectedEvent] = useState(null);
+    const [loadingView, setLoadingView] = useState(false);
 
     useEffect(() => {
         fetchEvents();
@@ -25,16 +31,34 @@ const AdminEvents = () => {
         }
     };
 
+    const handleView = async (eventId) => {
+        try {
+            setLoadingView(true);
+            const response = await axios.get(`http://localhost:5000/api/admin/api/events/${eventId}`, { withCredentials: true });
+            if (response.data.success) {
+                setSelectedEvent(response.data.data);
+                setViewModalOpen(true);
+            }
+        } catch (error) {
+            console.error('Error fetching event details:', error);
+            alert('Failed to load event details');
+        } finally {
+            setLoadingView(false);
+        }
+    };
+
     const handleDelete = async (eventId, eventName) => {
-        if (!window.confirm(`Delete event: ${eventName}?`)) return;
+        if (!window.confirm(`Delete event: ${eventName}? This action cannot be undone and will permanently remove this event from the entire system.`)) return;
         try {
             const response = await axios.delete(`http://localhost:5000/api/admin/events/${eventId}`, { withCredentials: true });
             if (response.data.success) {
+                // Update state immediately - remove deleted event from list
+                setEvents(prevEvents => prevEvents.filter(event => event.id !== eventId));
                 alert('Event deleted successfully');
-                fetchEvents();
             }
         } catch (error) {
-            alert('Failed to delete event');
+            console.error('Error deleting event:', error);
+            alert('Failed to delete event: ' + (error.response?.data?.message || 'Server error'));
         }
     };
 
@@ -44,6 +68,14 @@ const AdminEvents = () => {
 
     return (
         <AdminLayout>
+            {/* View Modal */}
+            <ViewModal 
+                isOpen={viewModalOpen}
+                onClose={() => setViewModalOpen(false)}
+                data={selectedEvent}
+                type="event"
+            />
+            
             <div className="p-6">
                 <div className="mb-6">
                     <h1 className="text-3xl font-bold text-gray-800 mb-2">Event Management</h1>
@@ -119,12 +151,23 @@ const AdminEvents = () => {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <button
-                                                    onClick={() => handleDelete(event.id, event.title || event.name)}
-                                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                                                >
-                                                    <i className="fas fa-trash"></i>
-                                                </button>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => handleView(event.id)}
+                                                        disabled={loadingView}
+                                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
+                                                        title="View Details"
+                                                    >
+                                                        <i className="fas fa-eye"></i>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(event.id, event.title || event.name)}
+                                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                        title="Delete Event"
+                                                    >
+                                                        <i className="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}

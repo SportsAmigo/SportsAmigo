@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/layout/AdminLayout';
+import ViewModal from '../../components/admin/ViewModal';
 import axios from 'axios';
 
 const AdminPlayers = () => {
@@ -10,6 +11,11 @@ const AdminPlayers = () => {
     const [filterStatus, setFilterStatus] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(7);
+    
+    // View Modal State
+    const [viewModalOpen, setViewModalOpen] = useState(false);
+    const [selectedPlayer, setSelectedPlayer] = useState(null);
+    const [loadingView, setLoadingView] = useState(false);
 
     useEffect(() => {
         fetchPlayers();
@@ -29,20 +35,37 @@ const AdminPlayers = () => {
         }
     };
 
+    const handleView = async (playerId) => {
+        try {
+            setLoadingView(true);
+            const response = await axios.get(`http://localhost:5000/api/admin/api/players/${playerId}`, { withCredentials: true });
+            if (response.data.success) {
+                setSelectedPlayer(response.data.data);
+                setViewModalOpen(true);
+            }
+        } catch (error) {
+            console.error('Error fetching player details:', error);
+            alert('Failed to load player details');
+        } finally {
+            setLoadingView(false);
+        }
+    };
+
     const handleDelete = async (playerId, playerName) => {
-        if (!window.confirm(`Are you sure you want to delete ${playerName}? This action cannot be undone.`)) {
+        if (!window.confirm(`Are you sure you want to delete ${playerName}? This action cannot be undone and will permanently remove this player from the entire system.`)) {
             return;
         }
 
         try {
             const response = await axios.delete(`http://localhost:5000/api/admin/users/player/${playerId}`, { withCredentials: true });
             if (response.data.success) {
+                // Update state immediately - remove deleted player from list
+                setPlayers(prevPlayers => prevPlayers.filter(player => player.id !== playerId));
                 alert('Player deleted successfully');
-                fetchPlayers();
             }
         } catch (error) {
             console.error('Error deleting player:', error);
-            alert('Failed to delete player');
+            alert('Failed to delete player: ' + (error.response?.data?.message || 'Server error'));
         }
     };
 
@@ -73,6 +96,14 @@ const AdminPlayers = () => {
 
     return (
         <AdminLayout>
+            {/* View Modal */}
+            <ViewModal 
+                isOpen={viewModalOpen}
+                onClose={() => setViewModalOpen(false)}
+                data={selectedPlayer}
+                type="user"
+            />
+            
             <div className="p-6">
                 {/* Header */}
                 <div className="mb-6">
@@ -180,8 +211,9 @@ const AdminPlayers = () => {
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center gap-2">
                                                     <button
-                                                        onClick={() => window.alert('View feature coming soon!')}
-                                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                        onClick={() => handleView(player.id)}
+                                                        disabled={loadingView}
+                                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
                                                         title="View Details"
                                                     >
                                                         <i className="fas fa-eye"></i>
