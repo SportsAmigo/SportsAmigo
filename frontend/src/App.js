@@ -9,6 +9,7 @@ import './App.css';
 // Pages
 import Home from './pages/Home';
 import Login from './pages/Login';
+import AdminLogin from './pages/AdminLogin';
 import Signup from './pages/Signup';
 import Shop from './pages/Shop';
 import About from './pages/About';
@@ -54,6 +55,15 @@ import ScheduleMatches from './pages/organizer/ScheduleMatches';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminPlayers from './pages/admin/AdminPlayers';
+import AdminManagers from './pages/admin/AdminManagers';
+import AdminOrganizers from './pages/admin/AdminOrganizers';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminTeams from './pages/admin/AdminTeams';
+import AdminEvents from './pages/admin/AdminEvents';
+import AdminMatches from './pages/admin/AdminMatches';
+import AdminStats from './pages/admin/AdminStats';
+import AdminActivityLogs from './pages/admin/AdminActivityLogs';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -385,11 +395,84 @@ const AppContent = () => {
         />
 
         {/* Admin Routes */}
+        <Route path="/admin/login" element={<AdminLogin />} />
         <Route
           path="/admin/dashboard"
           element={
             <ProtectedRoute allowedRoles={['admin']}>
               <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminUsers />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/players"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminPlayers />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/managers"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminManagers />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/organizers"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminOrganizers />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/teams"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminTeams />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/events"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminEvents />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/matches"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminMatches />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/stats"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminStats />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/activity-logs"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminActivityLogs />
             </ProtectedRoute>
           }
         />

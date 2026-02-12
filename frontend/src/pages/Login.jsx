@@ -54,7 +54,7 @@ const Login = () => {
         setLoading(true);
 
         if (loginStep === 1) {
-            // Step 1: Send login OTP
+            // Step 1: Send login OTP (for non-admin users)
             try {
                 const result = await authService.sendLoginOTP(formData.email, formData.password, formData.role);
                 setSuccessMessage(result.message || 'OTP sent to your email! Please check your inbox.');
