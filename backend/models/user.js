@@ -27,6 +27,11 @@ module.exports = {
             if (userData.organization_name) profileData.organization_name = userData.organization_name;
             if (userData.team_name) profileData.team_name = userData.team_name;
             
+            // Set verification status based on role if not explicitly provided
+            if (userData.verificationStatus === undefined) {
+                userData.verificationStatus = userData.role === 'organizer' ? 'pending' : 'verified';
+            }
+            
             // Create user with embedded profile
             const user = new User({
                 email: userData.email,
@@ -37,6 +42,7 @@ module.exports = {
                 phone: userData.phone || '',
                 bio: userData.bio || '',
                 profile_image: userData.profile_image || '',
+                verificationStatus: userData.verificationStatus,
                 profile: profileData
             });
             
@@ -106,6 +112,8 @@ module.exports = {
             }
             if (userData.phone !== undefined) updateData.phone = userData.phone;
             if (userData.bio !== undefined) updateData.bio = userData.bio;
+            if (userData.role !== undefined) updateData.role = userData.role;
+            if (userData.verificationStatus !== undefined) updateData.verificationStatus = userData.verificationStatus;
             
             // Handle profile fields - these should go in the profile sub-document
             if (userData.age !== undefined) updateData['profile.age'] = userData.age;

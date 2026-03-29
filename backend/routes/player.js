@@ -156,12 +156,17 @@ router.get('/my-events', async (req, res) => {
 // Browse Events (Events a player can join)
 router.get('/browse-events', async (req, res) => {
     try {
-        // Get all upcoming events
-        const events = await Event.getAllEvents();
+        // Get all events
+        const allEvents = await Event.getAllEvents();
 
-        console.log(`Player browse-events: Found ${events.length} total events`);
+        // Filter to only show approved events (exclude pending_approval, rejected, cancelled)
+        const events = allEvents.filter(event => 
+            ['upcoming', 'ongoing', 'completed', 'open'].includes(event.status)
+        );
 
-        // Format events for display (don't filter by status on backend, let frontend handle it)
+        console.log(`Player browse-events: Found ${events.length} approved events (filtered from ${allEvents.length} total)`);
+
+        // Format events for display
         const formattedEvents = events.map(event => ({
             id: event._id,
             name: event.title || 'Unnamed Event',
@@ -1067,9 +1072,30 @@ router.get('/api/events/browse', async (req, res) => {
             registrationDeadline: { $gte: new Date() }
         }).sort({ eventDate: 1 });
 
+        // Enrich events with organizer tier for badge display (batch query to avoid N+1)
+        const organizerIds = [...new Set(events.map(e => e.organizer_id?.toString()).filter(Boolean))];
+        const User = require('../models/user');
+        const organizers = await User.find({ _id: { $in: organizerIds } }).select('subscription').lean();
+        const organizerMap = {};
+        organizers.forEach(o => { organizerMap[o._id.toString()] = o.subscription?.plan || 'free'; });
+
+        const enrichedEvents = events.map(event => {
+            const ev = event.toObject ? event.toObject() : { ...event };
+            ev.organizerTier = organizerMap[ev.organizer_id?.toString()] || 'free';
+            return ev;
+        });
+
+        // Sort: date first (chronological), then tier within same date (enterprise > pro > free)
+        const tierWeight = { enterprise: 0, pro: 1, free: 2 };
+        enrichedEvents.sort((a, b) => {
+            const dateDiff = new Date(a.eventDate || a.event_date) - new Date(b.eventDate || b.event_date);
+            if (dateDiff !== 0) return dateDiff;
+            return (tierWeight[a.organizerTier] ?? 2) - (tierWeight[b.organizerTier] ?? 2);
+        });
+
         res.json({
             success: true,
-            events: events
+            events: enrichedEvents
         });
     } catch (error) {
         console.error('Error fetching events:', error);
@@ -1105,10 +1131,31 @@ router.get('/api/events/search', async (req, res) => {
 
         const events = await EventSchema.find(query).sort({ eventDate: 1 });
 
+        // Enrich with organizer tier (batch query to avoid N+1)
+        const organizerIds = [...new Set(events.map(e => e.organizer_id?.toString()).filter(Boolean))];
+        const User = require('../models/user');
+        const organizers = await User.find({ _id: { $in: organizerIds } }).select('subscription').lean();
+        const organizerMap = {};
+        organizers.forEach(o => { organizerMap[o._id.toString()] = o.subscription?.plan || 'free'; });
+
+        const enrichedEvents = events.map(event => {
+            const ev = event.toObject ? event.toObject() : { ...event };
+            ev.organizerTier = organizerMap[ev.organizer_id?.toString()] || 'free';
+            return ev;
+        });
+
+        // Sort: date first (chronological), then tier within same date (enterprise > pro > free)
+        const tierWeight = { enterprise: 0, pro: 1, free: 2 };
+        enrichedEvents.sort((a, b) => {
+            const dateDiff = new Date(a.eventDate || a.event_date) - new Date(b.eventDate || b.event_date);
+            if (dateDiff !== 0) return dateDiff;
+            return (tierWeight[a.organizerTier] ?? 2) - (tierWeight[b.organizerTier] ?? 2);
+        });
+
         res.json({
             success: true,
-            events: events,
-            count: events.length
+            events: enrichedEvents,
+            count: enrichedEvents.length
         });
     } catch (error) {
         console.error('Error searching events:', error);

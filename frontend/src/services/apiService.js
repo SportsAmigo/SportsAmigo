@@ -110,11 +110,10 @@ class ApiService {
         const data = await response.json().catch(() => ({}));
 
         if (!response.ok) {
-            throw {
-                status: response.status,
-                message: data.message || 'Request failed',
-                data
-            };
+            const error = new Error(data.message || 'Request failed');
+            error.status = response.status;
+            error.data = data;
+            throw error;
         }
 
         return data;

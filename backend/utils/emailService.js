@@ -26,16 +26,16 @@ transporter.verify((error, success) => {
 /**
  * Common HTML template structure for all emails
  * @param {string} userName - User's name
- * @param {string} mainContentHtml - The core content HTML (OTP box, welcome message, etc.)
- * @param {string} headerColor1 - Start color for the header gradient (e.g., #667eea)
- * @param {string} headerColor2 - End color for the header gradient (e.g., #764ba2)
- * @param {string} headerIcon - Icon for the header (e.g., 🏆 or 🔐)
- * @param {string} headerText - Main text for the header (e.g., Welcome to SportsAmigo!)
- * @param {string} headerAccentColor - Accent color for OTP boxes/borders (matches secondary header color)
- * @returns {string} The full HTML string
+ * @param {string} mainContentHtml 
+ * @param {string} headerColor1 
+ * @param {string} headerColor2 
+ * @param {string} headerIcon 
+ * @param {string} headerText 
+ * @param {string} headerAccentColor 
+ * @returns {string} 
  */
 const buildEmailHtml = (userName, mainContentHtml, headerColor1, headerColor2, headerIcon, headerText, headerAccentColor) => {
-  // Define styles using inline CSS for best compatibility
+  
   const primaryColor = headerColor1;
   const accentColor = headerAccentColor || headerColor2;
   const secondaryBg = '#f4f7f6';

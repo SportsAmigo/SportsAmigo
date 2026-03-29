@@ -1,5 +1,10 @@
 const express = require('express');
 const router = express.Router();
+const { processEventRegistrationPayment, getRegistrationCommissionBreakdown } = require('../controllers/eventPaymentController');
+
+// Event payment routes
+router.post('/events/:eventId/register-and-pay', processEventRegistrationPayment);
+router.get('/events/:eventId/commission-breakdown', getRegistrationCommissionBreakdown);
 const User = require('../models/user');
 const Event = require('../models/event');
 const Team = require('../models/team');

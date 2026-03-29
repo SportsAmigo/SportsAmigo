@@ -322,8 +322,11 @@ router.get('/matches', async (req, res) => {
         
 
 
-        // Fetch real events from the database
-        const allEvents = await Event.getAllEvents();
+        // Fetch real events from the database (only approved events)
+        const allEventsFromDB = await Event.getAllEvents();
+        const allEvents = allEventsFromDB.filter(event => 
+            ['upcoming', 'ongoing', 'completed', 'open'].includes(event.status)
+        );
         
         // Get past events (could filter based on date)
         const pastEvents = allEvents.filter(event => {
@@ -1195,9 +1198,12 @@ router.get('/browse-events', async (req, res) => {
                 });
             }
             
-            // Get all events directly from the Event model
-            const events = await Event.getAllEvents();
-            console.log(`Retrieved ${events.length} available events`);
+            // Get all approved events (exclude pending_approval, rejected, cancelled)
+            const allEvents = await Event.getAllEvents();
+            const events = allEvents.filter(event => 
+                ['upcoming', 'ongoing', 'completed', 'open'].includes(event.status)
+            );
+            console.log(`Retrieved ${events.length} approved events (filtered from ${allEvents.length} total)`);
             
             // Format events for display
             const formattedEvents = events.map(event => {
@@ -1463,10 +1469,13 @@ router.get('/my-events', async (req, res) => {
         // Create an array of team IDs for lookup
         const teamIds = teams.map(team => team._id.toString());
         
-        // Get all events
+        // Get all events (only approved events)
         const Event = require('../models/event');
-        const allEvents = await Event.getAllEvents();
-        console.log(`Retrieved ${allEvents.length} events total`);
+        const allEventsFromDB = await Event.getAllEvents();
+        const allEvents = allEventsFromDB.filter(event => 
+            ['upcoming', 'ongoing', 'completed', 'open'].includes(event.status)
+        );
+        console.log(`Retrieved ${allEvents.length} approved events total`);
         
         // Filter events that have registrations for this manager's teams
         const registeredEvents = [];

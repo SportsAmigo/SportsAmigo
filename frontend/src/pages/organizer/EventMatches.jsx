@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { selectUser } from '../../store/slices/authSlice';
 import OrganizerLayout from '../../components/layout/OrganizerLayout';
 import './EventMatches.css';
 
 const EventMatches = () => {
     const { eventId } = useParams();
     const navigate = useNavigate();
+    const user = useSelector(selectUser);
+    const organizerPlan = user?.subscription?.plan || 'free';
     const [matches, setMatches] = useState({ pending: [], verified: [], disputed: [] });
     const [activeTab, setActiveTab] = useState('pending');
     const [loading, setLoading] = useState(true);
@@ -246,6 +250,25 @@ const EventMatches = () => {
                         >
                             <i className="fas fa-trophy"></i> View Leaderboard
                         </button>
+                        {(organizerPlan === 'pro' || organizerPlan === 'enterprise') ? (
+                            <a
+                                href={`http://localhost:5000/api/organizer/events/${eventId}/export-matches-csv`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="btn-primary"
+                                style={{ background: 'linear-gradient(135deg,#10B981,#059669)', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none' }}
+                            >
+                                <i className="fas fa-file-csv"></i> Export CSV
+                            </a>
+                        ) : (
+                            <a href="/organizer/subscription"
+                                className="btn-primary"
+                                style={{ background: '#E5E7EB', color: '#9CA3AF', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none' }}
+                                title="Upgrade to Pro to export match results"
+                            >
+                                <i className="fas fa-lock"></i> Export CSV
+                            </a>
+                        )}
                     </div>
                 </div>
 

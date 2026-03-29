@@ -212,6 +212,7 @@ const Signup = () => {
                                         <option value="player">Player</option>
                                         <option value="manager">Manager</option>
                                         <option value="organizer">Organizer</option>
+                                        <option value="moderator">Moderator</option>
                                     </select>
                                     {errors.role && <span className="error-text">{errors.role}</span>}
                                 </div>

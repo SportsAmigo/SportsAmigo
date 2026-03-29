@@ -18,7 +18,7 @@ const AdminLayout = ({ children }) => {
     };
 
     const isActive = (path) => location.pathname === path;
-    
+
     // Check if any user management route is active
     const isUserManagementActive = () => {
         const userManagementPaths = ['/admin/users', '/admin/players', '/admin/managers', '/admin/organizers'];
@@ -42,8 +42,8 @@ const AdminLayout = ({ children }) => {
                     <div className="sidebar-user-profile">
                         <div className="sidebar-user-avatar">
                             {user?.profile_image ? (
-                                <img 
-                                    src={user.profile_image.startsWith('http') ? user.profile_image : `http://localhost:5000${user.profile_image}`} 
+                                <img
+                                    src={user.profile_image.startsWith('http') ? user.profile_image : `http://localhost:5000${user.profile_image}`}
                                     alt="Profile"
                                     onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
                                 />
@@ -51,7 +51,7 @@ const AdminLayout = ({ children }) => {
                             <i className="fa fa-user" style={{ display: user?.profile_image ? 'none' : 'flex' }}></i>
                         </div>
                         <div className="sidebar-user-name">
-                            {user?.first_name && user?.last_name 
+                            {user?.first_name && user?.last_name
                                 ? `${user.first_name} ${user.last_name}`
                                 : user?.email || 'Admin'
                             }
@@ -60,8 +60,8 @@ const AdminLayout = ({ children }) => {
                     </div>
 
                     <nav className="sidebar-nav">
-                        <Link 
-                            to="/admin/dashboard" 
+                        <Link
+                            to="/admin/dashboard"
                             className={`sidebar-nav-item ${isActive('/admin/dashboard') ? 'active' : ''}`}
                         >
                             <i className="fa fa-tachometer-alt"></i>
@@ -70,7 +70,7 @@ const AdminLayout = ({ children }) => {
 
                         {/* User Management Dropdown */}
                         <div className="sidebar-nav-dropdown">
-                            <button 
+                            <button
                                 onClick={() => setUserManagementOpen(!userManagementOpen)}
                                 className={`sidebar-nav-dropdown-header ${isUserManagementActive() ? 'active' : ''}`}
                             >
@@ -81,29 +81,29 @@ const AdminLayout = ({ children }) => {
                                 <i className={`fa fa-chevron-down sidebar-nav-dropdown-arrow ${userManagementOpen ? 'open' : ''}`}></i>
                             </button>
                             <div className={`sidebar-nav-dropdown-content ${userManagementOpen ? 'open' : ''}`}>
-                                <Link 
-                                    to="/admin/users" 
+                                <Link
+                                    to="/admin/users"
                                     className={`sidebar-nav-dropdown-item ${isActive('/admin/users') ? 'active' : ''}`}
                                 >
                                     <i className="fa fa-users"></i>
                                     All Users
                                 </Link>
-                                <Link 
-                                    to="/admin/players" 
+                                <Link
+                                    to="/admin/players"
                                     className={`sidebar-nav-dropdown-item ${isActive('/admin/players') ? 'active' : ''}`}
                                 >
                                     <i className="fa fa-user-friends"></i>
                                     Players
                                 </Link>
-                                <Link 
-                                    to="/admin/managers" 
+                                <Link
+                                    to="/admin/managers"
                                     className={`sidebar-nav-dropdown-item ${isActive('/admin/managers') ? 'active' : ''}`}
                                 >
                                     <i className="fa fa-user-tie"></i>
                                     Managers
                                 </Link>
-                                <Link 
-                                    to="/admin/organizers" 
+                                <Link
+                                    to="/admin/organizers"
                                     className={`sidebar-nav-dropdown-item ${isActive('/admin/organizers') ? 'active' : ''}`}
                                 >
                                     <i className="fa fa-user-shield"></i>
@@ -112,36 +112,43 @@ const AdminLayout = ({ children }) => {
                             </div>
                         </div>
 
-                        <Link 
-                            to="/admin/teams" 
+                        <Link
+                            to="/admin/teams"
                             className={`sidebar-nav-item ${isActive('/admin/teams') ? 'active' : ''}`}
                         >
                             <i className="fa fa-users"></i>
                             Teams
                         </Link>
-                        <Link 
-                            to="/admin/events" 
+                        <Link
+                            to="/admin/events"
                             className={`sidebar-nav-item ${isActive('/admin/events') ? 'active' : ''}`}
                         >
                             <i className="fa fa-calendar-alt"></i>
                             Events
                         </Link>
-                        <Link 
-                            to="/admin/matches" 
+                        <Link
+                            to="/admin/matches"
                             className={`sidebar-nav-item ${isActive('/admin/matches') ? 'active' : ''}`}
                         >
                             <i className="fa fa-futbol"></i>
                             Matches
                         </Link>
-                        <Link 
-                            to="/admin/stats" 
+                        <Link
+                            to="/admin/stats"
                             className={`sidebar-nav-item ${isActive('/admin/stats') ? 'active' : ''}`}
                         >
                             <i className="fa fa-chart-line"></i>
                             Statistics
                         </Link>
-                        <Link 
-                            to="/admin/activity-logs" 
+                        <Link
+                            to="/coordinator/dashboard"
+                            className={`sidebar-nav-item ${isActive('/coordinator/dashboard') ? 'active' : ''}`}
+                        >
+                            <i className="fa fa-clipboard-check"></i>
+                            Coordinator Panel
+                        </Link>
+                        <Link
+                            to="/admin/activity-logs"
                             className={`sidebar-nav-item ${isActive('/admin/activity-logs') ? 'active' : ''}`}
                         >
                             <i className="fa fa-history"></i>
@@ -163,7 +170,7 @@ const AdminLayout = ({ children }) => {
                     <button className="sidebar-toggle-btn" onClick={() => setSidebarOpen(!sidebarOpen)}>
                         <i className={`fa fa-${sidebarOpen ? 'times' : 'bars'}`}></i>
                     </button>
-                    
+
                     {children}
                 </div>
             </div>
