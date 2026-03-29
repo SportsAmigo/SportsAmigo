@@ -21,10 +21,8 @@ const OrganizerServices = () => {
   const [selectedService, setSelectedService] = useState(null);
   const [selectedTier, setSelectedTier] = useState(null);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [receipt, setReceipt] = useState(null);
-  const [paymentProgress, setPaymentProgress] = useState(0);
   const [eventVAS, setEventVAS] = useState([]);
 
   const organizerServices = [
@@ -139,59 +137,128 @@ const OrganizerServices = () => {
     setShowPurchaseModal(true);
   };
 
-  const handleProceedToPayment = () => {
-    setShowPurchaseModal(false);
-    setShowPaymentModal(true);
-    setPaymentProgress(0);
-    simulatePayment();
-  };
-
-  const simulatePayment = () => {
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 10;
-      setPaymentProgress(progress);
-      if (progress >= 100) {
-        clearInterval(interval);
-        setTimeout(() => processPayment(), 300);
-      }
-    }, 180);
-  };
+  const loadRazorpayScript = () => new Promise((resolve) => {
+    if (window.Razorpay) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
 
   const processPayment = async () => {
     try {
       setLoading(true);
       setError('');
+      setShowPurchaseModal(false);
+
+      const isLoaded = await loadRazorpayScript();
+      if (!isLoaded) {
+        setError('Failed to load Razorpay checkout. Please refresh and try again.');
+        return;
+      }
+
       const quantity = selectedService.id === 'certificate_generation' ? 50 : 1;
-      const response = await vasServiceV1.purchaseVAS(
+      const orderResponse = await vasServiceV1.createOrder(
         selectedEvent,
         selectedService.id,
         selectedTier.type,
         quantity
       );
-      if (response.success) {
-        setReceipt(response.receipt || {
-          transactionId: response.transactionId || `VAS${Date.now()}`,
+
+      if (!orderResponse.success) {
+        setError(orderResponse.message || orderResponse.error || 'Failed to create payment order');
+        return;
+      }
+
+      if (orderResponse.mode === 'direct_purchase') {
+        const eventName = myEvents.find(e => e._id === selectedEvent)?.title || 'Selected Event';
+        setReceipt(orderResponse.receipt || {
+          transactionId: orderResponse.transactionId,
           service: selectedService.name,
           tier: selectedTier.name,
-          amount: selectedTier.price,
-          event: myEvents.find(e => e._id === selectedEvent)?.title || 'Selected Event',
+          amount: orderResponse.data?.amount || selectedTier.price,
+          event: eventName,
           dateTime: new Date().toISOString(),
-          paymentStatus: 'SUCCESS'
+          paymentStatus: orderResponse.status || 'SUCCESS',
+          paymentMethod: 'Server Purchase'
         });
-        // Refresh active VAS for this event
+
         vasServiceV1.getEventVAS(selectedEvent)
           .then(res => { if (res.success) setEventVAS(res.data || []); })
           .catch(() => {});
-        setShowPaymentModal(false);
+
         setShowReceiptModal(true);
-      } else {
-        setError(response.message || 'Purchase failed');
-        setShowPaymentModal(false);
+        return;
       }
+
+      const options = {
+        key: orderResponse.key_id,
+        amount: orderResponse.amountInPaise,
+        currency: orderResponse.currency || 'INR',
+        name: 'SportsAmigo',
+        description: orderResponse.serviceName || `${selectedService.name} - ${selectedTier.name}`,
+        order_id: orderResponse.orderId,
+        prefill: orderResponse.prefill || {},
+        notes: {
+          eventId: selectedEvent,
+          serviceType: selectedService.id,
+          tier: selectedTier.type
+        },
+        handler: async function (rzp) {
+          try {
+            const verifyResponse = await vasServiceV1.verifyPayment(selectedEvent, {
+              razorpay_order_id: rzp.razorpay_order_id,
+              razorpay_payment_id: rzp.razorpay_payment_id,
+              razorpay_signature: rzp.razorpay_signature,
+              serviceType: selectedService.id,
+              tier: selectedTier.type,
+              quantity
+            });
+
+            if (!verifyResponse.success) {
+              setError(verifyResponse.message || verifyResponse.error || 'Payment verification failed');
+              return;
+            }
+
+            setReceipt(verifyResponse.receipt || {
+              transactionId: verifyResponse.transactionId,
+              service: selectedService.name,
+              tier: selectedTier.name,
+              amount: verifyResponse.data?.amount || selectedTier.price,
+              event: verifyResponse.data?.eventName || myEvents.find(e => e._id === selectedEvent)?.title || 'Selected Event',
+              dateTime: new Date().toISOString(),
+              paymentStatus: 'SUCCESS',
+              paymentMethod: 'Razorpay'
+            });
+
+            vasServiceV1.getEventVAS(selectedEvent)
+              .then(res => { if (res.success) setEventVAS(res.data || []); })
+              .catch(() => {});
+
+            setShowReceiptModal(true);
+          } catch (verifyErr) {
+            setError(verifyErr.message || 'Payment verification failed');
+          }
+        },
+        modal: {
+          ondismiss: function () {
+            setError('Payment cancelled. No charges were made.');
+          }
+        },
+        theme: {
+          color: '#2563EB'
+        }
+      };
+
+      const rz = new window.Razorpay(options);
+      rz.open();
     } catch (err) {
       setError(err.message || 'Failed to complete purchase');
-      setShowPaymentModal(false);
     } finally {
       setLoading(false);
     }
@@ -420,56 +487,6 @@ const OrganizerServices = () => {
           </div>
         </div>
 
-        {/* Payment Processing Modal */}
-        {showPaymentModal && selectedService && selectedTier && (
-          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000, backdropFilter: 'blur(6px)' }}>
-            <div style={{ background: 'white', borderRadius: 20, padding: '2.5rem', maxWidth: 450, width: '90%', boxShadow: '0 30px 80px rgba(0,0,0,0.5)' }}>
-              <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                <div style={{ width: 64, height: 64, borderRadius: '50%', margin: '0 auto 1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: paymentProgress < 100 ? '#EFF6FF' : '#ECFDF5' }}>
-                  <i className={`fas ${paymentProgress < 100 ? 'fa-spinner fa-spin' : 'fa-check-circle'}`} style={{ fontSize: '1.75rem', color: paymentProgress < 100 ? '#2563EB' : '#10B981' }}></i>
-                </div>
-                <h2 style={{ color: '#111827', marginBottom: '0.5rem', fontSize: '1.5rem', fontWeight: 700 }}>
-                  {paymentProgress < 100 ? 'Processing Payment...' : 'Payment Successful!'}
-                </h2>
-                <p style={{ color: '#6B7280', fontSize: '0.9375rem', margin: 0 }}>
-                  {paymentProgress < 100 ? 'Please wait while we process your payment' : 'Your service has been activated!'}
-                </p>
-              </div>
-              <div style={{ background: '#F3F4F6', borderRadius: 12, padding: '1.5rem', marginBottom: '1.5rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', fontSize: '0.9375rem' }}>
-                  <span style={{ color: '#6B7280' }}>Service:</span>
-                  <span style={{ fontWeight: 600, color: '#111827' }}>{selectedService.name}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', fontSize: '0.9375rem' }}>
-                  <span style={{ color: '#6B7280' }}>Tier:</span>
-                  <span style={{ fontWeight: 600, color: '#111827' }}>{selectedTier.name}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.125rem', paddingTop: '0.75rem', borderTop: '2px solid #E5E7EB' }}>
-                  <span style={{ fontWeight: 600, color: '#111827' }}>Amount:</span>
-                  <span style={{ fontWeight: 800, color: '#2563EB' }}>₹{discountedPrice(selectedTier.price).toLocaleString()}</span>
-                </div>
-              </div>
-              <div style={{ marginBottom: '1.5rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-                  <span style={{ color: '#6B7280' }}>Progress</span>
-                  <span style={{ fontWeight: 600, color: '#2563EB' }}>{paymentProgress}%</span>
-                </div>
-                <div style={{ height: 8, background: '#E5E7EB', borderRadius: 10, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', background: 'linear-gradient(90deg, #10B981, #059669)', width: `${paymentProgress}%`, transition: 'width 0.3s', borderRadius: 10 }}></div>
-                </div>
-              </div>
-              {paymentProgress === 100 && (
-                <div style={{ padding: '1rem', background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: 10, textAlign: 'center' }}>
-                  <p style={{ color: '#059669', margin: 0, fontWeight: 600, fontSize: '0.9375rem' }}>
-                    <i className="fa fa-check-circle" style={{ marginRight: 6 }}></i>
-                    Payment completed successfully
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* Receipt Modal */}
         {showReceiptModal && receipt && (
           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10001, backdropFilter: 'blur(6px)' }}
@@ -566,7 +583,7 @@ const OrganizerServices = () => {
                 </p>
               </div>
               <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <button onClick={handleProceedToPayment} disabled={loading}
+                <button onClick={processPayment} disabled={loading}
                   style={{ ...btn('linear-gradient(135deg, #10B981, #059669)'), flex: 1, justifyContent: 'center', padding: '0.875rem', fontSize: '1rem', boxShadow: '0 4px 12px rgba(16,185,129,0.3)', opacity: loading ? 0.5 : 1 }}>
                   {loading ? 'Processing...' : <><i className="fas fa-credit-card" style={{ marginRight: 6 }}></i>Proceed to Payment</>}
                 </button>

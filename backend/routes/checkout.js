@@ -10,6 +10,74 @@ const WalletTransaction = require('../models/walletTransaction');
 const UserSchema = require('../models/schemas/userSchema');
 
 /**
+ * @swagger
+ * /api/checkout:
+ *   get:
+ *     summary: Load checkout page
+ *     tags: [Checkout]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Checkout page rendered
+ *       302:
+ *         description: Redirect to login or cart when preconditions fail
+ *
+ *   post:
+ *     summary: Process checkout order
+ *     tags: [Checkout]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [fullName, phone, street, city, state, area, paymentMethod]
+ *             properties:
+ *               fullName:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               street:
+ *                 type: string
+ *               city:
+ *                 type: string
+ *               state:
+ *                 type: string
+ *               area:
+ *                 type: string
+ *               landmark:
+ *                 type: string
+ *               paymentMethod:
+ *                 type: string
+ *                 enum: [Wallet, COD]
+ *     responses:
+ *       200:
+ *         description: Order processed with success or error payload
+ *
+ * /api/checkout/order-success:
+ *   get:
+ *     summary: Load order success page
+ *     tags: [Checkout]
+ *     parameters:
+ *       - in: query
+ *         name: orderId
+ *         required: false
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Order success page rendered
+ *       302:
+ *         description: Redirected to shop if orderId is missing
+ */
+
+/**
  * GET /checkout - Checkout page (requires shop login)
  */
 router.get('/', async (req, res) => {

@@ -26,6 +26,404 @@ const isPlayer = (req, res, next) => {
 // Apply the isPlayer middleware to all player routes
 router.use(isPlayer);
 
+/**
+ * @swagger
+ * /api/player/dashboard:
+ *   get:
+ *     summary: Get player dashboard summary
+ *     tags: [Player]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Dashboard payload returned
+ *       500:
+ *         description: Failed to load dashboard
+ *
+ * /api/player/my-events:
+ *   get:
+ *     summary: Get events where player participates
+ *     tags: [Player]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Player events returned
+ *
+ * /api/player/browse-events:
+ *   get:
+ *     summary: Browse approved and upcoming events
+ *     tags: [Player]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Browsable events returned
+ *
+ * /api/player/my-teams:
+ *   get:
+ *     summary: Get teams joined by player
+ *     tags: [Player]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Teams returned
+ *
+ * /api/player/team/{teamId}:
+ *   get:
+ *     summary: Get team details with membership context
+ *     tags: [Player]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: teamId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Team details returned
+ *       404:
+ *         description: Team not found
+ *
+ * /api/player/browse-teams:
+ *   get:
+ *     summary: Browse teams available to join
+ *     tags: [Player]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Team browse list returned
+ *
+ * /api/player/teams/{id}/join:
+ *   post:
+ *     summary: Send request to join a team
+ *     tags: [Player]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Join request submitted
+ *       400:
+ *         description: Invalid or duplicate request
+ *
+ * /api/player/teams/leave/{id}:
+ *   post:
+ *     summary: Leave a joined team
+ *     tags: [Player]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Team leave completed
+ *
+ * /api/player/performance:
+ *   get:
+ *     summary: Get player performance metrics
+ *     tags: [Player]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Performance data returned
+ *
+ * /api/player/profile:
+ *   get:
+ *     summary: Get player profile
+ *     tags: [Player]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Profile data returned
+ *   put:
+ *     summary: Update player profile
+ *     tags: [Player]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               profile_image:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Profile updated
+ *
+ * /api/player/update-profile:
+ *   post:
+ *     summary: Update profile through legacy form endpoint
+ *     tags: [Player]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     responses:
+ *       200:
+ *         description: Profile updated
+ *
+ * /api/player/change-password:
+ *   post:
+ *     summary: Change player password
+ *     tags: [Player]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [currentPassword, newPassword]
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *               newPassword:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Password changed
+ *       400:
+ *         description: Validation failed
+ *
+ * /api/player/update-photo:
+ *   post:
+ *     summary: Upload player profile photo
+ *     tags: [Player]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               photo:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Photo updated
+ *
+ * /api/player/update-notifications:
+ *   post:
+ *     summary: Update player notification preferences
+ *     tags: [Player]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     responses:
+ *       200:
+ *         description: Notification settings updated
+ *
+ * /api/player/update-sports:
+ *   post:
+ *     summary: Update player preferred sports
+ *     tags: [Player]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     responses:
+ *       200:
+ *         description: Sports preferences updated
+ *
+ * /api/player/my-matches:
+ *   get:
+ *     summary: Get match history for player's teams
+ *     tags: [Player]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Match history returned
+ *
+ * /api/player/stats:
+ *   get:
+ *     summary: Get aggregated player statistics
+ *     tags: [Player]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Stats returned
+ *
+ * /api/player/teams/{teamId}/performance:
+ *   get:
+ *     summary: Get performance metrics in a specific team
+ *     tags: [Player]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: teamId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Team performance returned
+ *
+ * /api/player/event/{id}:
+ *   get:
+ *     summary: Get detailed event view
+ *     tags: [Player]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Event details returned
+ *
+ * /api/player/event/{id}/register:
+ *   post:
+ *     summary: Register player team for event
+ *     tags: [Player]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Event registration completed
+ *
+ * /api/player/request-join-team/{teamId}:
+ *   post:
+ *     summary: Request to join team through redirect-based flow
+ *     tags: [Player]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: teamId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Team request accepted
+ *
+ * /api/player/api/events/browse:
+ *   get:
+ *     summary: AJAX browse events
+ *     tags: [Player]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Event list returned
+ *
+ * /api/player/api/events/search:
+ *   get:
+ *     summary: AJAX search events with filters
+ *     tags: [Player]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         schema:
+ *           type: string
+ *         required: false
+ *       - in: query
+ *         name: sport
+ *         schema:
+ *           type: string
+ *         required: false
+ *     responses:
+ *       200:
+ *         description: Filtered events returned
+ *
+ * /api/player/api/player/events:
+ *   get:
+ *     summary: AJAX get player joined events
+ *     tags: [Player]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Joined events returned
+ *
+ * /api/player/api/events/{eventId}/join:
+ *   post:
+ *     summary: AJAX join event
+ *     tags: [Player]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Event join processed
+ *
+ * /api/player/api/teams/search:
+ *   get:
+ *     summary: AJAX search teams with filters
+ *     tags: [Player]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Teams returned
+ *
+ * /api/player/api/teams/{teamId}/join:
+ *   post:
+ *     summary: AJAX join team request
+ *     tags: [Player]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: teamId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Team join request submitted
+ */
+
 // Configure multer for file uploads
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {

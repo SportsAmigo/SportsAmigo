@@ -3,7 +3,60 @@ const router = express.Router();
 const { processEventRegistrationPayment, getRegistrationCommissionBreakdown } = require('../controllers/eventPaymentController');
 
 // Event payment routes
+/**
+ * @swagger
+ * /api/events/{eventId}/register-and-pay:
+ *   post:
+ *     summary: Register and pay for an event
+ *     description: Starts event registration payment flow for the authenticated user.
+ *     tags: [General]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Event ID
+ *     responses:
+ *       200:
+ *         description: Payment flow processed successfully
+ *       401:
+ *         description: Authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Event not found
+ *       500:
+ *         description: Server error while processing payment
+ */
 router.post('/events/:eventId/register-and-pay', processEventRegistrationPayment);
+
+/**
+ * @swagger
+ * /api/events/{eventId}/commission-breakdown:
+ *   get:
+ *     summary: Get commission breakdown for event registration
+ *     tags: [General]
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Event ID
+ *     responses:
+ *       200:
+ *         description: Commission breakdown fetched successfully
+ *       404:
+ *         description: Event not found
+ *       500:
+ *         description: Server error while fetching commission breakdown
+ */
 router.get('/events/:eventId/commission-breakdown', getRegistrationCommissionBreakdown);
 const User = require('../models/user');
 const Event = require('../models/event');
@@ -17,6 +70,35 @@ const Registration = require('../models/registration');
  */
 
 // GET /api/dashboard-stats - Live dashboard statistics
+/**
+ * @swagger
+ * /api/dashboard-stats:
+ *   get:
+ *     summary: Get live dashboard statistics
+ *     tags: [General]
+ *     responses:
+ *       200:
+ *         description: Dashboard statistics retrieved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 totalEvents:
+ *                   type: integer
+ *                 activeTeams:
+ *                   type: integer
+ *                 totalPlayers:
+ *                   type: integer
+ *                 totalTeams:
+ *                   type: integer
+ *       500:
+ *         description: Failed to fetch dashboard stats
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 router.get('/dashboard-stats', async (req, res) => {
     try {
         console.log('API: Fetching dashboard stats');
@@ -53,6 +135,44 @@ router.get('/dashboard-stats', async (req, res) => {
 });
 
 // POST /api/teams/:teamId/join - Join a team
+/**
+ * @swagger
+ * /api/teams/{teamId}/join:
+ *   post:
+ *     summary: Request to join a team
+ *     tags: [General]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: teamId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Team ID
+ *     responses:
+ *       200:
+ *         description: Join request sent successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       401:
+ *         description: User is not logged in
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Team not found
+ *       500:
+ *         description: Failed to request team join
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 router.post('/teams/:teamId/join', async (req, res) => {
     try {
         if (!req.session.user) {
@@ -91,6 +211,48 @@ router.post('/teams/:teamId/join', async (req, res) => {
 });
 
 // POST /api/teams/:teamId/leave - Leave a team
+/**
+ * @swagger
+ * /api/teams/{teamId}/leave:
+ *   post:
+ *     summary: Leave a team
+ *     tags: [General]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: teamId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Team ID
+ *     responses:
+ *       200:
+ *         description: Team left successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       401:
+ *         description: User is not logged in
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Team not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Failed to leave team
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 router.post('/teams/:teamId/leave', async (req, res) => {
     try {
         if (!req.session.user) {
@@ -136,6 +298,54 @@ router.post('/teams/:teamId/leave', async (req, res) => {
 });
 
 // POST /api/events/:eventId/register - Register for an event
+/**
+ * @swagger
+ * /api/events/{eventId}/register:
+ *   post:
+ *     summary: Register authenticated user for an event
+ *     tags: [General]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Event ID
+ *     responses:
+ *       200:
+ *         description: Registration successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       400:
+ *         description: User already registered
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Event not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Registration failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 router.post('/events/:eventId/register', async (req, res) => {
     try {
         if (!req.session.user) {
@@ -197,6 +407,48 @@ router.post('/events/:eventId/register', async (req, res) => {
 });
 
 // POST /api/events/:eventId/unregister - Unregister from an event
+/**
+ * @swagger
+ * /api/events/{eventId}/unregister:
+ *   post:
+ *     summary: Unregister authenticated user from an event
+ *     tags: [General]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Event ID
+ *     responses:
+ *       200:
+ *         description: Unregistration successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       400:
+ *         description: User is not registered for this event
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Unregistration failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 router.post('/events/:eventId/unregister', async (req, res) => {
     try {
         if (!req.session.user) {
@@ -240,6 +492,48 @@ router.post('/events/:eventId/unregister', async (req, res) => {
 });
 
 // POST /api/check-email - Check email availability
+/**
+ * @swagger
+ * /api/check-email:
+ *   post:
+ *     summary: Check email availability
+ *     tags: [General]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: Email availability result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 available:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Email was not provided
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Failed to check email
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 router.post('/check-email', async (req, res) => {
     try {
         const { email } = req.body;
@@ -271,6 +565,61 @@ router.post('/check-email', async (req, res) => {
 });
 
 // POST /api/search-events - Search events
+/**
+ * @swagger
+ * /api/search-events:
+ *   post:
+ *     summary: Search events by text and sport category
+ *     tags: [General]
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               query:
+ *                 type: string
+ *                 description: Text query applied on name, description, and location
+ *               category:
+ *                 type: string
+ *                 description: Sport type filter
+ *     responses:
+ *       200:
+ *         description: Matching events list
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 events:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       title:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       date:
+ *                         type: string
+ *                       location:
+ *                         type: string
+ *                       sport:
+ *                         type: string
+ *                       organizer:
+ *                         type: string
+ *       500:
+ *         description: Search failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 router.post('/search-events', async (req, res) => {
     try {
         const { query, category } = req.body;
@@ -326,6 +675,44 @@ router.post('/search-events', async (req, res) => {
 });
 
 // GET /api/events/:eventId - Get event details
+/**
+ * @swagger
+ * /api/events/{eventId}:
+ *   get:
+ *     summary: Get event details
+ *     tags: [General]
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Event ID
+ *     responses:
+ *       200:
+ *         description: Event details retrieved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 event:
+ *                   type: object
+ *       404:
+ *         description: Event not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Failed to fetch event details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 router.get('/events/:eventId', async (req, res) => {
     try {
         const eventId = req.params.eventId;

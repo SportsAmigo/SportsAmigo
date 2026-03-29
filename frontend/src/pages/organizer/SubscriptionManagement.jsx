@@ -14,10 +14,8 @@ const SubscriptionManagement = () => {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [billingCycle, setBillingCycle] = useState('yearly');
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [receipt, setReceipt] = useState(null);
-  const [paymentProgress, setPaymentProgress] = useState(0);
 
   const plans = {
     free: {
@@ -86,47 +84,116 @@ const SubscriptionManagement = () => {
 
   const handleProceedToPayment = () => {
     setShowUpgradeModal(false);
-    setShowPaymentModal(true);
-    setPaymentProgress(0);
-    simulatePayment();
+    processPayment();
   };
 
-  const simulatePayment = () => {
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 10;
-      setPaymentProgress(progress);
-      if (progress >= 100) {
-        clearInterval(interval);
-        setTimeout(() => processPayment(), 300);
-      }
-    }, 200);
-  };
+  const loadRazorpayScript = () => new Promise((resolve) => {
+    if (window.Razorpay) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
 
   const processPayment = async () => {
     try {
       setLoading(true);
       setError('');
+
+      const loaded = await loadRazorpayScript();
+      if (!loaded) {
+        setError('Failed to load Razorpay checkout. Please refresh and try again.');
+        return;
+      }
+
       const currentPlanKey = currentSubscription?.plan || 'free';
       const isUpgrade = currentPlanKey !== 'free';
-      const res = isUpgrade
-        ? await subscriptionService.upgrade(selectedPlan, billingCycle)
-        : await subscriptionService.purchase(selectedPlan, billingCycle);
+      const orderResponse = isUpgrade
+        ? await subscriptionService.createUpgradeOrder(selectedPlan, billingCycle)
+        : await subscriptionService.createOrder(selectedPlan, billingCycle);
 
-      if (res.success) {
-        setReceipt(res.receipt);
-        setShowPaymentModal(false);
-        setShowReceiptModal(true);
-        // Update Redux user state so sidebar badge updates immediately
-        dispatch(updateUserData({ subscription: { plan: selectedPlan, status: 'active' } }));
-        fetchSubscription();
-      } else {
-        setError(res.message || 'Payment failed. Please try again.');
-        setShowPaymentModal(false);
+      if (!orderResponse.success) {
+        setError(orderResponse.message || orderResponse.error || 'Failed to create subscription payment order.');
+        return;
       }
+
+      const options = {
+        key: orderResponse.key_id,
+        amount: orderResponse.amountInPaise,
+        currency: orderResponse.currency || 'INR',
+        name: 'SportsAmigo',
+        description: `${plans[selectedPlan].name} (${billingCycle})`,
+        order_id: orderResponse.orderId,
+        prefill: orderResponse.prefill || {},
+        notes: {
+          plan: selectedPlan,
+          billingCycle,
+          type: isUpgrade ? 'subscription_upgrade' : 'subscription'
+        },
+        handler: async function (rzp) {
+          try {
+            const verifyPayload = isUpgrade
+              ? {
+                razorpay_order_id: rzp.razorpay_order_id,
+                razorpay_payment_id: rzp.razorpay_payment_id,
+                razorpay_signature: rzp.razorpay_signature,
+                newPlan: selectedPlan,
+                billingCycle
+              }
+              : {
+                razorpay_order_id: rzp.razorpay_order_id,
+                razorpay_payment_id: rzp.razorpay_payment_id,
+                razorpay_signature: rzp.razorpay_signature,
+                plan: selectedPlan,
+                billingCycle
+              };
+
+            const verifyResponse = isUpgrade
+              ? await subscriptionService.verifyUpgradePayment(verifyPayload)
+              : await subscriptionService.verifyPayment(verifyPayload);
+
+            if (!verifyResponse.success) {
+              setError(verifyResponse.message || verifyResponse.error || 'Payment verification failed.');
+              return;
+            }
+
+            setReceipt(verifyResponse.receipt || {
+              transactionId: verifyResponse.transactionId,
+              organizerName: 'Organizer',
+              planOrPackage: `${plans[selectedPlan].name}`,
+              billingCycle,
+              amount: verifyResponse.data?.amount || getPrice(selectedPlan),
+              dateTime: new Date().toISOString(),
+              paymentStatus: verifyResponse.status || 'SUCCESS'
+            });
+            setShowReceiptModal(true);
+
+            // Update Redux user state so sidebar badge updates immediately.
+            dispatch(updateUserData({ subscription: { plan: selectedPlan, status: 'active' } }));
+            fetchSubscription();
+          } catch (verifyErr) {
+            setError(verifyErr.message || 'Payment verification failed.');
+          }
+        },
+        modal: {
+          ondismiss: function () {
+            setError('Payment cancelled. No charges were made.');
+          }
+        },
+        theme: {
+          color: '#2563EB'
+        }
+      };
+
+      const rz = new window.Razorpay(options);
+      rz.open();
     } catch (err) {
       setError(err.message || 'Failed to process subscription');
-      setShowPaymentModal(false);
     } finally {
       setLoading(false);
     }
@@ -287,31 +354,6 @@ const SubscriptionManagement = () => {
           </div>
         </div>
 
-        {/* Payment Processing Modal */}
-        {showPaymentModal && selectedPlan && (
-          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000, backdropFilter: 'blur(6px)' }}>
-            <div style={{ background: 'white', borderRadius: 20, padding: '2.5rem', maxWidth: 450, width: '90%', boxShadow: '0 30px 80px rgba(0,0,0,0.5)' }}>
-              <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                <div style={{ width: 64, height: 64, borderRadius: '50%', margin: '0 auto 1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: paymentProgress < 100 ? '#EFF6FF' : '#ECFDF5' }}>
-                  <i className={`fas ${paymentProgress < 100 ? 'fa-spinner fa-spin' : 'fa-check-circle'}`} style={{ fontSize: '1.75rem', color: paymentProgress < 100 ? '#2563EB' : '#10B981' }}></i>
-                </div>
-                <h2 style={{ color: '#111827', marginBottom: '0.5rem', fontSize: '1.5rem', fontWeight: 700 }}>{paymentProgress < 100 ? 'Processing Payment...' : 'Payment Successful!'}</h2>
-                <p style={{ color: '#6B7280', margin: 0 }}>{paymentProgress < 100 ? 'Please wait while we process your payment' : 'Your subscription has been activated!'}</p>
-              </div>
-              <div style={{ background: '#F3F4F6', borderRadius: 12, padding: '1.5rem', marginBottom: '1.5rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}><span style={{ color: '#6B7280' }}>Plan:</span><span style={{ fontWeight: 600 }}>{plans[selectedPlan].name}</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}><span style={{ color: '#6B7280' }}>Billing:</span><span style={{ fontWeight: 600, textTransform: 'capitalize' }}>{billingCycle}</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '0.75rem', borderTop: '2px solid #E5E7EB', fontSize: '1.125rem' }}><span style={{ fontWeight: 600 }}>Amount:</span><span style={{ fontWeight: 800, color: '#2563EB' }}>₹{getPrice(selectedPlan).toLocaleString()}</span></div>
-              </div>
-              <div style={{ marginBottom: '1.5rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.875rem' }}><span style={{ color: '#6B7280' }}>Progress</span><span style={{ fontWeight: 600, color: '#2563EB' }}>{paymentProgress}%</span></div>
-                <div style={{ height: 8, background: '#E5E7EB', borderRadius: 10, overflow: 'hidden' }}><div style={{ height: '100%', background: 'linear-gradient(90deg, #2563EB, #1D4ED8)', width: `${paymentProgress}%`, transition: 'width 0.3s', borderRadius: 10 }}></div></div>
-              </div>
-              {paymentProgress === 100 && <div style={{ padding: '1rem', background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: 10, textAlign: 'center' }}><p style={{ color: '#059669', margin: 0, fontWeight: 600 }}><i className="fa fa-check-circle" style={{ marginRight: 6 }}></i>Payment completed successfully</p></div>}
-            </div>
-          </div>
-        )}
-
         {/* Receipt Modal */}
         {showReceiptModal && receipt && (
           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10001, backdropFilter: 'blur(6px)' }}
@@ -362,7 +404,7 @@ const SubscriptionManagement = () => {
                 <div style={{ marginTop: '0.75rem', padding: '0.5rem', background: '#EFF6FF', borderRadius: 8 }}><span style={{ color: '#2563EB', fontWeight: 600 }}>New commission rate: {plans[selectedPlan].commissionRate}</span></div>
               </div>
               <div style={{ padding: '1rem', background: '#FFFBEB', borderRadius: 10, marginBottom: '1.5rem', border: '1px solid #FDE68A' }}>
-                <p style={{ color: '#92400E', fontSize: '0.875rem', margin: 0, textAlign: 'center' }}><i className="fa fa-info-circle" style={{ marginRight: 6 }}></i>This is a demo payment — no actual charges will be made.</p>
+                <p style={{ color: '#92400E', fontSize: '0.875rem', margin: 0, textAlign: 'center' }}><i className="fa fa-info-circle" style={{ marginRight: 6 }}></i>You will be redirected to secure Razorpay checkout to complete payment.</p>
               </div>
               <div style={{ display: 'flex', gap: '0.75rem' }}>
                 <button onClick={handleProceedToPayment} disabled={loading} style={{ flex: 1, padding: '0.875rem', border: 'none', borderRadius: 12, background: plans[selectedPlan].gradient, color: 'white', fontWeight: 700, fontSize: '1rem', cursor: 'pointer', boxShadow: '0 4px 16px rgba(0,0,0,0.2)', opacity: loading ? 0.5 : 1 }}>

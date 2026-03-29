@@ -2,6 +2,79 @@ const express = require('express');
 const router = express.Router();
 const ShopItem = require('../models/shopItem');
 
+/**
+ * @swagger
+ * /api/shop/items:
+ *   get:
+ *     summary: List shop items
+ *     tags: [Shop]
+ *     parameters:
+ *       - in: query
+ *         name: category
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: search
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: featured
+ *         required: false
+ *         schema:
+ *           type: boolean
+ *       - in: query
+ *         name: inStock
+ *         required: false
+ *         schema:
+ *           type: boolean
+ *     responses:
+ *       200:
+ *         description: Shop items returned
+ *       500:
+ *         description: Failed to fetch items
+ *
+ * /api/shop/items/{id}:
+ *   get:
+ *     summary: Get single shop item
+ *     tags: [Shop]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Item details returned
+ *       404:
+ *         description: Item not found
+ *
+ * /api/shop/categories:
+ *   get:
+ *     summary: List product categories
+ *     tags: [Shop]
+ *     responses:
+ *       200:
+ *         description: Categories returned
+ *
+ * /api/shop/featured:
+ *   get:
+ *     summary: Get featured shop items
+ *     tags: [Shop]
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 6
+ *     responses:
+ *       200:
+ *         description: Featured items returned
+ */
+
 // GET /api/shop/items - Get all shop items
 router.get('/items', async (req, res) => {
     try {

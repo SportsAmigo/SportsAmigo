@@ -66,6 +66,169 @@ function isAdmin(req, res, next) {
   });
 }
 
+/**
+ * @swagger
+ * /api/vas/products:
+ *   get:
+ *     summary: Get VAS product catalog
+ *     tags: [VAS]
+ *     parameters:
+ *       - in: query
+ *         name: category
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [organizer, player]
+ *     responses:
+ *       200:
+ *         description: Product catalog returned
+ *
+ * /api/vas/products/{category}:
+ *   get:
+ *     summary: Get VAS catalog by category
+ *     tags: [VAS]
+ *     parameters:
+ *       - in: path
+ *         name: category
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [organizer, player]
+ *     responses:
+ *       200:
+ *         description: Category products returned
+ *
+ * /api/vas/my-purchases:
+ *   get:
+ *     summary: Get authenticated user VAS purchases
+ *     tags: [VAS]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Purchase history returned
+ *
+ * /api/vas/check/{serviceType}:
+ *   get:
+ *     summary: Check active status for a VAS service type
+ *     tags: [VAS]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: serviceType
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Service status returned
+ *
+ * /api/vas/cancel/{id}:
+ *   post:
+ *     summary: Cancel purchased VAS
+ *     tags: [VAS]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: VAS cancelled
+ *
+ * /api/vas/organizer/insurance:
+ *   post:
+ *     summary: Purchase organizer event insurance
+ *     tags: [VAS]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     responses:
+ *       200:
+ *         description: Insurance purchased
+ *
+ * /api/vas/organizer/marketing:
+ *   post:
+ *     summary: Purchase organizer marketing boost
+ *     tags: [VAS]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     responses:
+ *       200:
+ *         description: Marketing boost purchased
+ *
+ * /api/vas/organizer/certificates:
+ *   post:
+ *     summary: Purchase organizer certificates package
+ *     tags: [VAS]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     responses:
+ *       200:
+ *         description: Certificates package purchased
+ *
+ * /api/vas/organizer/sms:
+ *   post:
+ *     summary: Purchase organizer SMS package
+ *     tags: [VAS]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     responses:
+ *       200:
+ *         description: SMS package purchased
+ *
+ * /api/vas/player/premium-profile:
+ *   post:
+ *     summary: Purchase player premium profile
+ *     tags: [VAS]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     responses:
+ *       200:
+ *         description: Premium profile purchased
+ *
+ * /api/vas/player/analytics:
+ *   post:
+ *     summary: Purchase player performance analytics
+ *     tags: [VAS]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     responses:
+ *       200:
+ *         description: Analytics purchased
+ *
+ * /api/vas/player/insurance:
+ *   post:
+ *     summary: Purchase player insurance
+ *     tags: [VAS]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     responses:
+ *       200:
+ *         description: Player insurance purchased
+ *
+ * /api/vas/admin/revenue:
+ *   get:
+ *     summary: Get VAS revenue stats (admin)
+ *     tags: [VAS]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Revenue stats returned
+ */
+
 // ============================================
 // PUBLIC ROUTES
 // ============================================

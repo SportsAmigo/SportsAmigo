@@ -1,19 +1,22 @@
 /**
  * v1 Subscription Routes — RESTful API
  *
- * POST   /api/v1/subscriptions/purchase   — First-time plan purchase
- * POST   /api/v1/subscriptions/upgrade    — Upgrade / downgrade (deactivates old plan)
- * GET    /api/v1/subscriptions/current     — Active subscription for dashboard
- * GET    /api/v1/subscriptions/history     — Payment history for subscriptions
- * GET    /api/v1/subscriptions/plans       — List available plans & pricing
- * GET    /api/v1/subscriptions/receipt/:txnId — Download PDF receipt
+ * POST   /api/v1/subscriptions/create-order          — Create Razorpay order for subscription
+ * POST   /api/v1/subscriptions/verify-payment         — Verify Razorpay payment & activate subscription
+ * POST   /api/v1/subscriptions/upgrade/create-order   — Create Razorpay order for plan upgrade
+ * POST   /api/v1/subscriptions/upgrade/verify-payment — Verify upgrade payment & switch plan
+ * GET    /api/v1/subscriptions/current                — Active subscription for dashboard
+ * GET    /api/v1/subscriptions/history                — Payment history for subscriptions
+ * GET    /api/v1/subscriptions/plans                  — List available plans & pricing
+ * GET    /api/v1/subscriptions/receipt/:txnId          — Download PDF receipt
  */
 
 const express = require('express');
 const router = express.Router();
 const Subscription = require('../../models/schemas/subscriptionSchema');
 const User = require('../../models/schemas/userSchema');
-const { processPayment, lookupSubscriptionPrice, CANONICAL_PRICES } = require('../../services/paymentService');
+const { razorpay, verifyPaymentSignature } = require('../../config/razorpay');
+const { lookupSubscriptionPrice, CANONICAL_PRICES } = require('../../services/paymentService');
 const { generateReceiptPDF } = require('../../services/receiptService');
 
 console.log('[v1/subscriptions] Router loaded successfully');
@@ -33,7 +36,62 @@ function isOrganizer(req, res, next) {
   next();
 }
 
-// ─── GET /plans ──────────────────────────────────────────────────────────
+/**
+ * @swagger
+ * /api/v1/subscriptions/plans:
+ *   get:
+ *     summary: List all available subscription plans with pricing
+ *     tags: [Subscriptions v1]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Plans retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean, example: true }
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     free:
+ *                       type: object
+ *                       properties:
+ *                         name: { type: string, example: "Free Plan" }
+ *                         price:
+ *                           type: object
+ *                           properties:
+ *                             monthly: { type: number, example: 0 }
+ *                             yearly: { type: number, example: 0 }
+ *                         commissionRate: { type: number, example: 20 }
+ *                         features: { type: object }
+ *                     pro:
+ *                       type: object
+ *                       properties:
+ *                         name: { type: string, example: "Pro Plan" }
+ *                         price:
+ *                           type: object
+ *                           properties:
+ *                             monthly: { type: number }
+ *                             yearly: { type: number }
+ *                         commissionRate: { type: number, example: 15 }
+ *                         features: { type: object }
+ *                     enterprise:
+ *                       type: object
+ *                       properties:
+ *                         name: { type: string, example: "Enterprise Plan" }
+ *                         price: { type: object }
+ *                         commissionRate: { type: number, example: 12 }
+ *                         features: { type: object }
+ *       401:
+ *         description: Not authenticated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 router.get('/plans', isAuthenticated, (req, res) => {
   res.json({
     success: true,
@@ -69,7 +127,42 @@ router.get('/plans', isAuthenticated, (req, res) => {
   });
 });
 
-// ─── GET /current ────────────────────────────────────────────────────────
+/**
+ * @swagger
+ * /api/v1/subscriptions/current:
+ *   get:
+ *     summary: Get current active subscription for the organizer
+ *     tags: [Subscriptions v1]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Current subscription details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean, example: true }
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     _id: { type: string }
+ *                     plan: { type: string, enum: [free, pro, enterprise] }
+ *                     billingCycle: { type: string, enum: [monthly, yearly] }
+ *                     status: { type: string, enum: [active, cancelled, expired] }
+ *                     startDate: { type: string, format: date-time }
+ *                     endDate: { type: string, format: date-time }
+ *                     daysRemaining: { type: integer, description: Days until subscription expires }
+ *                     features: { type: object }
+ *                     usage: { type: object }
+ *       403:
+ *         description: Not an organizer
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 router.get('/current', isOrganizer, async (req, res) => {
   try {
     const userId = req.session.user._id;
@@ -109,7 +202,43 @@ router.get('/current', isOrganizer, async (req, res) => {
   }
 });
 
-// ─── GET /history ────────────────────────────────────────────────────────
+/**
+ * @swagger
+ * /api/v1/subscriptions/history:
+ *   get:
+ *     summary: Get subscription payment history for organizer
+ *     tags: [Subscriptions v1]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Payment history retrieved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean, example: true }
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       transactionId: { type: string }
+ *                       date: { type: string, format: date-time }
+ *                       item: { type: string, example: "Pro Plan (monthly)" }
+ *                       productType: { type: string, example: "Subscription" }
+ *                       amount: { type: number }
+ *                       status: { type: string }
+ *                       billingCycle: { type: string }
+ *                       plan: { type: string }
+ *       403:
+ *         description: Not an organizer
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 router.get('/history', isOrganizer, async (req, res) => {
   try {
     const userId = req.session.user._id;
@@ -144,11 +273,58 @@ router.get('/history', isOrganizer, async (req, res) => {
   }
 });
 
-// ─── POST /purchase ──────────────────────────────────────────────────────
-router.post('/purchase', isOrganizer, async (req, res) => {
-  console.log('[v1/subscriptions/purchase] Request received:', { body: req.body, userId: req.session.user?._id });
+// ─── POST /create-order — Create Razorpay order for new subscription ─────
+/**
+ * @swagger
+ * /api/v1/subscriptions/create-order:
+ *   post:
+ *     summary: Create a Razorpay order for subscription purchase
+ *     description: Validates plan, checks for existing subscription, creates Razorpay order. Frontend uses the returned order to open Razorpay Checkout.
+ *     tags: [Subscriptions v1]
+ *     security:
+ *       - sessionAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [plan]
+ *             properties:
+ *               plan:
+ *                 type: string
+ *                 enum: [pro, enterprise]
+ *                 example: pro
+ *               billingCycle:
+ *                 type: string
+ *                 enum: [monthly, yearly]
+ *                 default: monthly
+ *     responses:
+ *       200:
+ *         description: Razorpay order created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean, example: true }
+ *                 orderId: { type: string, description: Razorpay order ID }
+ *                 amount: { type: number, description: Amount in INR }
+ *                 amountInPaise: { type: number, description: Amount in paise (for Razorpay) }
+ *                 currency: { type: string, example: INR }
+ *                 key_id: { type: string, description: Razorpay publishable key }
+ *                 plan: { type: string }
+ *                 billingCycle: { type: string }
+ *                 prefill: { type: object }
+ *       400:
+ *         description: Invalid plan or active subscription exists
+ *       403:
+ *         description: Not an organizer
+ */
+router.post('/create-order', isOrganizer, async (req, res) => {
+  console.log('[v1/subscriptions/create-order] Request received:', { body: req.body, userId: req.session.user?._id });
   try {
-    const { plan, billingCycle = 'monthly', idempotencyKey } = req.body;
+    const { plan, billingCycle = 'monthly' } = req.body;
     const userId = req.session.user._id;
 
     // Validate plan
@@ -175,61 +351,161 @@ router.post('/purchase', isOrganizer, async (req, res) => {
       });
     }
 
-    // Process payment transactionally
-    const result = await processPayment({
-      type: 'subscription',
-      userId,
-      amount,
-      idempotencyKey,
-      onSuccess: async (session, transactionId) => {
-        const now = new Date();
-        const endDate = new Date(now);
-        if (billingCycle === 'yearly') {
-          endDate.setFullYear(endDate.getFullYear() + 1);
-        } else {
-          endDate.setMonth(endDate.getMonth() + 1);
-        }
+    const shortUser = String(userId).slice(-6);
+    const receipt = `sub_${plan}_${billingCycle}_${shortUser}_${Date.now()}`;
 
-        const subscription = new Subscription({
-          user: userId,
-          plan,
-          billingCycle,
-          startDate: now,
-          endDate,
-          paymentHistory: [{
-            amount,
-            paymentDate: now,
-            paymentMethod: 'demo_payment',
-            transactionId,
-            status: 'success'
-          }]
-        });
-        const saveOpts = session ? { session } : {};
-        await subscription.save(saveOpts);
-
-        // Update user record
-        await User.findByIdAndUpdate(userId, {
-          'subscription.plan': plan,
-          'subscription.startDate': subscription.startDate,
-          'subscription.endDate': subscription.endDate,
-          'subscription.status': 'active',
-          'subscription.paymentId': transactionId
-        }, saveOpts);
-
-        return {
-          transactionId,
-          plan,
-          billingCycle,
-          amount,
-          startDate: subscription.startDate,
-          endDate: subscription.endDate
-        };
+    // Create Razorpay order
+    const order = await razorpay.orders.create({
+      amount: amount * 100, // Razorpay expects paise
+      currency: 'INR',
+      receipt,
+      notes: {
+        userId: String(userId),
+        plan,
+        billingCycle,
+        type: 'subscription'
       }
     });
 
-    if (!result.success) {
-      return res.status(500).json({ success: false, message: 'Payment failed: ' + result.error, transactionId: result.transactionId, status: 'FAILED' });
+    const user = await User.findById(userId);
+
+    res.json({
+      success: true,
+      orderId: order.id,
+      amount,
+      amountInPaise: order.amount,
+      currency: order.currency,
+      key_id: process.env.RAZORPAY_KEY_ID,
+      plan,
+      billingCycle,
+      prefill: {
+        name: user ? `${user.first_name} ${user.last_name}` : '',
+        email: user ? user.email : '',
+        contact: user ? user.phone || '' : ''
+      }
+    });
+  } catch (error) {
+    console.error('v1 POST /create-order error:', error);
+    res.status(500).json({ success: false, message: 'Failed to create payment order.' });
+  }
+});
+
+// ─── POST /verify-payment — Verify Razorpay signature & activate subscription ─
+/**
+ * @swagger
+ * /api/v1/subscriptions/verify-payment:
+ *   post:
+ *     summary: Verify Razorpay payment and activate subscription
+ *     description: Verifies HMAC-SHA256 signature from Razorpay Checkout response. On success, creates the subscription record and updates the user.
+ *     tags: [Subscriptions v1]
+ *     security:
+ *       - sessionAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [razorpay_order_id, razorpay_payment_id, razorpay_signature, plan]
+ *             properties:
+ *               razorpay_order_id: { type: string }
+ *               razorpay_payment_id: { type: string }
+ *               razorpay_signature: { type: string }
+ *               plan: { type: string, enum: [pro, enterprise] }
+ *               billingCycle: { type: string, enum: [monthly, yearly], default: monthly }
+ *     responses:
+ *       200:
+ *         description: Payment verified, subscription activated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean, example: true }
+ *                 message: { type: string }
+ *                 transactionId: { type: string }
+ *                 status: { type: string, example: SUCCESS }
+ *                 data: { type: object }
+ *                 receipt: { type: object }
+ *       400:
+ *         description: Payment verification failed or invalid plan
+ *       403:
+ *         description: Not an organizer
+ */
+router.post('/verify-payment', isOrganizer, async (req, res) => {
+  console.log('[v1/subscriptions/verify-payment] Request received:', { body: req.body, userId: req.session.user?._id });
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan, billingCycle = 'monthly' } = req.body;
+    const userId = req.session.user._id;
+
+    // Validate required fields
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({ success: false, message: 'Missing Razorpay payment details.' });
     }
+
+    if (!['pro', 'enterprise'].includes(plan)) {
+      return res.status(400).json({ success: false, message: 'Invalid plan.' });
+    }
+
+    // Verify signature
+    const isValid = verifyPaymentSignature(razorpay_order_id, razorpay_payment_id, razorpay_signature);
+    if (!isValid) {
+      console.error('[v1/subscriptions/verify-payment] Signature verification FAILED');
+      return res.status(400).json({ success: false, message: 'Payment verification failed. Invalid signature.' });
+    }
+
+    // Server-side price lookup
+    const amount = lookupSubscriptionPrice(plan, billingCycle);
+    if (amount === null) {
+      return res.status(400).json({ success: false, message: 'Invalid billing cycle.' });
+    }
+
+    // Double check no active subscription was created in the meantime
+    const existing = await Subscription.findOne({
+      user: userId,
+      status: 'active',
+      endDate: { $gte: new Date() }
+    });
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        message: `You already have an active ${existing.plan} subscription.`
+      });
+    }
+
+    // Create subscription
+    const now = new Date();
+    const endDate = new Date(now);
+    if (billingCycle === 'yearly') {
+      endDate.setFullYear(endDate.getFullYear() + 1);
+    } else {
+      endDate.setMonth(endDate.getMonth() + 1);
+    }
+
+    const subscription = new Subscription({
+      user: userId,
+      plan,
+      billingCycle,
+      startDate: now,
+      endDate,
+      paymentHistory: [{
+        amount,
+        paymentDate: now,
+        paymentMethod: 'razorpay',
+        transactionId: razorpay_payment_id,
+        status: 'success'
+      }]
+    });
+    await subscription.save();
+
+    // Update user record
+    await User.findByIdAndUpdate(userId, {
+      'subscription.plan': plan,
+      'subscription.startDate': subscription.startDate,
+      'subscription.endDate': subscription.endDate,
+      'subscription.status': 'active',
+      'subscription.paymentId': razorpay_payment_id
+    });
 
     const user = await User.findById(userId);
     const organizerName = user ? `${user.first_name} ${user.last_name}` : 'Organizer';
@@ -237,29 +513,72 @@ router.post('/purchase', isOrganizer, async (req, res) => {
     res.json({
       success: true,
       message: `Successfully subscribed to ${plan} plan (${billingCycle})!`,
-      transactionId: result.transactionId,
+      transactionId: razorpay_payment_id,
       status: 'SUCCESS',
-      data: result.receiptData,
+      data: {
+        transactionId: razorpay_payment_id,
+        razorpayOrderId: razorpay_order_id,
+        plan,
+        billingCycle,
+        amount,
+        startDate: subscription.startDate,
+        endDate: subscription.endDate
+      },
       receipt: {
-        transactionId: result.transactionId,
+        transactionId: razorpay_payment_id,
         organizerName,
         productType: 'Subscription',
         planOrPackage: `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`,
         billingCycle,
         amount,
-        dateTime: new Date().toISOString(),
+        dateTime: now.toISOString(),
         paymentStatus: 'SUCCESS'
       }
     });
   } catch (error) {
-    console.error('v1 POST /purchase error:', error);
-    res.status(500).json({ success: false, message: 'Subscription purchase failed.' });
+    console.error('v1 POST /verify-payment error:', error);
+    res.status(500).json({ success: false, message: 'Payment verification failed.' });
   }
 });
 
-// ─── POST /upgrade ───────────────────────────────────────────────────────
-router.post('/upgrade', isOrganizer, async (req, res) => {  console.log('[v1/subscriptions/upgrade] Request received:', { body: req.body, userId: req.session.user?._id });  try {
-    const { newPlan, billingCycle = 'monthly', idempotencyKey } = req.body;
+// ─── POST /upgrade/create-order — Razorpay order for plan upgrade ─────────
+/**
+ * @swagger
+ * /api/v1/subscriptions/upgrade/create-order:
+ *   post:
+ *     summary: Create a Razorpay order for subscription upgrade
+ *     description: Creates a Razorpay order for upgrading/downgrading subscription plan
+ *     tags: [Subscriptions v1]
+ *     security:
+ *       - sessionAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [newPlan]
+ *             properties:
+ *               newPlan:
+ *                 type: string
+ *                 enum: [pro, enterprise]
+ *                 example: enterprise
+ *               billingCycle:
+ *                 type: string
+ *                 enum: [monthly, yearly]
+ *                 default: monthly
+ *     responses:
+ *       200:
+ *         description: Razorpay order created for upgrade
+ *       400:
+ *         description: Invalid plan or billing cycle
+ *       403:
+ *         description: Not an organizer
+ */
+router.post('/upgrade/create-order', isOrganizer, async (req, res) => {
+  console.log('[v1/subscriptions/upgrade/create-order] Request received:', { body: req.body, userId: req.session.user?._id });
+  try {
+    const { newPlan, billingCycle = 'monthly' } = req.body;
     const userId = req.session.user._id;
 
     if (!['pro', 'enterprise'].includes(newPlan)) {
@@ -271,67 +590,142 @@ router.post('/upgrade', isOrganizer, async (req, res) => {  console.log('[v1/sub
       return res.status(400).json({ success: false, message: 'Invalid billing cycle.' });
     }
 
-    const result = await processPayment({
-      type: 'subscription',
-      userId,
-      amount,
-      idempotencyKey,
-      onSuccess: async (session, transactionId) => {
-        const saveOpts = session ? { session } : {};
-        // Mark all existing active subscriptions as UPGRADED
-        await Subscription.updateMany(
-          { user: userId, status: 'active' },
-          { $set: { status: 'cancelled', cancelledAt: new Date(), cancellationReason: `Upgraded to ${newPlan}` } },
-          saveOpts
-        );
+    const shortUser = String(userId).slice(-6);
+    const receipt = `upg_${newPlan}_${billingCycle}_${shortUser}_${Date.now()}`;
 
-        // Create new subscription
-        const now = new Date();
-        const endDate = new Date(now);
-        if (billingCycle === 'yearly') {
-          endDate.setFullYear(endDate.getFullYear() + 1);
-        } else {
-          endDate.setMonth(endDate.getMonth() + 1);
-        }
-
-        const subscription = new Subscription({
-          user: userId,
-          plan: newPlan,
-          billingCycle,
-          startDate: now,
-          endDate,
-          paymentHistory: [{
-            amount,
-            paymentDate: now,
-            paymentMethod: 'demo_payment',
-            transactionId,
-            status: 'success'
-          }]
-        });
-        await subscription.save(saveOpts);
-
-        await User.findByIdAndUpdate(userId, {
-          'subscription.plan': newPlan,
-          'subscription.startDate': subscription.startDate,
-          'subscription.endDate': subscription.endDate,
-          'subscription.status': 'active',
-          'subscription.paymentId': transactionId
-        }, saveOpts);
-
-        return {
-          transactionId,
-          plan: newPlan,
-          billingCycle,
-          amount,
-          startDate: subscription.startDate,
-          endDate: subscription.endDate
-        };
+    // Create Razorpay order
+    const order = await razorpay.orders.create({
+      amount: amount * 100,
+      currency: 'INR',
+      receipt,
+      notes: {
+        userId: String(userId),
+        newPlan,
+        billingCycle,
+        type: 'subscription_upgrade'
       }
     });
 
-    if (!result.success) {
-      return res.status(500).json({ success: false, message: 'Upgrade failed: ' + result.error, status: 'FAILED' });
+    const user = await User.findById(userId);
+
+    res.json({
+      success: true,
+      orderId: order.id,
+      amount,
+      amountInPaise: order.amount,
+      currency: order.currency,
+      key_id: process.env.RAZORPAY_KEY_ID,
+      newPlan,
+      billingCycle,
+      prefill: {
+        name: user ? `${user.first_name} ${user.last_name}` : '',
+        email: user ? user.email : '',
+        contact: user ? user.phone || '' : ''
+      }
+    });
+  } catch (error) {
+    console.error('v1 POST /upgrade/create-order error:', error);
+    res.status(500).json({ success: false, message: 'Failed to create upgrade payment order.' });
+  }
+});
+
+// ─── POST /upgrade/verify-payment — Verify upgrade payment & switch plan ──
+/**
+ * @swagger
+ * /api/v1/subscriptions/upgrade/verify-payment:
+ *   post:
+ *     summary: Verify Razorpay payment and complete subscription upgrade
+ *     description: Verifies payment signature, cancels old subscription, creates new one
+ *     tags: [Subscriptions v1]
+ *     security:
+ *       - sessionAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [razorpay_order_id, razorpay_payment_id, razorpay_signature, newPlan]
+ *             properties:
+ *               razorpay_order_id: { type: string }
+ *               razorpay_payment_id: { type: string }
+ *               razorpay_signature: { type: string }
+ *               newPlan: { type: string, enum: [pro, enterprise] }
+ *               billingCycle: { type: string, enum: [monthly, yearly], default: monthly }
+ *     responses:
+ *       200:
+ *         description: Upgrade payment verified, subscription switched
+ *       400:
+ *         description: Payment verification failed
+ *       403:
+ *         description: Not an organizer
+ */
+router.post('/upgrade/verify-payment', isOrganizer, async (req, res) => {
+  console.log('[v1/subscriptions/upgrade/verify-payment] Request received:', { body: req.body, userId: req.session.user?._id });
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, newPlan, billingCycle = 'monthly' } = req.body;
+    const userId = req.session.user._id;
+
+    // Validate required fields
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({ success: false, message: 'Missing Razorpay payment details.' });
     }
+
+    if (!['pro', 'enterprise'].includes(newPlan)) {
+      return res.status(400).json({ success: false, message: 'Invalid plan.' });
+    }
+
+    // Verify signature
+    const isValid = verifyPaymentSignature(razorpay_order_id, razorpay_payment_id, razorpay_signature);
+    if (!isValid) {
+      console.error('[v1/subscriptions/upgrade/verify-payment] Signature verification FAILED');
+      return res.status(400).json({ success: false, message: 'Payment verification failed. Invalid signature.' });
+    }
+
+    const amount = lookupSubscriptionPrice(newPlan, billingCycle);
+    if (amount === null) {
+      return res.status(400).json({ success: false, message: 'Invalid billing cycle.' });
+    }
+
+    // Cancel all existing active subscriptions
+    await Subscription.updateMany(
+      { user: userId, status: 'active' },
+      { $set: { status: 'cancelled', cancelledAt: new Date(), cancellationReason: `Upgraded to ${newPlan}` } }
+    );
+
+    // Create new subscription
+    const now = new Date();
+    const endDate = new Date(now);
+    if (billingCycle === 'yearly') {
+      endDate.setFullYear(endDate.getFullYear() + 1);
+    } else {
+      endDate.setMonth(endDate.getMonth() + 1);
+    }
+
+    const subscription = new Subscription({
+      user: userId,
+      plan: newPlan,
+      billingCycle,
+      startDate: now,
+      endDate,
+      paymentHistory: [{
+        amount,
+        paymentDate: now,
+        paymentMethod: 'razorpay',
+        transactionId: razorpay_payment_id,
+        status: 'success'
+      }]
+    });
+    await subscription.save();
+
+    // Update user record
+    await User.findByIdAndUpdate(userId, {
+      'subscription.plan': newPlan,
+      'subscription.startDate': subscription.startDate,
+      'subscription.endDate': subscription.endDate,
+      'subscription.status': 'active',
+      'subscription.paymentId': razorpay_payment_id
+    });
 
     const user = await User.findById(userId);
     const organizerName = user ? `${user.first_name} ${user.last_name}` : 'Organizer';
@@ -339,27 +733,71 @@ router.post('/upgrade', isOrganizer, async (req, res) => {  console.log('[v1/sub
     res.json({
       success: true,
       message: `Successfully upgraded to ${newPlan} plan (${billingCycle})!`,
-      transactionId: result.transactionId,
+      transactionId: razorpay_payment_id,
       status: 'SUCCESS',
-      data: result.receiptData,
+      data: {
+        transactionId: razorpay_payment_id,
+        razorpayOrderId: razorpay_order_id,
+        plan: newPlan,
+        billingCycle,
+        amount,
+        startDate: subscription.startDate,
+        endDate: subscription.endDate
+      },
       receipt: {
-        transactionId: result.transactionId,
+        transactionId: razorpay_payment_id,
         organizerName,
         productType: 'Subscription',
         planOrPackage: `${newPlan.charAt(0).toUpperCase() + newPlan.slice(1)} Plan`,
         billingCycle,
         amount,
-        dateTime: new Date().toISOString(),
+        dateTime: now.toISOString(),
         paymentStatus: 'SUCCESS'
       }
     });
   } catch (error) {
-    console.error('v1 POST /upgrade error:', error);
-    res.status(500).json({ success: false, message: 'Subscription upgrade failed.' });
+    console.error('v1 POST /upgrade/verify-payment error:', error);
+    res.status(500).json({ success: false, message: 'Upgrade payment verification failed.' });
   }
 });
 
 // ─── GET /receipt/:txnId ─────────────────────────────────────────────────
+/**
+ * @swagger
+ * /api/v1/subscriptions/receipt/{txnId}:
+ *   get:
+ *     summary: Download PDF receipt for a subscription payment
+ *     tags: [Subscriptions v1]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: txnId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Transaction ID from payment history
+ *     responses:
+ *       200:
+ *         description: PDF receipt file
+ *         content:
+ *           application/pdf:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       404:
+ *         description: Transaction not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Not an organizer
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 router.get('/receipt/:txnId', isOrganizer, async (req, res) => {
   try {
     const userId = req.session.user._id;

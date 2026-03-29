@@ -46,6 +46,73 @@ function isOrganizer(req, res, next) {
     next();
 }
 
+/**
+ * @swagger
+ * /api/tier/benefits:
+ *   get:
+ *     summary: Get tier benefits and rules
+ *     tags: [Tier]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Tier benefits returned
+ *
+ * /api/tier/my-progress:
+ *   get:
+ *     summary: Get tier progress for current organizer
+ *     tags: [Tier]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Organizer tier progress returned
+ *
+ * /api/tier/progress/{organizerId}:
+ *   get:
+ *     summary: Get tier progress for specific organizer
+ *     tags: [Tier]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: organizerId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Tier progress returned
+ *
+ * /api/tier/update/{organizerId}:
+ *   post:
+ *     summary: Update organizer tier (admin)
+ *     tags: [Tier]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: organizerId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Tier updated
+ *
+ * /api/tier/batch-update:
+ *   post:
+ *     summary: Batch update organizer tiers (admin)
+ *     tags: [Tier]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     responses:
+ *       200:
+ *         description: Batch update completed
+ */
+
 // Get tier benefits information
 router.get('/benefits', isAuthenticated, tierManagementController.getTierBenefits);
 

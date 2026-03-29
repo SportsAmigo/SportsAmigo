@@ -27,7 +27,7 @@
 /* ===== MAIN DASHBOARD WITH BACKGROUND IMAGE ===== */
 .player-dashboard {
   min-height: 100vh;
-  background-image: url('../../../public/images/fancy-crave-qowyMze7jqg-unsplash.jpg');
+  background-image: url('../../../public/images/581A3451.webp');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -240,6 +240,22 @@
   min-height: 100vh;
   transition: margin-left 0.3s ease;
   position: relative;
+  background-image: url('../../../public/images/581A3451.webp');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+.player-main-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 0;
+  pointer-events: none;
 }
 
 .player-main-content.expanded {

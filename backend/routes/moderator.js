@@ -25,6 +25,191 @@ function isModeratorOrAdmin(req, res, next) {
     next();
 }
 
+/**
+ * @swagger
+ * /api/moderator/dashboard:
+ *   get:
+ *     summary: Load moderator dashboard page
+ *     tags: [Moderator]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Dashboard rendered
+ *
+ * /api/moderator/api/dashboard-stats:
+ *   get:
+ *     summary: Get moderator dashboard statistics
+ *     tags: [Moderator]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Moderator stats returned
+ *
+ * /api/moderator/pending-organizers:
+ *   get:
+ *     summary: Get pending organizer verifications
+ *     tags: [Moderator]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Pending organizers returned
+ *
+ * /api/moderator/pending-events:
+ *   get:
+ *     summary: Get pending event approvals
+ *     tags: [Moderator]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Pending events returned
+ *
+ * /api/moderator/approve-organizer/{id}:
+ *   post:
+ *     summary: Approve organizer verification
+ *     tags: [Moderator]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Organizer approved
+ *
+ * /api/moderator/reject-organizer/{id}:
+ *   post:
+ *     summary: Reject organizer verification
+ *     tags: [Moderator]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Organizer rejected
+ *
+ * /api/moderator/approve-event/{id}:
+ *   post:
+ *     summary: Approve event submission
+ *     tags: [Moderator]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Event approved
+ *
+ * /api/moderator/reject-event/{id}:
+ *   post:
+ *     summary: Reject event submission
+ *     tags: [Moderator]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Event rejected
+ *
+ * /api/moderator/approved-organizers:
+ *   get:
+ *     summary: Get approved organizers
+ *     tags: [Moderator]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Approved organizers returned
+ *
+ * /api/moderator/approved-events:
+ *   get:
+ *     summary: Get approved events
+ *     tags: [Moderator]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Approved events returned
+ *
+ * /api/moderator/rejected:
+ *   get:
+ *     summary: Get rejected organizers and events
+ *     tags: [Moderator]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Rejected records returned
+ *
+ * /api/moderator/activity-log:
+ *   get:
+ *     summary: Get moderation activity log
+ *     tags: [Moderator]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Activity log returned
+ *
+ * /api/moderator/organizers/{organizerId}/suspend:
+ *   post:
+ *     summary: Suspend organizer account
+ *     tags: [Moderator]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: organizerId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Organizer suspended
+ *
+ * /api/moderator/organizers/{organizerId}/request-info:
+ *   post:
+ *     summary: Request additional verification info from organizer
+ *     tags: [Moderator]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: organizerId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Info request sent
+ */
+
 // Moderator dashboard
 router.get('/dashboard', isModeratorOrAdmin, (req, res) => {
     res.render('moderator/dashboard', {

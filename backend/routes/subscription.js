@@ -47,30 +47,284 @@ function isAdmin(req, res, next) {
 }
 
 // Get subscription plans
+/**
+ * @swagger
+ * /api/subscription/plans:
+ *   get:
+ *     summary: Get available subscription plans
+ *     tags: [Subscriptions]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Subscription plans retrieved successfully
+ *       401:
+ *         description: Authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Failed to fetch plans
+ */
 router.get('/plans', isAuthenticated, subscriptionController.getPlans);
 
 // Get current user subscription
+/**
+ * @swagger
+ * /api/subscription/my-subscription:
+ *   get:
+ *     summary: Get current organizer subscription
+ *     tags: [Subscriptions]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Current subscription retrieved successfully
+ *       403:
+ *         description: Organizer access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Failed to fetch subscription
+ */
 router.get('/my-subscription', isOrganizer, subscriptionController.getMySubscription);
 
 // Get subscription history
+/**
+ * @swagger
+ * /api/subscription/history:
+ *   get:
+ *     summary: Get organizer subscription payment history
+ *     tags: [Subscriptions]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Subscription history retrieved successfully
+ *       403:
+ *         description: Organizer access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Failed to fetch history
+ */
 router.get('/history', isOrganizer, subscriptionController.getSubscriptionHistory);
 
 // Create new subscription (frontend uses this endpoint)
+/**
+ * @swagger
+ * /api/subscription/create:
+ *   post:
+ *     summary: Create a new organizer subscription
+ *     tags: [Subscriptions]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [plan]
+ *             properties:
+ *               plan:
+ *                 type: string
+ *                 enum: [pro, enterprise]
+ *               billingCycle:
+ *                 type: string
+ *                 enum: [monthly, yearly]
+ *     responses:
+ *       200:
+ *         description: Subscription created successfully
+ *       400:
+ *         description: Invalid request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Organizer access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Failed to create subscription
+ */
 router.post('/create', isOrganizer, subscriptionController.createSubscription);
 
 // Upgrade subscription
+/**
+ * @swagger
+ * /api/subscription/upgrade:
+ *   post:
+ *     summary: Upgrade or change subscription plan
+ *     tags: [Subscriptions]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [plan]
+ *             properties:
+ *               plan:
+ *                 type: string
+ *                 enum: [pro, enterprise]
+ *               billingCycle:
+ *                 type: string
+ *                 enum: [monthly, yearly]
+ *     responses:
+ *       200:
+ *         description: Subscription upgraded successfully
+ *       400:
+ *         description: Invalid request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Organizer access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Failed to upgrade subscription
+ */
 router.post('/upgrade', isOrganizer, subscriptionController.upgradeSubscription);
 
 // Cancel subscription
+/**
+ * @swagger
+ * /api/subscription/cancel:
+ *   post:
+ *     summary: Cancel active subscription
+ *     tags: [Subscriptions]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     responses:
+ *       200:
+ *         description: Subscription cancelled successfully
+ *       403:
+ *         description: Organizer access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Failed to cancel subscription
+ */
 router.post('/cancel', isOrganizer, subscriptionController.cancelSubscription);
 
 // Renew subscription
+/**
+ * @swagger
+ * /api/subscription/renew:
+ *   post:
+ *     summary: Renew existing subscription
+ *     tags: [Subscriptions]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     responses:
+ *       200:
+ *         description: Subscription renewed successfully
+ *       403:
+ *         description: Organizer access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Failed to renew subscription
+ */
 router.post('/renew', isOrganizer, subscriptionController.renewSubscription);
 
 // Check event creation eligibility
+/**
+ * @swagger
+ * /api/subscription/can-create-event:
+ *   get:
+ *     summary: Check if organizer can create a new event under current plan
+ *     tags: [Subscriptions]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Eligibility check result
+ *       403:
+ *         description: Organizer access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Failed to check eligibility
+ */
 router.get('/can-create-event', isOrganizer, subscriptionController.checkEventCreationEligibility);
 
 // Unified subscribe endpoint (frontend calls this)
+/**
+ * @swagger
+ * /api/subscription/subscribe:
+ *   post:
+ *     summary: Unified endpoint to create or upgrade subscription
+ *     tags: [Subscriptions]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [plan]
+ *             properties:
+ *               plan:
+ *                 type: string
+ *                 enum: [pro, enterprise]
+ *               billingCycle:
+ *                 type: string
+ *                 enum: [monthly, yearly]
+ *                 default: monthly
+ *     responses:
+ *       200:
+ *         description: Subscription processed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       400:
+ *         description: Invalid plan or request body
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Organizer access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Subscription process failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 router.post('/subscribe', isOrganizer, async (req, res) => {
     try {
         const { plan, billingCycle } = req.body;
@@ -149,8 +403,70 @@ router.post('/subscribe', isOrganizer, async (req, res) => {
 });
 
 // Admin routes
+/**
+ * @swagger
+ * /api/subscription/revenue:
+ *   get:
+ *     summary: Get subscription revenue metrics (admin)
+ *     tags: [Subscriptions]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Revenue stats fetched successfully
+ *       403:
+ *         description: Admin access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Failed to fetch revenue metrics
+ */
 router.get('/revenue', isAdmin, subscriptionController.getSubscriptionRevenue);
+
+/**
+ * @swagger
+ * /api/subscription/active:
+ *   get:
+ *     summary: Get all active subscriptions (admin)
+ *     tags: [Subscriptions]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Active subscriptions fetched successfully
+ *       403:
+ *         description: Admin access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Failed to fetch active subscriptions
+ */
 router.get('/active', isAdmin, subscriptionController.getAllActiveSubscriptions);
+
+/**
+ * @swagger
+ * /api/subscription/expiring:
+ *   get:
+ *     summary: Get expiring subscriptions (admin)
+ *     tags: [Subscriptions]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Expiring subscriptions fetched successfully
+ *       403:
+ *         description: Admin access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Failed to fetch expiring subscriptions
+ */
 router.get('/expiring', isAdmin, subscriptionController.getExpiringSubscriptions);
 
 // Subscription plans page

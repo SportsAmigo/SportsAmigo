@@ -1,12 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import { selectUser } from '../../store/slices/authSlice';
-import axios from 'axios';
+import apiService from '../../services/apiService';
 import './CreateTeam.css';
 
 const CreateTeam = () => {
-    const user = useSelector(selectUser);
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         name: '',
@@ -46,16 +43,16 @@ const CreateTeam = () => {
         }
         
         try {
-            const response = await axios.post('http://localhost:5000/api/manager/create-team', formData, { withCredentials: true });
-            if (response.data.success) {
+            const response = await apiService.post('/api/manager/create-team', formData);
+            if (response.success) {
                 alert('Team created successfully!');
                 navigate('/manager/my-teams');
             }
         } catch (error) {
-            if (error.response?.data?.errors) {
-                setErrors(error.response.data.errors);
+            if (error.data?.errors) {
+                setErrors(error.data.errors);
             } else {
-                setErrors({ submit: error.response?.data?.message || 'Error creating team' });
+                setErrors({ submit: error.data?.message || error.message || 'Error creating team' });
             }
         } finally {
             setLoading(false);

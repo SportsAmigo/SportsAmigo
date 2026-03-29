@@ -46,6 +46,126 @@ function isOrganizer(req, res, next) {
     next();
 }
 
+/**
+ * @swagger
+ * /api/commission/create:
+ *   post:
+ *     summary: Create a commission record
+ *     tags: [Commission]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     responses:
+ *       200:
+ *         description: Commission record created
+ *
+ * /api/commission/my-earnings:
+ *   get:
+ *     summary: Get earnings for logged-in organizer
+ *     tags: [Commission]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Organizer earnings returned
+ *
+ * /api/commission/organizer/{organizerId}:
+ *   get:
+ *     summary: Get organizer earnings by organizer id
+ *     tags: [Commission]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: organizerId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Organizer earnings returned
+ *
+ * /api/commission/event/{eventId}:
+ *   get:
+ *     summary: Get commission records for an event
+ *     tags: [Commission]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Event commissions returned
+ *
+ * /api/commission/{commissionId}:
+ *   get:
+ *     summary: Get commission record by id
+ *     tags: [Commission]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: commissionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Commission record returned
+ *
+ * /api/commission/dashboard/revenue:
+ *   get:
+ *     summary: Get commission revenue dashboard (admin)
+ *     tags: [Commission]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Revenue dashboard returned
+ *
+ * /api/commission/payouts/eligible:
+ *   get:
+ *     summary: Get eligible payouts (admin)
+ *     tags: [Commission]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Eligible payouts returned
+ *
+ * /api/commission/{commissionId}/update-status:
+ *   post:
+ *     summary: Update commission payout status (admin)
+ *     tags: [Commission]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: commissionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Status updated
+ *
+ * /api/commission/payouts/bulk-process:
+ *   post:
+ *     summary: Process bulk payouts (admin)
+ *     tags: [Commission]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     responses:
+ *       200:
+ *         description: Bulk payout processing started
+ */
+
 // Create commission record (internal use or webhook)
 router.post('/create', isAuthenticated, commissionController.createCommission);
 

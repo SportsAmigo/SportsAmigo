@@ -3,6 +3,132 @@ const router = express.Router();
 const WalletTransaction = require('../models/walletTransaction');
 const User = require('../models/schemas/userSchema');
 
+/**
+ * @swagger
+ * /api/wallet:
+ *   get:
+ *     summary: Load wallet page
+ *     tags: [Wallet]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Wallet page rendered
+ *       302:
+ *         description: Redirect for unauthorized access
+ *
+ * /api/wallet/balance:
+ *   get:
+ *     summary: Get current wallet balance
+ *     tags: [Wallet]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Balance details returned
+ *
+ * /api/wallet/add:
+ *   post:
+ *     summary: Add funds to wallet
+ *     tags: [Wallet]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [amount]
+ *             properties:
+ *               amount:
+ *                 type: number
+ *               paymentMethod:
+ *                 type: string
+ *                 default: Online Banking
+ *     responses:
+ *       200:
+ *         description: Top-up result returned
+ *
+ * /api/wallet/transactions:
+ *   get:
+ *     summary: Get paginated wallet transactions
+ *     tags: [Wallet]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *       - in: query
+ *         name: type
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [all, credit, debit]
+ *           default: all
+ *     responses:
+ *       200:
+ *         description: Transaction list returned
+ *
+ * /api/wallet/summary:
+ *   get:
+ *     summary: Get wallet summary metrics
+ *     tags: [Wallet]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Wallet summary returned
+ *
+ * /api/wallet/validate-payment:
+ *   post:
+ *     summary: Validate wallet balance against payment amount
+ *     tags: [Wallet]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [amount]
+ *             properties:
+ *               amount:
+ *                 type: number
+ *     responses:
+ *       200:
+ *         description: Validation response returned
+ *
+ * /api/wallet/transaction/{referenceId}:
+ *   get:
+ *     summary: Get transaction details by reference id
+ *     tags: [Wallet]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: referenceId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Transaction details returned
+ */
+
 // Middleware to check if user is authenticated and is a player
 const isPlayerAuthenticated = (req, res, next) => {
     if (!req.session || !req.session.user || !req.session.user.id) {
