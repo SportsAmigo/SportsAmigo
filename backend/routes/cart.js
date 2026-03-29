@@ -25,6 +25,103 @@ const initializeCart = (req, res, next) => {
 router.use(initializeCart);
 
 /**
+ * @swagger
+ * /api/cart:
+ *   get:
+ *     summary: Get cart page data
+ *     tags: [Cart]
+ *     responses:
+ *       200:
+ *         description: Cart page rendered
+ *
+ * /api/cart/add/{id}:
+ *   post:
+ *     summary: Add item to cart
+ *     tags: [Cart]
+ *     security:
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               quantity:
+ *                 type: integer
+ *                 default: 1
+ *     responses:
+ *       200:
+ *         description: Item added or update failed with error payload
+ *
+ * /api/cart/update:
+ *   post:
+ *     summary: Update cart item quantity
+ *     tags: [Cart]
+ *     security:
+ *       - csrfToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [itemId, quantity]
+ *             properties:
+ *               itemId:
+ *                 type: string
+ *               quantity:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Cart updated or error payload returned
+ *
+ * /api/cart/remove:
+ *   post:
+ *     summary: Remove item from cart
+ *     tags: [Cart]
+ *     security:
+ *       - csrfToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [itemId]
+ *             properties:
+ *               itemId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Item removed or error payload returned
+ *
+ * /api/cart/clear:
+ *   post:
+ *     summary: Clear full cart
+ *     tags: [Cart]
+ *     security:
+ *       - csrfToken: []
+ *     responses:
+ *       200:
+ *         description: Cart cleared
+ *
+ * /api/cart/count:
+ *   get:
+ *     summary: Get current cart item count
+ *     tags: [Cart]
+ *     responses:
+ *       200:
+ *         description: Item count returned
+ */
+
+/**
  * GET /cart - View cart page
  */
 router.get('/', (req, res) => {

@@ -27,6 +27,316 @@ function isManager(req, res, next) {
 // Apply isManager middleware to all routes
 router.use(isManager);
 
+/**
+ * @swagger
+ * /api/manager/dashboard:
+ *   get:
+ *     summary: Get manager dashboard
+ *     tags: [Manager]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Manager dashboard data returned
+ *
+ * /api/manager/profile:
+ *   get:
+ *     summary: Get manager profile
+ *     tags: [Manager]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Profile returned
+ *   put:
+ *     summary: Update manager profile
+ *     tags: [Manager]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               profile_image:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Profile updated
+ *
+ * /api/manager/my-teams:
+ *   get:
+ *     summary: Get teams managed by current manager
+ *     tags: [Manager]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Teams returned
+ *
+ * /api/manager/create-team:
+ *   post:
+ *     summary: Create a new team
+ *     tags: [Manager]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Team'
+ *     responses:
+ *       201:
+ *         description: Team created
+ *       400:
+ *         description: Validation failed
+ *
+ * /api/manager/team/{id}:
+ *   get:
+ *     summary: Get team details
+ *     tags: [Manager]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Team details returned
+ *       404:
+ *         description: Team not found
+ *   put:
+ *     summary: Update team details
+ *     tags: [Manager]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Team updated
+ *       400:
+ *         description: Validation failed
+ *
+ * /api/manager/team/{id}/members:
+ *   get:
+ *     summary: List members of a team
+ *     tags: [Manager]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Team members returned
+ *
+ * /api/manager/team/{id}/remove-player/{playerId}:
+ *   post:
+ *     summary: Remove a player from team
+ *     tags: [Manager]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: playerId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Player removed
+ *
+ * /api/manager/join-requests:
+ *   get:
+ *     summary: Get pending team join requests
+ *     tags: [Manager]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Join requests returned
+ *
+ * /api/manager/team/{teamId}/approve-request:
+ *   post:
+ *     summary: Approve join request for team
+ *     tags: [Manager]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: teamId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Join request approved
+ *
+ * /api/manager/team/{teamId}/reject-request:
+ *   post:
+ *     summary: Reject join request for team
+ *     tags: [Manager]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: teamId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Join request rejected
+ *
+ * /api/manager/browse-events:
+ *   get:
+ *     summary: Browse available events for registration
+ *     tags: [Manager]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Events returned
+ *
+ * /api/manager/event/{id}/register:
+ *   post:
+ *     summary: Register manager team in event
+ *     tags: [Manager]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Registration completed
+ *
+ * /api/manager/my-events:
+ *   get:
+ *     summary: Get events where manager teams are registered
+ *     tags: [Manager]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Registered events returned
+ *
+ * /api/manager/team/{teamId}/matches:
+ *   get:
+ *     summary: Get matches for team
+ *     tags: [Manager]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: teamId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Team matches returned
+ *
+ * /api/manager/team/{teamId}/match/record:
+ *   post:
+ *     summary: Record a match result for team
+ *     tags: [Manager]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: teamId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Match result recorded
+ *
+ * /api/manager/team/{teamId}/match/{matchId}:
+ *   put:
+ *     summary: Update recorded match result
+ *     tags: [Manager]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: teamId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: matchId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Match updated
+ *   delete:
+ *     summary: Delete recorded match result
+ *     tags: [Manager]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: teamId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: matchId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Match deleted
+ *
+ * /api/manager/pending-matches:
+ *   get:
+ *     summary: Get pending match result approvals for manager
+ *     tags: [Manager]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Pending matches returned
+ */
+
 // Configure multer for file uploads
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {

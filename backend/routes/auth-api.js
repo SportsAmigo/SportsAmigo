@@ -10,9 +10,82 @@ const Subscription = require('../models/schemas/subscriptionSchema');
  */
 
 /**
- * Login endpoint
- * POST /api/auth/login
- * Body: { email, password, role }
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: Authenticate user and create session
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: player@example.com
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: password123
+ *               role:
+ *                 type: string
+ *                 enum: [player, manager, organizer, moderator, admin]
+ *                 description: Optional - verifies user has this specific role
+ *                 example: player
+ *     responses:
+ *       200:
+ *         description: Login successful - session created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Login successful!
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id: { type: string }
+ *                     name: { type: string }
+ *                     email: { type: string }
+ *                     role: { type: string }
+ *                     first_name: { type: string }
+ *                     last_name: { type: string }
+ *                     phone: { type: string }
+ *                     profile_image: { type: string }
+ *                     subscription:
+ *                       type: object
+ *                       properties:
+ *                         plan: { type: string, enum: [free, pro, enterprise] }
+ *                         status: { type: string }
+ *       400:
+ *         description: Missing required fields
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Email not verified or role mismatch
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/login', async (req, res) => {
     try {
@@ -126,57 +199,318 @@ router.post('/login', async (req, res) => {
 });
 
 /**
- * Send OTP for email verification during signup
- * POST /api/auth/send-otp
- * Body: { email, first_name, last_name, role }
+ * @swagger
+ * /api/auth/send-otp:
+ *   post:
+ *     summary: Send OTP for email verification during signup
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - first_name
+ *               - role
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: newuser@example.com
+ *               first_name:
+ *                 type: string
+ *                 example: John
+ *               last_name:
+ *                 type: string
+ *                 example: Doe
+ *               role:
+ *                 type: string
+ *                 enum: [player, manager, organizer]
+ *                 example: player
+ *     responses:
+ *       200:
+ *         description: OTP sent successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       400:
+ *         description: Email already registered or validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/send-otp', userController.sendOTP);
 
 /**
- * Verify OTP and complete signup
- * POST /api/auth/verify-otp
- * Body: { email, otp, password, first_name, last_name, phone, role, preferred_sports?, organization_name?, team_name? }
+ * @swagger
+ * /api/auth/verify-otp:
+ *   post:
+ *     summary: Verify OTP and complete user registration
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - otp
+ *               - password
+ *               - first_name
+ *               - role
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               otp:
+ *                 type: string
+ *                 example: "123456"
+ *               password:
+ *                 type: string
+ *                 format: password
+ *               first_name:
+ *                 type: string
+ *               last_name:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *                 enum: [player, manager, organizer]
+ *               preferred_sports:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               organization_name:
+ *                 type: string
+ *                 description: For organizers
+ *               team_name:
+ *                 type: string
+ *                 description: For managers
+ *     responses:
+ *       200:
+ *         description: Registration successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 message: { type: string }
+ *                 user: { $ref: '#/components/schemas/User' }
+ *       400:
+ *         description: Invalid or expired OTP
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/verify-otp', userController.verifyOTP);
 
 /**
- * Send OTP for login verification
- * POST /api/auth/send-login-otp
- * Body: { email, password, role }
+ * @swagger
+ * /api/auth/send-login-otp:
+ *   post:
+ *     summary: Send OTP for two-factor authentication during login
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email: { type: string, format: email }
+ *               password: { type: string, format: password }
+ *               role: { type: string, enum: [player, manager, organizer, moderator, admin] }
+ *     responses:
+ *       200:
+ *         description: OTP sent to email
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       401:
+ *         description: Invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/send-login-otp', userController.sendLoginOTP);
 
 /**
- * Verify login OTP and complete login
- * POST /api/auth/verify-login-otp
- * Body: { email, otp, role }
+ * @swagger
+ * /api/auth/verify-login-otp:
+ *   post:
+ *     summary: Verify login OTP and create session
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - otp
+ *             properties:
+ *               email: { type: string, format: email }
+ *               otp: { type: string, example: "123456" }
+ *               role: { type: string, enum: [player, manager, organizer, moderator, admin] }
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 message: { type: string }
+ *                 user: { $ref: '#/components/schemas/User' }
+ *       400:
+ *         description: Invalid or expired OTP
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/verify-login-otp', userController.verifyLoginOTP);
 
 /**
- * Initiate forgot password - send reset OTP
- * POST /api/auth/forgot-password
- * Body: { email }
+ * @swagger
+ * /api/auth/forgot-password:
+ *   post:
+ *     summary: Initiate password reset - send OTP to email
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: Password reset OTP sent
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       404:
+ *         description: Email not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/forgot-password', userController.forgotPassword);
 
 /**
- * Verify password reset OTP
- * POST /api/auth/verify-reset-otp
- * Body: { email, otp }
+ * @swagger
+ * /api/auth/verify-reset-otp:
+ *   post:
+ *     summary: Verify password reset OTP
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - otp
+ *             properties:
+ *               email: { type: string, format: email }
+ *               otp: { type: string, example: "123456" }
+ *     responses:
+ *       200:
+ *         description: OTP verified successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       400:
+ *         description: Invalid or expired OTP
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/verify-reset-otp', userController.verifyResetOTP);
 
 /**
- * Reset password with verified OTP
- * POST /api/auth/reset-password
- * Body: { email, otp, newPassword }
+ * @swagger
+ * /api/auth/reset-password:
+ *   post:
+ *     summary: Reset password with verified OTP
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - otp
+ *               - newPassword
+ *             properties:
+ *               email: { type: string, format: email }
+ *               otp: { type: string, example: "123456" }
+ *               newPassword: { type: string, format: password }
+ *     responses:
+ *       200:
+ *         description: Password reset successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       400:
+ *         description: Invalid OTP or validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/reset-password', userController.resetPassword);
 
 /**
- * Logout endpoint
- * POST /api/auth/logout
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     summary: Logout user and destroy session
+ *     tags: [Authentication]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Logout successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       500:
+ *         description: Error during logout
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/logout', (req, res) => {
     req.session.destroy(err => {
@@ -195,8 +529,44 @@ router.post('/logout', (req, res) => {
 });
 
 /**
- * Check session endpoint
- * GET /api/auth/check-session
+ * @swagger
+ * /api/auth/check-session:
+ *   get:
+ *     summary: Check if user has an active session
+ *     description: Returns current user data if authenticated, with fresh subscription status
+ *     tags: [Authentication]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Session status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               oneOf:
+ *                 - type: object
+ *                   properties:
+ *                     authenticated: { type: boolean, example: true }
+ *                     user:
+ *                       type: object
+ *                       properties:
+ *                         id: { type: string }
+ *                         name: { type: string }
+ *                         email: { type: string }
+ *                         role: { type: string }
+ *                         first_name: { type: string }
+ *                         last_name: { type: string }
+ *                         phone: { type: string }
+ *                         profile_image: { type: string }
+ *                         verificationStatus: { type: string }
+ *                         subscription:
+ *                           type: object
+ *                           properties:
+ *                             plan: { type: string }
+ *                             status: { type: string }
+ *                 - type: object
+ *                   properties:
+ *                     authenticated: { type: boolean, example: false }
  */
 router.get('/check-session', async (req, res) => {
     if (req.session && req.session.user) {
@@ -237,8 +607,35 @@ router.get('/check-session', async (req, res) => {
 });
 
 /**
- * Get current user endpoint
- * GET /api/auth/user
+ * @swagger
+ * /api/auth/user:
+ *   get:
+ *     summary: Get current authenticated user's full profile
+ *     tags: [Authentication]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile retrieved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 user: { $ref: '#/components/schemas/User' }
+ *       401:
+ *         description: Not authenticated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get('/user', async (req, res) => {
     if (!req.session || !req.session.user) {

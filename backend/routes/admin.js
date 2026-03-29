@@ -35,6 +35,369 @@ const ensureAdminAuth = (req, res, next) => {
 // Apply admin authentication middleware to all routes
 router.use(ensureAdminAuth);
 
+/**
+ * @swagger
+ * /api/admin/dashboard:
+ *   get:
+ *     summary: Get admin dashboard metrics
+ *     tags: [Admin]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Dashboard metrics returned
+ *
+ * /api/admin/users:
+ *   get:
+ *     summary: Get all users across supported roles
+ *     tags: [Admin]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Users returned
+ *
+ * /api/admin/users/{role}:
+ *   get:
+ *     summary: Get users filtered by role
+ *     tags: [Admin]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: role
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [player, manager, organizer]
+ *     responses:
+ *       200:
+ *         description: Filtered users returned
+ *       400:
+ *         description: Invalid role
+ *
+ * /api/admin/teams:
+ *   get:
+ *     summary: Get all teams
+ *     tags: [Admin]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Teams returned
+ *   delete:
+ *     summary: Delete team by id
+ *     tags: [Admin]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         required: false
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Team deleted
+ *
+ * /api/admin/teams/{id}:
+ *   delete:
+ *     summary: Delete a team
+ *     tags: [Admin]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Team deleted
+ *
+ * /api/admin/events:
+ *   get:
+ *     summary: Get all events
+ *     tags: [Admin]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Events returned
+ *
+ * /api/admin/events/{id}:
+ *   get:
+ *     summary: Get event details for admin
+ *     tags: [Admin]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Event returned
+ *   delete:
+ *     summary: Delete event by id
+ *     tags: [Admin]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Event deleted
+ *
+ * /api/admin/matches:
+ *   get:
+ *     summary: Get all matches for admin view
+ *     tags: [Admin]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Matches returned
+ *
+ * /api/admin/stats:
+ *   get:
+ *     summary: Get admin summary statistics
+ *     tags: [Admin]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Stats returned
+ *
+ * /api/admin/tournaments:
+ *   get:
+ *     summary: Get tournament list
+ *     tags: [Admin]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Tournaments returned
+ *
+ * /api/admin/activity-logs:
+ *   get:
+ *     summary: Get recent admin activity logs
+ *     tags: [Admin]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Activity logs returned
+ *
+ * /api/admin/transactions:
+ *   get:
+ *     summary: Get transaction list for admin
+ *     tags: [Admin]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Transactions returned
+ *
+ * /api/admin/organizers:
+ *   get:
+ *     summary: Get organizer accounts
+ *     tags: [Admin]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Organizers returned
+ *
+ * /api/admin/managers:
+ *   get:
+ *     summary: Get manager accounts
+ *     tags: [Admin]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Managers returned
+ *
+ * /api/admin/players:
+ *   get:
+ *     summary: Get player accounts
+ *     tags: [Admin]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Players returned
+ *
+ * /api/admin/api/orders/{id}:
+ *   get:
+ *     summary: Get order details by id
+ *     tags: [Admin]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Order details returned
+ *
+ * /api/admin/api/orders/{id}/status:
+ *   put:
+ *     summary: Update order status
+ *     tags: [Admin]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Order status updated
+ *
+ * /api/admin/api/transactions/export:
+ *   get:
+ *     summary: Export transactions report
+ *     tags: [Admin]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Export generated
+ *
+ * /api/admin/api/players/{id}:
+ *   get:
+ *     summary: Get single player profile for admin
+ *     tags: [Admin]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Player details returned
+ *
+ * /api/admin/api/managers/{id}:
+ *   get:
+ *     summary: Get single manager profile for admin
+ *     tags: [Admin]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Manager details returned
+ *
+ * /api/admin/api/organizers/{id}:
+ *   get:
+ *     summary: Get single organizer profile for admin
+ *     tags: [Admin]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Organizer details returned
+ *
+ * /api/admin/api/teams/{id}:
+ *   get:
+ *     summary: Get single team details for admin
+ *     tags: [Admin]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Team details returned
+ *
+ * /api/admin/users/manager/{id}:
+ *   delete:
+ *     summary: Delete manager account
+ *     tags: [Admin]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Manager deleted
+ *
+ * /api/admin/users/organizer/{id}:
+ *   delete:
+ *     summary: Delete organizer account
+ *     tags: [Admin]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Organizer deleted
+ *
+ * /api/admin/users/player/{id}:
+ *   delete:
+ *     summary: Delete player account
+ *     tags: [Admin]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Player deleted
+ */
+
 // Admin dashboard - JSON API for React frontend
 router.get('/dashboard', async (req, res) => {
     try {

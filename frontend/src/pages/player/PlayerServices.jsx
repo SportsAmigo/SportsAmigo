@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PlayerLayout from '../../components/layout/PlayerLayout';
 import vasService from '../../services/vasService';
-import './PlayerDashboard.css';
+import './Dashboard.css';
+import './PlayerServices.css';
 
 const PlayerServices = () => {
   const navigate = useNavigate();
@@ -15,6 +16,11 @@ const PlayerServices = () => {
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [receipt, setReceipt] = useState(null);
   const [paymentProgress, setPaymentProgress] = useState(0);
+  const [activeServices, setActiveServices] = useState({
+    premium_profile: { active: false, service: null },
+    performance_analytics: { active: false, service: null },
+    player_insurance: { active: false, service: null }
+  });
 
   const playerServices = [
     {
@@ -50,7 +56,35 @@ const PlayerServices = () => {
     }
   ];
 
+  const fetchActiveServices = useCallback(async () => {
+    try {
+      const [premium, analytics, insurance] = await Promise.all([
+        vasService.checkVASStatus('premium_profile'),
+        vasService.checkVASStatus('performance_analytics'),
+        vasService.checkVASStatus('player_insurance')
+      ]);
+
+      setActiveServices({
+        premium_profile: { active: Boolean(premium?.hasService), service: premium?.service || null },
+        performance_analytics: { active: Boolean(analytics?.hasService), service: analytics?.service || null },
+        player_insurance: { active: Boolean(insurance?.hasService), service: insurance?.service || null }
+      });
+    } catch (statusErr) {
+      console.error('Failed to load active services:', statusErr);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchActiveServices();
+  }, [fetchActiveServices]);
+
   const handlePurchaseClick = (service, tier = null) => {
+    if (activeServices[service.id]?.active) {
+      setSuccess(`${service.name} is already active on your account.`);
+      setTimeout(() => setSuccess(''), 3500);
+      return;
+    }
+
     setSelectedService({ ...service, selectedTier: tier });
     setShowModal(true);
   };
@@ -96,6 +130,21 @@ const PlayerServices = () => {
       }
       if (response.success) {
         const price = selectedService.selectedTier?.price || selectedService.price;
+        const activatedServiceType = selectedService.id;
+
+        setActiveServices((prev) => ({
+          ...prev,
+          [activatedServiceType]: {
+            active: true,
+            service: {
+              serviceType: activatedServiceType,
+              serviceDetails: activatedServiceType === 'player_insurance'
+                ? { insurancePlan: selectedService.selectedTier?.plan || 'basic' }
+                : {}
+            }
+          }
+        }));
+
         const receiptData = {
           transactionId: `PLY${Date.now()}${Math.floor(Math.random()*1000)}`,
           service: selectedService.name,
@@ -108,6 +157,7 @@ const PlayerServices = () => {
         setReceipt(receiptData);
         setShowPaymentModal(false);
         setShowReceiptModal(true);
+        fetchActiveServices();
       } else {
         setError(response.message || response.error || 'Purchase failed');
         setShowPaymentModal(false);
@@ -155,7 +205,7 @@ Payment Method: ${receipt.paymentMethod}
 
   return (
     <PlayerLayout>
-      <div className="player-main-content">
+      <div className="player-services-page">
         {/* Header */}
         <div className="dashboard-header-section">
           <div className="dashboard-welcome-card">
@@ -222,9 +272,14 @@ Payment Method: ${receipt.paymentMethod}
                             <span style={{ color: '#10B981', fontWeight: 700 }}>✓</span> {f}
                           </div>
                         ))}
-                        <button onClick={() => handlePurchaseClick(service, tier)} disabled={loading}
-                          style={{ ...btn(service.gradient), width: '100%', justifyContent: 'center', marginTop: '0.75rem', opacity: loading ? 0.5 : 1 }}>
-                          <i className="fa fa-shopping-cart"></i> Select Plan
+                        <button onClick={() => handlePurchaseClick(service, tier)} disabled={loading || activeServices.player_insurance.active}
+                          style={{ ...btn(activeServices.player_insurance.active ? 'linear-gradient(135deg, #10B981, #059669)' : service.gradient), width: '100%', justifyContent: 'center', marginTop: '0.75rem', opacity: loading ? 0.5 : 1 }}>
+                          <i className={`fa ${activeServices.player_insurance.active ? 'fa-check-circle' : 'fa-shopping-cart'}`}></i>
+                          {activeServices.player_insurance.active
+                            ? activeServices.player_insurance.service?.serviceDetails?.insurancePlan === tier.plan
+                              ? 'Current Plan Active'
+                              : 'Insurance Active'
+                            : 'Select Plan'}
                         </button>
                       </div>
                     ))}
@@ -243,9 +298,10 @@ Payment Method: ${receipt.paymentMethod}
                         </div>
                       ))}
                     </div>
-                    <button onClick={() => handlePurchaseClick(service)} disabled={loading}
-                      style={{ ...btn(service.gradient), width: '100%', justifyContent: 'center', opacity: loading ? 0.5 : 1 }}>
-                      <i className="fa fa-shopping-cart"></i> Get Started
+                    <button onClick={() => handlePurchaseClick(service)} disabled={loading || activeServices[service.id]?.active}
+                      style={{ ...btn(activeServices[service.id]?.active ? 'linear-gradient(135deg, #10B981, #059669)' : service.gradient), width: '100%', justifyContent: 'center', opacity: (loading || activeServices[service.id]?.active) ? 0.75 : 1 }}>
+                      <i className={`fa ${activeServices[service.id]?.active ? 'fa-check-circle' : 'fa-shopping-cart'}`}></i>
+                      {activeServices[service.id]?.active ? 'Activated' : 'Get Started'}
                     </button>
                   </div>
                 )}

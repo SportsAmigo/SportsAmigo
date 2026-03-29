@@ -20,7 +20,7 @@ const PlayerLayout = ({ children }) => {
 
     return (
         <div className="player-dashboard">
-            <div className="dashboard-content">
+            <div className="player-dashboard-content">
                 {/* Sidebar */}
                 <div className={`player-sidebar ${sidebarOpen ? '' : 'collapsed'}`}>
                     <div className="sidebar-header">

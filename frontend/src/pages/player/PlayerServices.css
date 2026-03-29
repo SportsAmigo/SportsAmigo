@@ -1,11 +1,30 @@
-/* Player Services Page Styles */
+/* Player Services page alignment patch */
 
-.player-services-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 2rem;
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+.player-services-page {
+  width: 100%;
   min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+
+.player-services-page .dashboard-header-section,
+.player-services-page > div[style*='max-width: 1200px'] {
+  position: relative;
+  z-index: 1;
+}
+
+.player-services-page .dashboard-welcome-card {
+  max-width: 1200px;
+}
+
+@media (max-width: 768px) {
+  .player-services-page .dashboard-header-section {
+    padding: 1.25rem;
+  }
+
+  .player-services-page > div[style*='max-width: 1200px'] {
+    padding: 0 1rem 1.5rem !important;
+  }
 }
 
 .services-header {

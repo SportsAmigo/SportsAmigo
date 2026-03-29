@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
@@ -115,7 +117,8 @@ app.use((req, res, next) => {
         req.path.startsWith('/api/shop-login/') ||
         req.path.startsWith('/api/subscription/') ||
         req.path.startsWith('/api/vas/') ||
-        req.path.startsWith('/api/v1/')) {
+        req.path.startsWith('/api/v1/') ||
+        req.path.startsWith('/api-docs')) {
         return next();
     }
     csrfProtection(req, res, next);
@@ -179,6 +182,22 @@ app.get('/api/health', (req, res) => {
         message: 'Server is running',
         timestamp: new Date().toISOString()
     });
+});
+
+// Swagger API Documentation
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./config/swagger');
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'SportsAmigo API Docs',
+    customfavIcon: '/images/favicon.ico'
+}));
+
+// Raw JSON spec endpoint
+app.get('/api-docs.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(swaggerSpec);
 });
 
 app.use('/api/auth', authApiRoutes);

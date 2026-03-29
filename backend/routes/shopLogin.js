@@ -11,6 +11,97 @@ const router = express.Router();
 const UserSchema = require('../models/schemas/userSchema');
 
 /**
+ * @swagger
+ * /api/shop-login:
+ *   get:
+ *     summary: Load shop login page
+ *     tags: [Authentication]
+ *     parameters:
+ *       - in: query
+ *         name: returnUrl
+ *         required: false
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Shop login page rendered
+ *       302:
+ *         description: Redirected to checkout when already logged in
+ *
+ *   post:
+ *     summary: Authenticate shop user
+ *     tags: [Authentication]
+ *     security:
+ *       - csrfToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/x-www-form-urlencoded:
+ *           schema:
+ *             type: object
+ *             required: [email, password]
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               returnUrl:
+ *                 type: string
+ *     responses:
+ *       302:
+ *         description: Redirect to checkout/return URL on success
+ *       200:
+ *         description: Login page with validation errors
+ *
+ * /api/shop-login/logout:
+ *   post:
+ *     summary: Logout shop user and clear auth session
+ *     tags: [Authentication]
+ *     security:
+ *       - csrfToken: []
+ *     responses:
+ *       302:
+ *         description: Redirect to cart after logout
+ *
+ * /api/shop-login/register:
+ *   get:
+ *     summary: Load shop registration page
+ *     tags: [Authentication]
+ *     responses:
+ *       200:
+ *         description: Registration page rendered
+ *
+ *   post:
+ *     summary: Register new shop user (player role)
+ *     tags: [Authentication]
+ *     security:
+ *       - csrfToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/x-www-form-urlencoded:
+ *           schema:
+ *             type: object
+ *             required: [firstName, lastName, email, password, confirmPassword]
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               confirmPassword:
+ *                 type: string
+ *     responses:
+ *       302:
+ *         description: Redirect to checkout on successful registration
+ *       200:
+ *         description: Registration page with validation error
+ */
+
+/**
  * GET /shop-login - Display shop login page
  */
 router.get('/', (req, res) => {

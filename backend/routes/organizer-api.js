@@ -20,6 +20,281 @@ function isOrganizerAPI(req, res, next) {
 // Apply middleware to all routes
 router.use(isOrganizerAPI);
 
+/**
+ * @swagger
+ * /api/organizer/stats:
+ *   get:
+ *     summary: Get organizer dashboard statistics
+ *     tags: [Organizer]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Statistics returned
+ *       500:
+ *         description: Failed to fetch statistics
+ *
+ * /api/organizer/events:
+ *   get:
+ *     summary: Get organizer events list
+ *     tags: [Organizer]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Organizer events returned
+ *
+ * /api/organizer/create-event:
+ *   post:
+ *     summary: Create new organizer event
+ *     tags: [Organizer]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Event'
+ *     responses:
+ *       201:
+ *         description: Event created
+ *       400:
+ *         description: Validation error
+ *
+ * /api/organizer/event/{id}:
+ *   get:
+ *     summary: Get single organizer event details
+ *     tags: [Organizer]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Event details returned
+ *       404:
+ *         description: Event not found
+ *   put:
+ *     summary: Update organizer event
+ *     tags: [Organizer]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Event updated
+ *       400:
+ *         description: Invalid input
+ *   delete:
+ *     summary: Delete organizer event
+ *     tags: [Organizer]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Event deleted
+ *       404:
+ *         description: Event not found
+ *
+ * /api/organizer/event/{id}/cancel:
+ *   put:
+ *     summary: Cancel organizer event
+ *     tags: [Organizer]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Event cancelled
+ *
+ * /api/organizer/profile:
+ *   get:
+ *     summary: Get organizer profile
+ *     tags: [Organizer]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Profile returned
+ *   put:
+ *     summary: Update organizer profile
+ *     tags: [Organizer]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               profile_image:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Profile updated
+ *
+ * /api/organizer/change-password:
+ *   put:
+ *     summary: Change organizer password
+ *     tags: [Organizer]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [currentPassword, newPassword]
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *               newPassword:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Password changed
+ *
+ * /api/organizer/event/{eventId}/approve-team/{teamId}:
+ *   put:
+ *     summary: Approve team registration for event
+ *     tags: [Organizer]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: teamId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Team approved
+ *
+ * /api/organizer/event/{eventId}/reject-team/{teamId}:
+ *   put:
+ *     summary: Reject team registration for event
+ *     tags: [Organizer]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: teamId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Team rejected
+ *
+ * /api/organizer/event/{eventId}/schedule-matches:
+ *   post:
+ *     summary: Generate event match schedule
+ *     tags: [Organizer]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Match schedule generated
+ *
+ * /api/organizer/event/{eventId}/finalize-schedule:
+ *   post:
+ *     summary: Finalize generated match schedule
+ *     tags: [Organizer]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Schedule finalized
+ *
+ * /api/organizer/events/{eventId}/export-participants-csv:
+ *   get:
+ *     summary: Export event participants as CSV
+ *     tags: [Organizer]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: CSV stream returned
+ *
+ * /api/organizer/events/{eventId}/export-matches-csv:
+ *   get:
+ *     summary: Export event matches as CSV
+ *     tags: [Organizer]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: CSV stream returned
+ */
+
 // Configure multer for profile image uploads
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {

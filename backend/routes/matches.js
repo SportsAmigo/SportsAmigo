@@ -23,6 +23,194 @@ const isAuthenticated = (req, res, next) => {
     next();
 };
 
+/**
+ * @swagger
+ * /api/matches/create:
+ *   post:
+ *     summary: Create a new match
+ *     tags: [Matches]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     responses:
+ *       200:
+ *         description: Match created
+ *
+ * /api/matches/event/{eventId}:
+ *   get:
+ *     summary: Get matches for event
+ *     tags: [Matches]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Event matches returned
+ *
+ * /api/matches/team/{teamId}/history:
+ *   get:
+ *     summary: Get historical matches for team
+ *     tags: [Matches]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: teamId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Team history returned
+ *
+ * /api/matches/team/{teamId}/upcoming:
+ *   get:
+ *     summary: Get upcoming matches for team
+ *     tags: [Matches]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: teamId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Upcoming matches returned
+ *
+ * /api/matches/teams:
+ *   get:
+ *     summary: Get all teams for match creation
+ *     tags: [Matches]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Team list returned
+ *
+ * /api/matches/teams/{teamId}:
+ *   get:
+ *     summary: Get single team details
+ *     tags: [Matches]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: teamId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Team details returned
+ *       404:
+ *         description: Team not found
+ *
+ * /api/matches/team/{teamId}/all:
+ *   get:
+ *     summary: Get all matches for team (scheduled and completed)
+ *     tags: [Matches]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: teamId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Team matches returned
+ *
+ * /api/matches/{matchId}/result:
+ *   put:
+ *     summary: Update match result
+ *     tags: [Matches]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: matchId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Match result updated
+ *
+ * /api/matches/{matchId}/approve:
+ *   post:
+ *     summary: Approve pending match result
+ *     tags: [Matches]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: matchId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Match result approved
+ *
+ * /api/matches/{matchId}/reject:
+ *   post:
+ *     summary: Reject pending match result
+ *     tags: [Matches]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: matchId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Match result rejected
+ *
+ * /api/matches/{matchId}:
+ *   get:
+ *     summary: Get match details
+ *     tags: [Matches]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: matchId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Match details returned
+ *   delete:
+ *     summary: Delete a match
+ *     tags: [Matches]
+ *     security:
+ *       - sessionAuth: []
+ *       - csrfToken: []
+ *     parameters:
+ *       - in: path
+ *         name: matchId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Match deleted
+ */
+
 // Create new match (organizer only)
 router.post('/create', isOrganizer, matchController.createMatch);
 

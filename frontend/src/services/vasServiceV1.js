@@ -13,15 +13,33 @@ class VASService {
     return apiService.get(`${API_BASE}/vas/products`);
   }
 
-  /** Purchase a VAS for a specific event */
-  async purchaseVAS(eventId, serviceType, tier, quantity = null) {
-    const body = {
-      serviceType,
-      tier,
-      idempotencyKey: `vas_${eventId}_${serviceType}_${tier}_${Date.now()}`
-    };
+  /** Create Razorpay order for VAS purchase */
+  async createOrder(eventId, serviceType, tier, quantity = null) {
+    const body = { serviceType, tier };
     if (quantity) body.quantity = quantity;
-    return apiService.post(`${API_BASE}/events/${eventId}/vas/purchase`, body);
+
+    const createOrderResponse = await apiService.post(`${API_BASE}/events/${eventId}/vas/create-order`, body);
+
+    // Compatibility fallback for servers that still expose only /purchase.
+    if (createOrderResponse?.success === false && createOrderResponse?.status === 404) {
+      const purchaseResponse = await apiService.post(`${API_BASE}/events/${eventId}/vas/purchase`, body);
+
+      if (purchaseResponse?.success && !purchaseResponse?.orderId) {
+        return {
+          ...purchaseResponse,
+          mode: 'direct_purchase'
+        };
+      }
+
+      return purchaseResponse;
+    }
+
+    return createOrderResponse;
+  }
+
+  /** Verify Razorpay payment and activate VAS */
+  async verifyPayment(eventId, payload) {
+    return apiService.post(`${API_BASE}/events/${eventId}/vas/verify-payment`, payload);
   }
 
   /** Fetch active VAS for a specific event */
