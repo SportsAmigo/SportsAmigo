@@ -303,6 +303,16 @@ const Login = () => {
                                     <h3>Player</h3>
                                     <p>Access your player dashboard and manage your team activities</p>
                                 </div>
+                                <div 
+                                    className={`role-card ${formData.role === 'moderator' ? 'active' : ''}`}
+                                    onClick={() => selectRole('moderator')}
+                                >
+                                    <div className="role-icon">
+                                        <i className="fa fa-clipboard-check"></i>
+                                    </div>
+                                    <h3>Moderator</h3>
+                                    <p>Review and approve organizers and events</p>
+                                </div>
                             </div>
                         </div>
                         

@@ -2,6 +2,7 @@
 const router = express.Router();
 const userController = require('../controllers/userController');
 const User = require('../models/user');
+const Subscription = require('../models/schemas/subscriptionSchema');
 
 router.post('/login', async (req, res) => {
     try {
@@ -23,6 +24,14 @@ router.post('/login', async (req, res) => {
         const sessionUser = freshUserData.toObject ? freshUserData.toObject() : freshUserData;
         sessionUser.name = sessionUser.first_name + (sessionUser.last_name ? ' ' + sessionUser.last_name : '');
         req.session.user = sessionUser;
+
+        // Fetch active subscription so badge shows immediately after login
+        let subscriptionData = { plan: 'free', status: 'active' };
+        try {
+            const sub = await Subscription.findOne({ user: sessionUser._id, status: 'active' }).sort({ createdAt: -1 });
+            if (sub) subscriptionData = { plan: sub.plan, status: sub.status };
+        } catch (_) { /* non-fatal */ }
+
         req.session.save(err => {
             if (err) {
                 return res.status(500).json({ success: false, message: 'Session error' });
@@ -42,7 +51,8 @@ router.post('/login', async (req, res) => {
                     address: sessionUser.profile?.address || '',
                     bio: sessionUser.bio || '',
                     organization: sessionUser.profile?.organization_name || '',
-                    profile_image: sessionUser.profile_image 
+                    profile_image: sessionUser.profile_image,
+                    subscription: subscriptionData
                 } 
             });
         });
@@ -91,9 +101,17 @@ router.post('/logout', (req, res) => {
     });
 });
 
-router.get('/check-session', (req, res) => {
+router.get('/check-session', async (req, res) => {
     if (req.session && req.session.user) {
+        // Fetch active subscription from DB so badge always reflects real state
+        let subscriptionData = { plan: 'free', status: 'active' };
+        try {
+            const sub = await Subscription.findOne({ user: req.session.user._id, status: 'active' }).sort({ createdAt: -1 });
+            if (sub) subscriptionData = { plan: sub.plan, status: sub.status };
+        } catch (_) { /* non-fatal */ }
+
         return res.json({ 
+            success: true,
             authenticated: true, 
             user: { 
                 id: req.session.user._id, 
@@ -107,7 +125,8 @@ router.get('/check-session', (req, res) => {
                 address: req.session.user.profile?.address || '',
                 bio: req.session.user.bio || '',
                 organization: req.session.user.profile?.organization_name || '',
-                profile_image: req.session.user.profile_image 
+                profile_image: req.session.user.profile_image,
+                subscription: subscriptionData
             } 
         });
     } else {
@@ -183,6 +202,20 @@ router.post('/verify-reset-otp', userController.verifyResetOTP);
  * Body: { email, otp, newPassword }
  */
 router.post('/reset-password', userController.resetPassword);
+
+/**
+ * Send OTP for login verification
+ * POST /auth/send-login-otp
+ * Body: { email, password, role }
+ */
+router.post('/send-login-otp', userController.sendLoginOTP);
+
+/**
+ * Verify login OTP and complete login
+ * POST /auth/verify-login-otp
+ * Body: { email, otp, role }
+ */
+router.post('/verify-login-otp', userController.verifyLoginOTP);
 
 module.exports = router;
 

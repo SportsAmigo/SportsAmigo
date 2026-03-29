@@ -34,8 +34,52 @@ const eventSchema = new Schema({
   registration_deadline: Date,
   status: { 
     type: String, 
-    default: 'upcoming',
-    enum: ['draft', 'upcoming', 'ongoing', 'completed', 'cancelled']
+    default: 'pending_approval',
+    enum: ['draft', 'pending_approval', 'approved', 'rejected', 'upcoming', 'ongoing', 'completed', 'cancelled']
+  },
+  // Event visibility and promotion
+  visibility: {
+    type: String,
+    enum: ['public', 'featured', 'sponsored'],
+    default: 'public'
+  },
+  featuredUntil: Date,
+  // Commission and revenue tracking
+  commissionRate: { 
+    type: Number, 
+    default: 15,  // Default 15% commission
+    min: 0,
+    max: 100
+  },
+  revenue: {
+    totalCollected: { type: Number, default: 0 },
+    platformCommission: { type: Number, default: 0 },
+    organizerPayout: { type: Number, default: 0 },
+    refundedAmount: { type: Number, default: 0 }
+  },
+  registrationCount: {
+    type: Number,
+    default: 0
+  },
+  // Approval tracking
+  approvalStatus: {
+    reviewedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    reviewedAt: Date,
+    approvalNotes: String,
+    rejectionReason: String
+  },
+  // Event ratings
+  ratings: [{
+    user: { type: Schema.Types.ObjectId, ref: 'User' },
+    rating: { type: Number, min: 1, max: 5 },
+    review: String,
+    createdAt: { type: Date, default: Date.now }
+  }],
+  averageRating: { 
+    type: Number, 
+    default: 0,
+    min: 0,
+    max: 5
   },
   // Schedule finalization tracking
   schedule_finalized: {

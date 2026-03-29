@@ -295,5 +295,157 @@ module.exports = {
             console.error('Error fetching team events:', err);
             return res.status(500).json({ error: 'Error fetching events' });
         }
+    },
+
+    /**
+     * Create event with tier checks and approval workflow (Enhanced)
+     * @param {Object} req - Request object
+     * @param {Object} res - Response object
+     */
+    createEventWithTierCheck: async (req, res) => {
+        try {
+            const { User, Subscription } = require('../models');
+            const organizerId = req.session.user._id;
+            
+            // Get organizer details
+            const organizer = await User.getUserById(organizerId);
+            
+            if (!organizer || organizer.role !== 'organizer') {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Only organizers can create events'
+                });
+            }
+
+            // Check verification status
+            if (organizer.verificationStatus !== 'verified') {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Your organizer account must be verified before creating events. Please wait for approval.'
+                });
+            }
+
+            // Check subscription limits
+            const canCreate = await Subscription.canUserCreateEvent(organizerId);
+            if (!canCreate.canCreate) {
+                return res.status(403).json({
+                    success: false,
+                    message: canCreate.reason
+                });
+            }
+
+            // Get commission rate based on tier and subscription
+            let commissionRate = 20; // Default for free/new
+            const subscription = await Subscription.getUserSubscription(organizerId);
+            
+            if (subscription && subscription.isValid()) {
+                commissionRate = subscription.features.commissionRate;
+            } else {
+                // Tier-based commission rates
+                switch(organizer.organizerTier) {
+                    case 'enterprise':
+                        commissionRate = 12;
+                        break;
+                    case 'premium':
+                        commissionRate = 15;
+                        break;
+                    case 'established':
+                        commissionRate = 17;
+                        break;
+                    default:
+                        commissionRate = 20;
+                }
+            }
+
+            // Determine event status based on organizer tier
+            let eventStatus = 'pending_approval';
+            if (organizer.organizerTier === 'premium' || organizer.organizerTier === 'enterprise') {
+                eventStatus = 'approved'; // Auto-approve for premium/enterprise
+            } else if (organizer.organizerTier === 'established') {
+                // Auto-approve for established, unless high-risk event
+                const isHighRisk = req.body.max_teams > 100 || req.body.entry_fee > 5000;
+                eventStatus = isHighRisk ? 'pending_approval' : 'approved';
+            }
+
+            const eventData = {
+                organizer_id: organizerId,
+                title: req.body.title,
+                description: req.body.description || '',
+                sport_type: req.body.sport_type,
+                event_date: req.body.event_date,
+                event_time: req.body.event_time,
+                location: req.body.location,
+                max_teams: req.body.max_teams || 0,
+                entry_fee: req.body.entry_fee || 0,
+                registration_deadline: req.body.registration_deadline || null,
+                status: eventStatus,
+                commissionRate: commissionRate,
+                visibility: 'public'
+            };
+            
+            const event = await Event.createEvent(eventData);
+
+            // Increment subscription usage
+            await Subscription.incrementEventUsage(organizerId);
+
+            // Update organizer stats
+            await User.findByIdAndUpdate(organizerId, {
+                $inc: { 'organizerStats.totalEvents': 1 }
+            });
+            
+            return res.status(201).json({
+                success: true,
+                message: eventStatus === 'approved' 
+                    ? 'Event created and published successfully!' 
+                    : 'Event created and submitted for approval',
+                data: event
+            });
+        } catch (err) {
+            console.error('Error creating event:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Error creating event',
+                error: err.message
+            });
+        }
+    },
+
+    /**
+     * Mark event as completed and update stats
+     * @param {Object} req - Request object
+     * @param {Object} res - Response object
+     */
+    completeEvent: async (req, res) => {
+        try {
+            const eventId = req.params.id;
+            const { tierManagementController } = require('./tierManagementController');
+            
+            const event = await Event.getEventById(eventId);
+            
+            if (!event) {
+                return res.status(404).json({ success: false, message: 'Event not found' });
+            }
+
+            // Update event status
+            await Event.updateEvent(eventId, { status: 'completed' });
+
+            // Update organizer stats and tier
+            await tierManagementController.updateStatsOnEventComplete(
+                event.organizer_id,
+                eventId
+            );
+
+            return res.json({
+                success: true,
+                message: 'Event marked as completed'
+            });
+        } catch (err) {
+            console.error('Error completing event:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Error completing event',
+                error: err.message
+            });
+        }
     }
 };

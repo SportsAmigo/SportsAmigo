@@ -350,6 +350,51 @@ const EventDetails = () => {
                                     </p>
                                 </div>
                             </div>
+
+                            {/* QR Code Card */}
+                            <div className="bg-white rounded-xl shadow-lg p-6">
+                                <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                                    <i className="fa fa-qrcode text-orange-600 mr-3"></i>
+                                    Event QR Code
+                                </h3>
+                                {(user?.subscription?.plan === 'pro' || user?.subscription?.plan === 'enterprise') ? (
+                                    <div className="text-center">
+                                        <img
+                                            src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`${window.location.origin}/player/event/${id}`)}`}
+                                            alt="Event QR Code"
+                                            className="mx-auto rounded-lg border border-gray-200 shadow-sm"
+                                            style={{ width: 180, height: 180 }}
+                                        />
+                                        <p className="text-xs text-gray-500 mt-3 mb-3">
+                                            Scan to view event registration page
+                                        </p>
+                                        <button
+                                            onClick={() => {
+                                                const url = `${window.location.origin}/player/event/${id}`;
+                                                navigator.clipboard.writeText(url).then(() => alert('Event link copied!')).catch(() => prompt('Copy this link:', url));
+                                            }}
+                                            className="w-full py-2 px-4 rounded-lg text-sm font-semibold text-white"
+                                            style={{ background: 'linear-gradient(135deg, #F97316, #EA580C)' }}
+                                        >
+                                            <i className="fa fa-copy mr-2"></i>Copy Event Link
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-4">
+                                        <div className="w-20 h-20 mx-auto mb-3 rounded-xl flex items-center justify-center" style={{ background: '#F3F4F6' }}>
+                                            <i className="fa fa-lock text-3xl text-gray-400"></i>
+                                        </div>
+                                        <p className="text-sm font-semibold text-gray-700 mb-1">Pro Feature</p>
+                                        <p className="text-xs text-gray-500 mb-3">QR code sharing is available on Pro and Enterprise plans.</p>
+                                        <a href="/organizer/subscription"
+                                            className="inline-block py-2 px-4 rounded-lg text-sm font-semibold text-white"
+                                            style={{ background: 'linear-gradient(135deg, #2563EB, #1D4ED8)' }}
+                                        >
+                                            <i className="fa fa-arrow-up mr-2"></i>Upgrade Plan
+                                        </a>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}
@@ -417,10 +462,31 @@ const EventDetails = () => {
 
                         {/* Approved Teams */}
                         <div className="bg-white rounded-xl shadow-lg p-8">
-                            <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                                <i className="fa fa-check-circle text-green-600 mr-3"></i>
-                                Approved Teams ({approvedTeams.length})
-                            </h2>
+                            <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+                                <h2 className="text-2xl font-bold text-gray-800 flex items-center">
+                                    <i className="fa fa-check-circle text-green-600 mr-3"></i>
+                                    Approved Teams ({approvedTeams.length})
+                                </h2>
+                                {(user?.subscription?.plan === 'pro' || user?.subscription?.plan === 'enterprise') ? (
+                                    <a
+                                        href={`http://localhost:5000/api/organizer/events/${id}/export-participants-csv`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white"
+                                        style={{ background: 'linear-gradient(135deg, #10B981, #059669)', boxShadow: '0 2px 8px rgba(16,185,129,0.3)' }}
+                                    >
+                                        <i className="fa fa-download"></i> Export CSV
+                                    </a>
+                                ) : (
+                                    <a href="/organizer/subscription"
+                                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold"
+                                        style={{ background: '#F3F4F6', color: '#9CA3AF', border: '1px solid #E5E7EB' }}
+                                        title="Upgrade to Pro to export participant CSV"
+                                    >
+                                        <i className="fa fa-lock"></i> Export CSV (Pro)
+                                    </a>
+                                )}
+                            </div>
                             {approvedTeams.length > 0 ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {approvedTeams.map((team) => (

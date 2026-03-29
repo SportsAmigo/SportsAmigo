@@ -538,6 +538,21 @@ router.post('/create-event', async (req, res) => {
         // Check if this is an AJAX request
         const isAjax = req.headers['content-type'] === 'application/json' || 
                       req.headers['x-requested-with'] === 'XMLHttpRequest';
+
+        // Block unverified organizers from creating events
+        const organizer = await User.getUserById(req.session.user._id);
+        if (!organizer || organizer.verificationStatus !== 'verified') {
+            const msg = 'Your account must be verified by a coordinator before you can create events.';
+            if (isAjax) {
+                return res.status(403).json({ success: false, message: msg, verificationStatus: organizer?.verificationStatus || 'pending' });
+            }
+            return res.render('organizer/create-event', {
+                error: msg,
+                validationErrors: {},
+                formData: req.body,
+                layout: 'layouts/dashboard'
+            });
+        }
         
         // Validation
         const validationErrors = {};
@@ -592,6 +607,25 @@ router.post('/create-event', async (req, res) => {
             });
         }
         
+        // Enforce max_teams cap based on subscription plan
+        const organizerPlan = req.session.user?.subscription?.plan || 'free';
+        const requestedMaxTeams = parseInt(req.body.max_teams || 16);
+        const planTeamLimits = { free: 16, pro: 64 }; // enterprise = unlimited
+        if (organizerPlan !== 'enterprise' && planTeamLimits[organizerPlan] !== undefined) {
+            if (requestedMaxTeams > planTeamLimits[organizerPlan]) {
+                const limitMsg = `Your ${organizerPlan} plan supports up to ${planTeamLimits[organizerPlan]} teams per event. Upgrade to increase this limit.`;
+                if (isAjax) {
+                    return res.status(403).json({ success: false, message: limitMsg, errors: { max_teams: limitMsg } });
+                }
+                return res.render('organizer/create-event', {
+                    error: limitMsg,
+                    validationErrors: { max_teams: limitMsg },
+                    formData: req.body,
+                    layout: 'layouts/dashboard'
+                });
+            }
+        }
+        
         // Create event data object from form data
         const eventData = {
             organizer_id: req.session.user._id,
@@ -606,7 +640,7 @@ router.post('/create-event', async (req, res) => {
             max_teams: parseInt(req.body.max_teams || 16),
             entry_fee: req.body.entry_fee ? parseFloat(req.body.entry_fee) : 0,  // Default to 0 if not provided
             registration_deadline: req.body.registration_deadline || null,
-            status: req.body.status === 'Draft' ? 'draft' : 'upcoming'
+            status: req.body.status === 'Draft' ? 'draft' : 'pending_approval'
         };
         
         // Save the event to the database
@@ -897,6 +931,16 @@ router.put('/event/:id', async (req, res) => {
             status: req.body.status || event.status
         };
         
+        // Enforce max_teams cap based on subscription plan (same as create-event)
+        const organizerPlan = req.session.user?.subscription?.plan || 'free';
+        const planTeamLimits = { free: 16, pro: 64 }; // enterprise = unlimited
+        if (organizerPlan !== 'enterprise' && planTeamLimits[organizerPlan] !== undefined) {
+            if (eventData.max_teams > planTeamLimits[organizerPlan]) {
+                const limitMsg = `Your ${organizerPlan} plan supports up to ${planTeamLimits[organizerPlan]} teams per event. Upgrade to increase this limit.`;
+                return res.status(403).json({ success: false, message: limitMsg, errors: { max_teams: limitMsg } });
+            }
+        }
+        
         // Update the event
         const updatedEvent = await Event.updateEvent(eventId, eventData);
         
@@ -952,6 +996,19 @@ router.post('/event/:id/update', async (req, res) => {
             registration_deadline: req.body.registration_deadline,
             status: req.body.status
         };
+        
+        // Enforce max_teams cap based on subscription plan (same as create-event)
+        const organizerPlan = req.session.user?.subscription?.plan || 'free';
+        const planTeamLimits = { free: 16, pro: 64 }; // enterprise = unlimited
+        if (organizerPlan !== 'enterprise' && planTeamLimits[organizerPlan] !== undefined) {
+            if (eventData.max_teams > planTeamLimits[organizerPlan]) {
+                req.session.flashMessage = {
+                    type: 'error',
+                    text: `Your ${organizerPlan} plan supports up to ${planTeamLimits[organizerPlan]} teams per event. Upgrade to increase this limit.`
+                };
+                return res.redirect(`/organizer/event/${req.params.id}/edit`);
+            }
+        }
         
         // Update the event
         await Event.updateEvent(eventId, eventData);
@@ -1771,28 +1828,149 @@ router.post('/event/:eventId/remove-team/:teamId', async (req, res) => {
 
 // API Routes for React Frontend
 
+// GET /api/organizer/events/:eventId/export-participants-csv - Export approved participants as CSV (Pro/Enterprise)
+router.get('/events/:eventId/export-participants-csv', async (req, res) => {
+    try {
+        const plan = req.session.user?.subscription?.plan || 'free';
+        if (plan === 'free') {
+            return res.status(403).json({ success: false, message: 'Upgrade to Pro or Enterprise to export participant data.' });
+        }
+        const Event = require('../models/event');
+        const Team = require('../models/team');
+        const User = require('../models/user');
+        const { eventId } = req.params;
+        const event = await Event.getEventById(eventId);
+        if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
+        if (event.organizer_id.toString() !== req.session.user._id.toString()) {
+            return res.status(403).json({ success: false, message: 'Access denied' });
+        }
+        const approvedRegs = (event.team_registrations || []).filter(r => r.status === 'approved');
+        const rows = ['Team Name,Manager Name,Manager Email,Members,Registration Date'];
+        for (const reg of approvedRegs) {
+            try {
+                const team = await Team.getTeamById(reg.team_id);
+                if (!team) continue;
+                const manager = await User.getUserById(team.manager_id);
+                const managerName = manager ? `${manager.first_name || ''} ${manager.last_name || ''}`.trim() : 'N/A';
+                const managerEmail = manager?.email || 'N/A';
+                const members = team.members?.length || 0;
+                const regDate = reg.registered_at ? new Date(reg.registered_at).toLocaleDateString() : 'N/A';
+                rows.push(`"${(team.name || '').replace(/"/g,'""')}","${managerName.replace(/"/g,'""')}","${managerEmail}","${members}","${regDate}"`);
+            } catch (e) { /* skip */ }
+        }
+        const csv = rows.join('\n');
+        const filename = `${(event.title || 'event').replace(/[^a-z0-9]/gi,'_')}_participants.csv`;
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.send(csv);
+    } catch (error) {
+        console.error('Error exporting participants CSV:', error);
+        res.status(500).json({ success: false, message: 'Failed to export data' });
+    }
+});
+
+// GET /api/organizer/events/:eventId/export-matches-csv - Export match results as CSV (Pro/Enterprise)
+router.get('/events/:eventId/export-matches-csv', async (req, res) => {
+    try {
+        const plan = req.session.user?.subscription?.plan || 'free';
+        if (plan === 'free') {
+            return res.status(403).json({ success: false, message: 'Upgrade to Pro or Enterprise to export match results.' });
+        }
+        const Match = require('../models/schemas/matchSchema');
+        const Event = require('../models/event');
+        const { eventId } = req.params;
+        const event = await Event.getEventById(eventId);
+        if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
+        if (event.organizer_id.toString() !== req.session.user._id.toString()) {
+            return res.status(403).json({ success: false, message: 'Access denied' });
+        }
+        const matches = await Match.find({ event_id: eventId }).sort({ match_date: 1 }).lean();
+        const rows = ['Match Number,Team A,Team B,Score A,Score B,Status,Date'];
+        matches.forEach((m, i) => {
+            const teamA = `"${(m.team1_name || m.team_a_name || '').replace(/"/g,'""')}"`;
+            const teamB = `"${(m.team2_name || m.team_b_name || '').replace(/"/g,'""')}"`;
+            const scoreA = m.score_team1 ?? m.score_a ?? '-';
+            const scoreB = m.score_team2 ?? m.score_b ?? '-';
+            const status = m.status || 'scheduled';
+            const date = m.match_date ? new Date(m.match_date).toLocaleDateString() : 'N/A';
+            rows.push(`${i + 1},${teamA},${teamB},"${scoreA}","${scoreB}","${status}","${date}"`);
+        });
+        const csv = rows.join('\n');
+        const filename = `${(event.title || 'event').replace(/[^a-z0-9]/gi,'_')}_matches.csv`;
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.send(csv);
+    } catch (error) {
+        console.error('Error exporting matches CSV:', error);
+        res.status(500).json({ success: false, message: 'Failed to export data' });
+    }
+});
+
 // GET /api/organizer/stats - Get organizer account statistics
 router.get('/stats', async (req, res) => {
     try {
         const Event = require('../models/event');
         const organizerId = req.session.user._id;
+        const plan = req.session.user?.subscription?.plan || 'free';
         
         const events = await Event.getEventsByOrganizer(organizerId);
         const upcomingCount = events.filter(e => new Date(e.event_date) > new Date() && e.status !== 'cancelled').length;
+        const completedEvents = events.filter(e => e.status === 'completed' || new Date(e.event_date) < new Date());
+        
+        // Calculate total participants (approved teams across all events)
+        let totalParticipants = 0;
+        let totalRevenue = 0;
+        const revenueByEvent = [];
+        const commissionRates = { free: 0.20, pro: 0.15, enterprise: 0.12 };
+        const commissionRate = commissionRates[plan] || 0.20;
+
+        for (const event of events) {
+            const approvedTeams = (event.team_registrations || []).filter(r => r.status === 'approved').length;
+            totalParticipants += approvedTeams;
+            if (event.entry_fee && approvedTeams > 0) {
+                const gross = event.entry_fee * approvedTeams;
+                const net = Math.round(gross * (1 - commissionRate));
+                totalRevenue += net;
+                if (plan !== 'free') {
+                    revenueByEvent.push({
+                        name: (event.title || 'Untitled').substring(0, 20),
+                        gross,
+                        net,
+                        teams: approvedTeams
+                    });
+                }
+            }
+        }
         
         const memberSince = req.session.user.created_at 
             ? new Date(req.session.user.created_at).toLocaleDateString() 
             : '8-11-2025';
         
-        res.json({
+        const responseData = {
             success: true,
             stats: {
                 status: 'Active',
                 memberSince,
                 totalEvents: events.length,
-                upcomingEvents: upcomingCount
+                upcomingEvents: upcomingCount,
+                totalParticipants,
+                completedEvents: completedEvents.length
             }
-        });
+        };
+
+        // Revenue data only for Pro/Enterprise
+        if (plan === 'pro' || plan === 'enterprise') {
+            const platformCut = Math.round(totalRevenue * commissionRate / (1 - commissionRate));
+            responseData.stats.revenueStats = {
+                totalRevenue,
+                platformCut,
+                yourEarnings: totalRevenue,
+                commissionRate: Math.round(commissionRate * 100),
+                revenueByEvent: revenueByEvent.slice(-8) // last 8 events
+            };
+        }
+        
+        res.json(responseData);
     } catch (error) {
         console.error('Error fetching organizer stats:', error);
         res.status(500).json({ success: false, message: 'Failed to fetch statistics' });
