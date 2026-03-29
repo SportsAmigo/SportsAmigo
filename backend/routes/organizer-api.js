@@ -102,7 +102,15 @@ router.get('/events', async (req, res) => {
         
         const events = await Event.getEventsByOrganizer(organizerId);
         
-        const formattedEvents = events.map(event => {
+        // Filter for approved events only (for VAS purchases, etc.)
+        const approvedEvents = events.filter(event => 
+            event.status === 'approved' || 
+            event.status === 'upcoming' || 
+            event.status === 'ongoing' || 
+            event.status === 'completed'
+        );
+        
+        const formattedEvents = approvedEvents.map(event => {
             const now = new Date();
             const startDate = new Date(event.start_date || event.event_date);
             const endDate = new Date(event.end_date || event.event_date);
@@ -143,6 +151,24 @@ router.get('/events', async (req, res) => {
 router.post('/create-event', async (req, res) => {
     try {
         const Event = require('../models/event');
+        const User = require('../models/user');
+        
+        // Check if organizer is verified
+        const organizer = await User.getUserById(req.session.user._id);
+        if (!organizer) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Organizer account not found' 
+            });
+        }
+        
+        if (organizer.verificationStatus !== 'verified') {
+            return res.status(403).json({ 
+                success: false, 
+                message: 'Your account must be verified by a coordinator before you can create events. Please wait for approval.',
+                verificationStatus: organizer.verificationStatus
+            });
+        }
         
         // Validation
         if (!req.body.name) {
@@ -197,7 +223,7 @@ router.post('/create-event', async (req, res) => {
             max_teams: parseInt(req.body.max_teams) || 16,
             entry_fee: parseFloat(req.body.entry_fee) || 0,
             registration_deadline: req.body.registration_deadline || null,
-            status: 'upcoming',
+            status: 'pending_approval',
             team_registrations: []
         };
         
@@ -205,7 +231,7 @@ router.post('/create-event', async (req, res) => {
         
         res.status(201).json({
             success: true,
-            message: 'Event created successfully!',
+            message: 'Event created successfully! It will be visible to players once approved by a coordinator.',
             event: {
                 _id: newEvent._id,
                 name: newEvent.title,
@@ -974,6 +1000,84 @@ router.post('/event/:eventId/finalize-schedule', async (req, res) => {
             message: 'Failed to finalize schedule',
             error: error.message
         });
+    }
+});
+
+// GET /api/organizer/events/:eventId/export-participants-csv - Export approved participants as CSV (Pro/Enterprise)
+router.get('/events/:eventId/export-participants-csv', async (req, res) => {
+    try {
+        const plan = req.session.user?.subscription?.plan || 'free';
+        if (plan === 'free') {
+            return res.status(403).json({ success: false, message: 'Upgrade to Pro or Enterprise to export participant data.' });
+        }
+        const Event = require('../models/event');
+        const Team = require('../models/team');
+        const User = require('../models/user');
+        const { eventId } = req.params;
+        const event = await Event.getEventById(eventId);
+        if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
+        if (event.organizer_id.toString() !== req.session.user._id.toString()) {
+            return res.status(403).json({ success: false, message: 'Access denied' });
+        }
+        const approvedRegs = (event.team_registrations || []).filter(r => r.status === 'approved');
+        const rows = ['Team Name,Manager Name,Manager Email,Members,Registration Date'];
+        for (const reg of approvedRegs) {
+            try {
+                const team = await Team.getTeamById(reg.team_id);
+                if (!team) continue;
+                const manager = await User.getUserById(team.manager_id);
+                const managerName = manager ? `${manager.first_name || ''} ${manager.last_name || ''}`.trim() : 'N/A';
+                const managerEmail = manager?.email || 'N/A';
+                const members = team.members?.length || 0;
+                const regDate = reg.registered_at ? new Date(reg.registered_at).toLocaleDateString() : 'N/A';
+                rows.push(`"${(team.name || '').replace(/"/g,'""')}","${managerName.replace(/"/g,'""')}","${managerEmail}","${members}","${regDate}"`);
+            } catch (e) { /* skip */ }
+        }
+        const csv = rows.join('\n');
+        const filename = `${(event.title || 'event').replace(/[^a-z0-9]/gi,'_')}_participants.csv`;
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.send(csv);
+    } catch (error) {
+        console.error('Error exporting participants CSV:', error);
+        res.status(500).json({ success: false, message: 'Failed to export data' });
+    }
+});
+
+// GET /api/organizer/events/:eventId/export-matches-csv - Export match results as CSV (Pro/Enterprise)
+router.get('/events/:eventId/export-matches-csv', async (req, res) => {
+    try {
+        const plan = req.session.user?.subscription?.plan || 'free';
+        if (plan === 'free') {
+            return res.status(403).json({ success: false, message: 'Upgrade to Pro or Enterprise to export match results.' });
+        }
+        const Match = require('../models/schemas/matchSchema');
+        const Event = require('../models/event');
+        const { eventId } = req.params;
+        const event = await Event.getEventById(eventId);
+        if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
+        if (event.organizer_id.toString() !== req.session.user._id.toString()) {
+            return res.status(403).json({ success: false, message: 'Access denied' });
+        }
+        const matches = await Match.find({ event_id: eventId }).sort({ match_date: 1 }).lean();
+        const rows = ['Match Number,Team A,Team B,Score A,Score B,Status,Date'];
+        matches.forEach((m, i) => {
+            const teamA = `"${(m.team1_name || m.team_a_name || '').replace(/"/g,'""')}"`;
+            const teamB = `"${(m.team2_name || m.team_b_name || '').replace(/"/g,'""')}"`;
+            const scoreA = m.score_team1 ?? m.score_a ?? '-';
+            const scoreB = m.score_team2 ?? m.score_b ?? '-';
+            const status = m.status || 'scheduled';
+            const date = m.match_date ? new Date(m.match_date).toLocaleDateString() : 'N/A';
+            rows.push(`${i + 1},${teamA},${teamB},"${scoreA}","${scoreB}","${status}","${date}"`);
+        });
+        const csv = rows.join('\n');
+        const filename = `${(event.title || 'event').replace(/[^a-z0-9]/gi,'_')}_matches.csv`;
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.send(csv);
+    } catch (error) {
+        console.error('Error exporting matches CSV:', error);
+        res.status(500).json({ success: false, message: 'Failed to export data' });
     }
 });
 

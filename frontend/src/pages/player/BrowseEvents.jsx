@@ -170,6 +170,12 @@ const BrowseEvents = () => {
                                         <div className="event-info-item">
                                             <i className="fa fa-user"></i>
                                             <span><strong>Organizer:</strong> {event.organizer}</span>
+                                            {event.organizerTier === 'enterprise' && (
+                                                <span className="organizer-tier-badge enterprise-badge">★ Enterprise</span>
+                                            )}
+                                            {event.organizerTier === 'pro' && (
+                                                <span className="organizer-tier-badge pro-badge">⚡ Pro</span>
+                                            )}
                                         </div>
                                     )}
                                 </div>

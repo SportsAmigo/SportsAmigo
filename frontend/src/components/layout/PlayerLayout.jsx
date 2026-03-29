@@ -86,6 +86,13 @@ const PlayerLayout = ({ children }) => {
                             My Matches
                         </Link>
                         <Link 
+                            to="/player/services" 
+                            className={`sidebar-nav-item ${isActive('/player/services') ? 'active' : ''}`}
+                        >
+                            <i className="fa fa-star"></i>
+                            Premium Services
+                        </Link>
+                        <Link 
                             to="/player/profile" 
                             className={`sidebar-nav-item ${isActive('/player/profile') ? 'active' : ''}`}
                         >

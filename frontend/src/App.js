@@ -1,4 +1,4 @@
-﻿import React, { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Provider, useSelector, useDispatch } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
@@ -10,6 +10,7 @@ import './App.css';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import AdminLogin from './pages/AdminLogin';
+import ModeratorLogin from './pages/ModeratorLogin';
 import Signup from './pages/Signup';
 import Shop from './pages/Shop';
 import About from './pages/About';
@@ -28,6 +29,7 @@ import MyMatches from './pages/player/MyMatches';
 import PlayerStats from './pages/player/PlayerStats';
 import PlayerMatches from './pages/player/PlayerMatches';
 import PlayerEventDetail from './pages/player/EventDetail';
+import PlayerServices from './pages/player/PlayerServices';
 
 // Manager Pages
 import ManagerDashboard from './pages/manager/Dashboard';
@@ -52,6 +54,9 @@ import OrganizerProfile from './pages/organizer/OrganizerProfile';
 import EventMatches from './pages/organizer/EventMatches';
 import EventLeaderboard from './pages/organizer/EventLeaderboard';
 import ScheduleMatches from './pages/organizer/ScheduleMatches';
+import OrganizerServices from './pages/organizer/OrganizerServices';
+import SubscriptionManagement from './pages/organizer/SubscriptionManagement';
+import PaymentHistory from './pages/organizer/PaymentHistory';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -64,6 +69,15 @@ import AdminEvents from './pages/admin/AdminEvents';
 import AdminMatches from './pages/admin/AdminMatches';
 import AdminStats from './pages/admin/AdminStats';
 import AdminActivityLogs from './pages/admin/AdminActivityLogs';
+
+// Coordinator Pages
+import CoordinatorHome from './pages/coordinator/CoordinatorHome';
+import PendingOrganizers from './pages/coordinator/PendingOrganizers';
+import PendingEvents from './pages/coordinator/PendingEvents';
+import ApprovedOrganizers from './pages/coordinator/ApprovedOrganizers';
+import ApprovedEvents from './pages/coordinator/ApprovedEvents';
+import RejectedApplications from './pages/coordinator/RejectedApplications';
+import ActivityLog from './pages/coordinator/ActivityLog';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -115,6 +129,11 @@ const AppContent = () => {
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/shop" element={<Shop />} />
+
+        {/* Admin & Coordinator Login Routes */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/moderator/login" element={<ModeratorLogin />} />
+        <Route path="/coordinator/login" element={<ModeratorLogin />} />
 
         {/* Player Routes */}
         <Route
@@ -210,6 +229,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute allowedRoles={['player']}>
               <PlayerMatches />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/player/services"
+          element={
+            <ProtectedRoute allowedRoles={['player']}>
+              <PlayerServices />
             </ProtectedRoute>
           }
         />
@@ -393,9 +420,32 @@ const AppContent = () => {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/organizer/services"
+          element={
+            <ProtectedRoute allowedRoles={['organizer']}>
+              <OrganizerServices />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/organizer/subscription"
+          element={
+            <ProtectedRoute allowedRoles={['organizer']}>
+              <SubscriptionManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/organizer/payment-history"
+          element={
+            <ProtectedRoute allowedRoles={['organizer']}>
+              <PaymentHistory />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Admin Routes */}
-        <Route path="/admin/login" element={<AdminLogin />} />
         <Route
           path="/admin/dashboard"
           element={
@@ -457,6 +507,71 @@ const AppContent = () => {
           element={
             <ProtectedRoute allowedRoles={['admin']}>
               <AdminMatches />
+            </ProtectedRoute>
+          }
+        />
+        {/* Coordinator Routes */}
+        <Route
+          path="/moderator/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'moderator', 'coordinator']}>
+              <CoordinatorHome />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/coordinator/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'moderator', 'coordinator']}>
+              <CoordinatorHome />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/coordinator/pending-organizers"
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'moderator', 'coordinator']}>
+              <PendingOrganizers />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/coordinator/pending-events"
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'moderator', 'coordinator']}>
+              <PendingEvents />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/coordinator/approved-organizers"
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'moderator', 'coordinator']}>
+              <ApprovedOrganizers />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/coordinator/approved-events"
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'moderator', 'coordinator']}>
+              <ApprovedEvents />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/coordinator/rejected"
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'moderator', 'coordinator']}>
+              <RejectedApplications />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/coordinator/activity-log"
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'moderator', 'coordinator']}>
+              <ActivityLog />
             </ProtectedRoute>
           }
         />

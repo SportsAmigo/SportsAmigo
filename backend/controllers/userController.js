@@ -439,6 +439,11 @@ module.exports = {
             if (preferred_sports) updateData.preferred_sports = preferred_sports;
             if (organization_name) updateData.organization_name = organization_name;
             if (team_name) updateData.team_name = team_name;
+            
+            // Set verification status for organizers
+            if (role === 'organizer') {
+                updateData.verificationStatus = 'pending';
+            }
 
             await User.updateUser(user._id, updateData);
 

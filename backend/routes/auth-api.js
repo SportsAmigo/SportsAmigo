@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
 const User = require('../models/user');
+const Subscription = require('../models/schemas/subscriptionSchema');
 
 /**
  * API Authentication Routes for React Frontend
@@ -74,6 +75,18 @@ router.post('/login', async (req, res) => {
         
         req.session.user = sessionUser;
 
+        // Fetch active subscription so the badge shows immediately after login
+        let subscriptionData = { plan: 'free', status: 'active' };
+        try {
+            const sub = await Subscription.findOne({
+                user: sessionUser._id,
+                status: 'active'
+            }).sort({ createdAt: -1 });
+            if (sub) {
+                subscriptionData = { plan: sub.plan, status: sub.status };
+            }
+        } catch (_) { /* non-fatal — fall back to free */ }
+
         req.session.save(err => {
             if (err) {
                 return res.status(500).json({ 
@@ -97,7 +110,8 @@ router.post('/login', async (req, res) => {
                     address: sessionUser.profile?.address || '',
                     bio: sessionUser.bio || '',
                     organization: sessionUser.profile?.organization_name || '',
-                    profile_image: sessionUser.profile_image 
+                    profile_image: sessionUser.profile_image,
+                    subscription: subscriptionData
                 } 
             });
         });
@@ -184,8 +198,20 @@ router.post('/logout', (req, res) => {
  * Check session endpoint
  * GET /api/auth/check-session
  */
-router.get('/check-session', (req, res) => {
+router.get('/check-session', async (req, res) => {
     if (req.session && req.session.user) {
+        // Fetch active subscription from DB so the badge reflects real state after purchase
+        let subscriptionData = { plan: 'free', status: 'active' };
+        try {
+            const sub = await Subscription.findOne({
+                user: req.session.user._id,
+                status: 'active'
+            }).sort({ createdAt: -1 });
+            if (sub) {
+                subscriptionData = { plan: sub.plan, status: sub.status };
+            }
+        } catch (_) { /* non-fatal — fall back to free */ }
+
         return res.json({ 
             authenticated: true, 
             user: { 
@@ -200,7 +226,9 @@ router.get('/check-session', (req, res) => {
                 address: req.session.user.profile?.address || '',
                 bio: req.session.user.bio || '',
                 organization: req.session.user.profile?.organization_name || '',
-                profile_image: req.session.user.profile_image 
+                profile_image: req.session.user.profile_image,
+                verificationStatus: req.session.user.verificationStatus,
+                subscription: subscriptionData
             } 
         });
     } else {

@@ -11,5 +11,12 @@ module.exports = {
     PlayerProfile: require('./playerProfile'),
     Registration: require('./registration'),
     Template: require('./template'),
-    Match: require('./match')
+    Match: require('./match'),
+    Commission: require('./commission'),
+    Subscription: require('./subscription'),
+    Cart: require('./cart'),
+    Order: require('./order'),
+    ShopItem: require('./shopItem'),
+    WalletTransaction: require('./walletTransaction'),
+    VAS: require('./vas')
 }; 

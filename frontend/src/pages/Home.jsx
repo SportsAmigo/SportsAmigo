@@ -165,6 +165,14 @@ const Home = () => {
             <section className="footer">
                 <h4>About SportsAmigo</h4>
                 <p>Join the largest sports community and experience the thrill of competition, the joy of teamwork, and the pride of victory.</p>
+                <div style={{ marginTop: '20px', marginBottom: '10px' }}>
+                    <Link to="/admin/login" style={{ color: '#f44336', textDecoration: 'none', margin: '0 15px', fontSize: '14px' }}>
+                        <i className="fas fa-shield-alt"></i> Admin Login
+                    </Link>
+                    <Link to="/coordinator/login" style={{ color: '#f44336', textDecoration: 'none', margin: '0 15px', fontSize: '14px' }}>
+                        <i className="fas fa-clipboard-check"></i> Coordinator Login
+                    </Link>
+                </div>
                 <p>Made with <i className="fa fa-heart-o"></i> by SportsAmigo Team</p>
             </section>
         </div>

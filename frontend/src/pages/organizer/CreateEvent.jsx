@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import { selectUser } from '../../store/slices/authSlice';
+import { useSelector, useDispatch } from 'react-redux';
+import { selectUser, updateUserData } from '../../store/slices/authSlice';
 import OrganizerLayout from '../../components/layout/OrganizerLayout';
 import axios from 'axios';
 
 const CreateEvent = () => {
     const user = useSelector(selectUser);
+    const dispatch = useDispatch();
     const navigate = useNavigate();
 
     const [currentStep, setCurrentStep] = useState(1);
@@ -24,6 +25,26 @@ const CreateEvent = () => {
 
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
+
+    // Check if user is verified
+    const isVerified = user?.verificationStatus === 'verified';
+
+    // Refresh user session on component mount
+    useEffect(() => {
+        const refreshSession = async () => {
+            try {
+                const response = await axios.get('http://localhost:5000/api/auth/check-session', {
+                    withCredentials: true
+                });
+                if (response.data.authenticated && response.data.user) {
+                    dispatch(updateUserData(response.data.user));
+                }
+            } catch (error) {
+                console.error('Failed to refresh session:', error);
+            }
+        };
+        refreshSession();
+    }, [dispatch]);
 
     const sports = [
         'Football', 'Cricket', 'Basketball', 'Tennis', 'Badminton', 
@@ -189,17 +210,31 @@ const CreateEvent = () => {
         setErrors({});
 
         try {
+            // Fetch CSRF token
+            const csrfResponse = await axios.get('http://localhost:5000/api/csrf-token', {
+                withCredentials: true
+            });
+            const csrfToken = csrfResponse.data.csrfToken;
+
             const response = await axios.post('http://localhost:5000/api/organizer/create-event', {
                 ...formData,
                 organizer_id: user._id
             }, {
-                withCredentials: true
+                withCredentials: true,
+                headers: {
+                    'CSRF-Token': csrfToken
+                }
             });
 
-            alert('Event created successfully!');
-            navigate('/organizer/events');
+            if (response.data.success) {
+                alert('Event created successfully!');
+                navigate('/organizer/events');
+            }
         } catch (error) {
-            setErrors({ submit: error.response?.data?.message || 'Error creating event' });
+            console.error('Create event error:', error);
+            const errorMessage = error.response?.data?.message || 'Error creating event';
+            setErrors({ submit: errorMessage });
+            alert(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -231,6 +266,34 @@ const CreateEvent = () => {
                         </h1>
                         <p className="text-gray-600">Fill in the details to create your sports event</p>
                     </div>
+
+                    {/* Verification Status Warning */}
+                    {!isVerified && (
+                        <div style={{
+                            backgroundColor: '#FEF3C7',
+                            border: '2px solid #F59E0B',
+                            borderRadius: '8px',
+                            padding: '16px',
+                            marginBottom: '24px',
+                            display: 'flex',
+                            alignItems: 'start',
+                            gap: '12px'
+                        }}>
+                            <svg style={{ width: '24px', height: '24px', flexShrink: 0, color: '#F59E0B' }} fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                            <div>
+                                <h3 style={{ fontWeight: 'bold', color: '#92400E', marginBottom: '4px', fontSize: '16px' }}>
+                                    Account Verification Required
+                                </h3>
+                                <p style={{ color: '#78350F', fontSize: '14px', margin: 0 }}>
+                                    Your organizer account is currently <strong>{user?.verificationStatus || 'pending'}</strong>. 
+                                    You must be verified by a coordinator before you can create events. 
+                                    Please wait for the verification process to complete.
+                                </p>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="mb-8">
                         <div className="flex items-center justify-between">
@@ -509,6 +572,27 @@ const CreateEvent = () => {
                                     <p className="text-xs text-gray-500 mt-1">
                                         Minimum 2 teams, maximum 100 teams
                                     </p>
+                                    {(() => {
+                                        const plan = user?.subscription?.plan || 'free';
+                                        if (plan === 'free') return (
+                                            <p className="text-xs mt-1" style={{ color: '#D97706' }}>
+                                                <i className="fas fa-lock" style={{ marginRight: 4 }}></i>
+                                                Free plan: max 16 teams. <a href="/organizer/subscription" style={{ color: '#2563EB', textDecoration: 'underline' }}>Upgrade to Pro</a> for up to 64.
+                                            </p>
+                                        );
+                                        if (plan === 'pro') return (
+                                            <p className="text-xs mt-1" style={{ color: '#2563EB' }}>
+                                                <i className="fas fa-star" style={{ marginRight: 4 }}></i>
+                                                Pro plan: max 64 teams. <a href="/organizer/subscription" style={{ color: '#7C3AED', textDecoration: 'underline' }}>Upgrade to Enterprise</a> for unlimited.
+                                            </p>
+                                        );
+                                        return (
+                                            <p className="text-xs mt-1" style={{ color: '#059669' }}>
+                                                <i className="fas fa-building" style={{ marginRight: 4 }}></i>
+                                                Enterprise plan: unlimited teams allowed.
+                                            </p>
+                                        );
+                                    })()}
                                 </div>
 
                                 <div>
@@ -563,8 +647,9 @@ const CreateEvent = () => {
                                     </button>
                                     <button
                                         type="submit"
-                                        disabled={loading}
+                                        disabled={loading || !isVerified}
                                         className="px-8 py-4 bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 hover:from-orange-600 hover:via-red-600 hover:to-pink-600 text-white font-bold text-lg rounded-xl shadow-xl transform transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                                        title={!isVerified ? 'Account must be verified to create events' : ''}
                                     >
                                         {loading ? (
                                             <span className="flex items-center">

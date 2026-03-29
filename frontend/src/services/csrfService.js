@@ -67,12 +67,18 @@ class CsrfService {
      * @returns {Promise<Object>} Headers with CSRF token added
      */
     async addCsrfHeader(headers = {}) {
-        const token = await this.getCsrfToken();
-        return {
-            ...headers,
-            'X-CSRF-Token': token,
-            'CSRF-Token': token // Some backends use this header name
-        };
+        try {
+            const token = await this.getCsrfToken();
+            return {
+                ...headers,
+                'X-CSRF-Token': token,
+                'CSRF-Token': token // Some backends use this header name
+            };
+        } catch (error) {
+            console.warn('Failed to get CSRF token, continuing without it:', error.message);
+            // Return headers without CSRF token - some endpoints may not require it
+            return headers;
+        }
     }
 
     /**
