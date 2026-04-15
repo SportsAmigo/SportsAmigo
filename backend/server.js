@@ -18,6 +18,15 @@ const User = require('./models/user');
 const app = express();
 const port = process.env.PORT || 5000;
 const mongoose = require('./config/mongodb');
+const mongoUri =
+    process.env.MONGO_URI ||
+    process.env.MONGODB_URI ||
+    (process.env.NODE_ENV === 'production' ? null : 'mongodb://localhost:27017/sportsamigo');
+
+if (!mongoUri) {
+    console.error('MongoDB URI is missing. Set MONGO_URI or MONGODB_URI.');
+    process.exit(1);
+}
 
 app.use(helmet({
     contentSecurityPolicy: false,
@@ -92,7 +101,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
-        mongoUrl: process.env.MONGODB_URI || 'mongodb://localhost:27017/sportsamigo',
+        mongoUrl: mongoUri,
         collectionName: 'sessions',
         ttl: 14 * 24 * 60 * 60
     }),
@@ -249,6 +258,10 @@ app.use((req, res, next) => {
 });
 
 app.use((err, req, res, next) => {
+    if (res.headersSent) {
+        return next(err);
+    }
+
     const statusCode = err.statusCode || err.status || 500;
 
     const errorLog = {
