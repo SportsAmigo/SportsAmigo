@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectUser, logoutUser } from '../../store/slices/authSlice';
 import '../../pages/coordinator/CoordinatorDashboard.css';
+import { API_BASE_URL } from '../../utils/constants';
 
 const CoordinatorLayout = ({ children }) => {
     const location = useLocation();

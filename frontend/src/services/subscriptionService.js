@@ -4,6 +4,7 @@
  */
 
 import apiService from './apiService';
+import { API_BASE_URL } from '../utils/constants';
 
 const API_BASE = '/api/v1/subscriptions';
 
@@ -62,7 +63,7 @@ class SubscriptionService {
 
   /** Get the PDF receipt download URL for a transaction */
   getReceiptURL(transactionId) {
-    const base = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    const base = process.env.REACT_APP_API_URL || API_BASE_URL;
     return `${base}${API_BASE}/receipt/${transactionId}`;
   }
 }

@@ -1,0 +1,283 @@
+﻿[0mPOST /api/auth/login [32m200[0m 136.343 ms - 319[0m
+[0mGET /api/wallet/balance [32m200[0m 16.481 ms - 72[0m
+[0mGET /api/wallet/balance [33m401[0m 0.973 ms - 51[0m
+[0mPOST /api/auth/login [32m200[0m 74.376 ms - 319[0m
+[0mPOST /api/wallet/add [32m200[0m 18.091 ms - 588[0m
+[0mGET /api/wallet/balance [32m200[0m 8.904 ms - 78[0m
+[0mPOST /api/auth/login [32m200[0m 71.144 ms - 319[0m
+[0mPOST /api/wallet/add [32m200[0m 3.856 ms - 75[0m
+[0mPOST /api/auth/login [32m200[0m 72.409 ms - 319[0m
+[0mPOST /api/wallet/add [32m200[0m 2.520 ms - 75[0m
+[0mPOST /api/auth/login [32m200[0m 69.084 ms - 319[0m
+[0mPOST /api/wallet/add [32m200[0m 2.525 ms - 79[0m
+[0mPOST /api/auth/login [32m200[0m 71.156 ms - 319[0m
+[0mPOST /api/wallet/add [32m200[0m 12.097 ms - 588[0m
+[0mPOST /api/wallet/add [32m200[0m 18.153 ms - 588[0m
+[0mPOST /api/wallet/add [32m200[0m 11.428 ms - 588[0m
+[0mGET /api/wallet/transactions [32m200[0m 10.555 ms - 1417[0m
+node.exe : PASS __tests__/wallet.test.js (7.798 
+s)
+At C:\Program Files\nodejs\npx.ps1:29 char:3
++   & $NODE_EXE $NPX_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (PAS 
+   S __tests__/wallet.test.js (7.798 s):String)  
+   [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  ΓùÅ Console
+
+    console.log
+      [v1/subscriptions] Router loaded 
+successfully
+
+      at Object.log 
+(routes/v1/subscriptions.js:22:9)
+
+    console.log
+      [server] Mounting v1 subscription routes 
+at /api/v1/subscriptions
+
+      at Object.log (server.js:266:9)
+
+    console.log
+      [server] Mounting v1 VAS routes at /api/v1
+
+      at Object.log (server.js:268:9)
+
+[0mPOST /api/auth/login [32m200[0m 119.892 ms - 316[0m
+[0mPOST /api/auth/login [33m401[0m 109.082 ms - 55[0m
+[0mPOST /api/auth/login [33m401[0m 4.228 ms - 55[0m
+[0mPOST /api/auth/login [33m400[0m 1.913 ms - 61[0m
+[0mPOST /api/auth/login [32m200[0m 112.536 ms - 316[0m
+[0mGET /api/auth/check-session [32m200[0m 1.896 ms - 23[0m
+[0mPOST /api/auth/login [32m200[0m 107.054 ms - 316[0m
+[0mGET /api/auth/check-session [32m200[0m 5.471 ms - 324[0m
+PASS __tests__/auth.test.js
+  ΓùÅ Console
+
+    console.log
+      [v1/subscriptions] Router loaded 
+successfully
+
+      at Object.log 
+(routes/v1/subscriptions.js:22:9)
+
+    console.log
+      [server] Mounting v1 subscription routes 
+at /api/v1/subscriptions
+
+      at Object.log (server.js:266:9)
+
+    console.log
+      [server] Mounting v1 VAS routes at /api/v1
+
+      at Object.log (server.js:268:9)
+
+[0mPOST /api/auth/login [32m200[0m 96.568 ms - 316[0m
+[0mGET /api/auth/check-session [32m200[0m 4.662 ms - 324[0m
+[0mPOST /api/auth/logout [32m200[0m 3.835 ms - 46[0m
+[0mGET /api/auth/check-session [32m200[0m 0.444 ms - 23[0m
+[0mPOST /api/auth/login [32m200[0m 161.838 ms - 331[0m
+[0mPOST /api/v1/subscriptions/create-order [32m200[0m 25.865 ms - 249[0m
+[0mPOST /api/v1/subscriptions/create-order [33m403[0m 2.746 ms - 71[0m
+[0mPOST /api/auth/login [32m200[0m 118.166 ms - 331[0m
+[0mPOST /api/v1/subscriptions/create-order [33m400[0m 4.928 ms - 69[0m
+[0mPOST /api/auth/login [32m200[0m 109.190 ms - 331[0m
+[0mPOST /api/v1/subscriptions/verify-payment [33m400[0m 4.895 ms - 77[0m
+PASS __tests__/payments.test.js
+  ΓùÅ Console
+
+    console.log
+      [v1/subscriptions] Router loaded 
+successfully
+
+      at Object.log 
+(routes/v1/subscriptions.js:22:9)
+
+    console.log
+      [server] Mounting v1 subscription routes 
+at /api/v1/subscriptions
+
+      at Object.log (server.js:266:9)
+
+    console.log
+      [server] Mounting v1 VAS routes at /api/v1
+
+      at Object.log (server.js:268:9)
+
+    console.log
+      [v1/subscriptions/create-order] Request 
+received: {
+        body: { plan: 'pro', billingCycle: 
+'monthly' },
+        userId: '69e0de5d1a1f3f6e4b86afe0'
+      }
+
+      at log (routes/v1/subscriptions.js:325:11)
+
+    console.log
+      [v1/subscriptions/create-order] Request 
+received: { body: {}, userId: 
+'69e0de5d1a1f3f6e4b86b005' }
+
+      at log (routes/v1/subscriptions.js:325:11)
+
+    console.log
+      [v1/subscriptions/verify-payment] Request 
+received: {
+        body: {
+          razorpay_order_id: 
+'order_test_mock123',
+          razorpay_payment_id: 
+'pay_test_mock456',
+          razorpay_signature: 
+'totally_wrong_signature',
+          plan: 'pro',
+          billingCycle: 'monthly'
+        },
+        userId: '69e0de5e1a1f3f6e4b86b019'
+      }
+
+      at log (routes/v1/subscriptions.js:436:11)
+
+    console.error
+      [v1/subscriptions/verify-payment] 
+Signature verification FAILED
+
+    [0m [90m 451 |[39m     [36mconst[39m 
+isValid [33m=[39m verifyPaymentSignature(razorp
+ay_order_id[33m,[39m 
+razorpay_payment_id[33m,[39m 
+razorpay_signature)[33m;[39m
+     [90m 452 |[39m     [36mif[39m 
+([33m![39misValid) {
+    [31m[1m>[22m[39m[90m 453 |[39m       co
+nsole[33m.[39merror([32m'[v1/subscriptions/ver
+ify-payment] Signature verification 
+FAILED'[39m)[33m;[39m
+     [90m     |[39m               
+[31m[1m^[22m[39m
+     [90m 454 |[39m       [36mreturn[39m res
+[33m.[39mstatus([35m400[39m)[33m.[39mjson({ 
+success[33m:[39m [36mfalse[39m[33m,[39m 
+message[33m:[39m [32m'Payment verification 
+failed. Invalid signature.'[39m })[33m;[39m
+     [90m 455 |[39m     }
+     [90m 456 |[39m[0m
+
+      at error 
+(routes/v1/subscriptions.js:453:15)
+      at Layer.handle [as handle_request] 
+(node_modules/express/lib/router/layer.js:95:5)
+      at next 
+(node_modules/express/lib/router/route.js:149:13)
+      at next (routes/v1/subscriptions.js:36:3)
+      at Layer.handle [as handle_request] 
+(node_modules/express/lib/router/layer.js:95:5)
+      at next 
+(node_modules/express/lib/router/route.js:149:13)
+      at Route.dispatch 
+(node_modules/express/lib/router/route.js:119:3)
+      at Layer.handle [as handle_request] 
+(node_modules/express/lib/router/layer.js:95:5)
+      at 
+node_modules/express/lib/router/index.js:284:15
+      at Function.process_params 
+(node_modules/express/lib/router/index.js:346:12)
+      at next 
+(node_modules/express/lib/router/index.js:280:10)
+      at Function.handle 
+(node_modules/express/lib/router/index.js:175:3)
+      at router 
+(node_modules/express/lib/router/index.js:47:12)
+      at Layer.handle [as handle_request] 
+(node_modules/express/lib/router/layer.js:95:5)
+      at trim_prefix 
+(node_modules/express/lib/router/index.js:328:13)
+      at 
+node_modules/express/lib/router/index.js:286:9
+      at Function.process_params 
+(node_modules/express/lib/router/index.js:346:12)
+      at next 
+(node_modules/express/lib/router/index.js:280:10)
+      at 
+node_modules/express/lib/router/index.js:646:15
+      at next 
+(node_modules/express/lib/router/index.js:265:14)
+      at Function.handle 
+(node_modules/express/lib/router/index.js:175:3)
+      at router 
+(node_modules/express/lib/router/index.js:47:12)
+      at Layer.handle [as handle_request] 
+(node_modules/express/lib/router/layer.js:95:5)
+      at trim_prefix 
+(node_modules/express/lib/router/index.js:328:13)
+      at 
+node_modules/express/lib/router/index.js:286:9
+      at Function.process_params 
+(node_modules/express/lib/router/index.js:346:12)
+      at next 
+(node_modules/express/lib/router/index.js:280:10)
+      at next (server.js:174:5)
+      at Layer.handle [as handle_request] 
+(node_modules/express/lib/router/layer.js:95:5)
+      at trim_prefix 
+(node_modules/express/lib/router/index.js:328:13)
+      at 
+node_modules/express/lib/router/index.js:286:9
+      at Function.process_params 
+(node_modules/express/lib/router/index.js:346:12)
+      at next 
+(node_modules/express/lib/router/index.js:280:10)
+      at next (server.js:139:33)
+      at Layer.handle [as handle_request] 
+(node_modules/express/lib/router/layer.js:95:5)
+      at trim_prefix 
+(node_modules/express/lib/router/index.js:328:13)
+      at 
+node_modules/express/lib/router/index.js:286:9
+      at Function.process_params 
+(node_modules/express/lib/router/index.js:346:12)
+      at next 
+(node_modules/express/lib/router/index.js:280:10)
+      at 
+node_modules/express-session/index.js:521:7
+      at node_modules/connect-mongo/src/lib/Mongo
+Store.ts:325:9
+
+[0mPOST /api/auth/login [32m200[0m 104.796 ms - 331[0m
+[0mPOST /api/v1/events/69e0de5e1a1f3f6e4b86b033/vas/create-order [32m200[0m 11.857 ms - 340[0m
+[0mPOST /api/v1/events/69e0de5e1a1f3f6e4b86b047/vas/create-order [33m403[0m 1.519 ms - 63[0m
+PASS __tests__/health.test.js
+  ΓùÅ Console
+
+    console.log
+      [v1/subscriptions] Router loaded 
+successfully
+
+      at Object.log 
+(routes/v1/subscriptions.js:22:9)
+
+    console.log
+      [server] Mounting v1 subscription routes 
+at /api/v1/subscriptions
+
+      at Object.log (server.js:266:9)
+
+    console.log
+      [server] Mounting v1 VAS routes at /api/v1
+
+      at Object.log (server.js:268:9)
+
+
+Test Suites: 4 passed, 4 total
+Tests:       22 passed, 22 total
+Snapshots:   0 total
+Time:        14.282 s, estimated 15 s
+Ran all test suites.
+[0mGET /health [32m200[0m 0.988 ms - 95[0m
+Force exiting Jest: Have you considered using 
+`--detectOpenHandles` to detect async operations 
+that kept running after all tests finished?
+

@@ -5,6 +5,7 @@ import { selectUser, logoutUser } from '../../store/slices/authSlice';
 import PlayerLayout from '../../components/layout/PlayerLayout';
 import axios from 'axios';
 import './Dashboard.css';
+import { API_BASE_URL } from '../../utils/constants';
 
 const PlayerDashboard = () => {
     const user = useSelector(selectUser);
@@ -26,7 +27,7 @@ const PlayerDashboard = () => {
     const fetchDashboardData = async () => {
         try {
             setLoading(true);
-            const response = await axios.get('http://localhost:5000/api/player/dashboard', { withCredentials: true });
+            const response = await axios.get(`${API_BASE_URL}/api/player/dashboard`, { withCredentials: true });
             if (response.data.success) {
                 setDashboardData({
                     teamCount: response.data.teamCount || 0,

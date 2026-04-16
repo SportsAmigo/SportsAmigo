@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectUser, logoutUser } from '../../store/slices/authSlice';
 import '../../pages/manager/ManagerDashboard.css';
+import { API_BASE_URL } from '../../utils/constants';
 
 const ManagerLayout = ({ children }) => {
     const location = useLocation();

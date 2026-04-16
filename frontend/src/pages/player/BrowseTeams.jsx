@@ -5,6 +5,7 @@ import { selectUser } from '../../store/slices/authSlice';
 import PlayerLayout from '../../components/layout/PlayerLayout';
 import axios from 'axios';
 import './BrowseTeams.css';
+import { API_BASE_URL } from '../../utils/constants';
 
 const BrowseTeams = () => {
     const user = useSelector(selectUser);
@@ -20,7 +21,7 @@ const BrowseTeams = () => {
 
     const fetchTeams = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/player/browse-teams', { 
+            const response = await axios.get(`${API_BASE_URL}/api/player/browse-teams`, { 
                 withCredentials: true 
             });
             
@@ -53,7 +54,7 @@ const BrowseTeams = () => {
     const handleJoinRequest = async (teamId, teamName) => {
         try {
             const response = await axios.post(
-                `http://localhost:5000/api/player/teams/${teamId}/join`,
+                `${API_BASE_URL}/api/player/teams/${teamId}/join`,
                 {},
                 { withCredentials: true }
             );

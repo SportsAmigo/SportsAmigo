@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { selectUser, updateUserData } from '../../store/slices/authSlice';
 import OrganizerLayout from '../../components/layout/OrganizerLayout';
 import axios from 'axios';
+import { API_BASE_URL } from '../../utils/constants';
 
 const CreateEvent = () => {
     const user = useSelector(selectUser);
@@ -33,7 +34,7 @@ const CreateEvent = () => {
     useEffect(() => {
         const refreshSession = async () => {
             try {
-                const response = await axios.get('http://localhost:5000/api/auth/check-session', {
+                const response = await axios.get(`${API_BASE_URL}/api/auth/check-session`, {
                     withCredentials: true
                 });
                 if (response.data.authenticated && response.data.user) {
@@ -211,12 +212,12 @@ const CreateEvent = () => {
 
         try {
             // Fetch CSRF token
-            const csrfResponse = await axios.get('http://localhost:5000/api/csrf-token', {
+            const csrfResponse = await axios.get(`${API_BASE_URL}/api/csrf-token`, {
                 withCredentials: true
             });
             const csrfToken = csrfResponse.data.csrfToken;
 
-            const response = await axios.post('http://localhost:5000/api/organizer/create-event', {
+            const response = await axios.post(`${API_BASE_URL}/api/organizer/create-event`, {
                 ...formData,
                 organizer_id: user._id
             }, {

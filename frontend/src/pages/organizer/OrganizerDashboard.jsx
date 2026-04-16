@@ -6,6 +6,7 @@ import OrganizerLayout from '../../components/layout/OrganizerLayout';
 import axios from 'axios';
 // recharts removed — using pure CSS charts for React 19 compatibility
 import './OrganizerDashboard.css';
+import { API_BASE_URL } from '../../utils/constants';
 
 const OrganizerDashboard = () => {
     const user = useSelector(selectUser);
@@ -28,8 +29,8 @@ const OrganizerDashboard = () => {
     const fetchDashboardData = async () => {
         try {
             const [statsResponse, eventsResponse] = await Promise.all([
-                axios.get('http://localhost:5000/api/organizer/stats', { withCredentials: true }),
-                axios.get('http://localhost:5000/api/organizer/events?limit=5', { withCredentials: true })
+                axios.get(`${API_BASE_URL}/api/organizer/stats`, { withCredentials: true }),
+                axios.get(`${API_BASE_URL}/api/organizer/events?limit=5`, { withCredentials: true })
             ]);
 
             if (statsResponse.data.success) {

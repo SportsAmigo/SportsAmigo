@@ -5,6 +5,7 @@ import { selectUser } from '../../store/slices/authSlice';
 import PlayerLayout from '../../components/layout/PlayerLayout';
 import axios from 'axios';
 import './MyTeams.css';
+import { API_BASE_URL } from '../../utils/constants';
 
 const MyTeams = () => {
     const user = useSelector(selectUser);
@@ -17,7 +18,7 @@ const MyTeams = () => {
 
     const fetchMyTeams = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/player/my-teams', { withCredentials: true });
+            const response = await axios.get(`${API_BASE_URL}/api/player/my-teams`, { withCredentials: true });
             if (response.data.success) {
                 console.log('MyTeams - Fetched teams:', response.data.teams);
                 setTeams(response.data.teams);
@@ -33,7 +34,7 @@ const MyTeams = () => {
         if (!window.confirm('Are you sure you want to leave this team?')) return;
         
         try {
-            const response = await axios.post(`http://localhost:5000/api/player/teams/leave/${teamId}`, {}, { withCredentials: true });
+            const response = await axios.post(`${API_BASE_URL}/api/player/teams/leave/${teamId}`, {}, { withCredentials: true });
             if (response.data.success) {
                 alert('Left team successfully');
                 fetchMyTeams();

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/layout/AdminLayout';
 import ViewModal from '../../components/admin/ViewModal';
 import axios from 'axios';
+import { API_BASE_URL } from '../../utils/constants';
 
 const AdminPlayers = () => {
     const [players, setPlayers] = useState([]);
@@ -24,7 +25,7 @@ const AdminPlayers = () => {
     const fetchPlayers = async () => {
         try {
             setLoading(true);
-            const response = await axios.get('http://localhost:5000/api/admin/users/player', { withCredentials: true });
+            const response = await axios.get(`${API_BASE_URL}/api/admin/users/player`, { withCredentials: true });
             if (response.data.success) {
                 setPlayers(response.data.users || []);
             }
@@ -38,7 +39,7 @@ const AdminPlayers = () => {
     const handleView = async (playerId) => {
         try {
             setLoadingView(true);
-            const response = await axios.get(`http://localhost:5000/api/admin/api/players/${playerId}`, { withCredentials: true });
+            const response = await axios.get(`${API_BASE_URL}/api/admin/api/players/${playerId}`, { withCredentials: true });
             if (response.data.success) {
                 setSelectedPlayer(response.data.data);
                 setViewModalOpen(true);
@@ -57,7 +58,7 @@ const AdminPlayers = () => {
         }
 
         try {
-            const response = await axios.delete(`http://localhost:5000/api/admin/users/player/${playerId}`, { withCredentials: true });
+            const response = await axios.delete(`${API_BASE_URL}/api/admin/users/player/${playerId}`, { withCredentials: true });
             if (response.data.success) {
                 // Update state immediately - remove deleted player from list
                 setPlayers(prevPlayers => prevPlayers.filter(player => player.id !== playerId));

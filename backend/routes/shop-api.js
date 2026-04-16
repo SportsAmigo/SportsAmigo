@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const ShopItem = require('../models/shopItem');
+const cacheMiddleware = require('../middleware/cacheMiddleware');
 
 /**
  * @swagger
@@ -75,8 +76,8 @@ const ShopItem = require('../models/shopItem');
  *         description: Featured items returned
  */
 
-// GET /api/shop/items - Get all shop items
-router.get('/items', async (req, res) => {
+// GET /api/shop/items - Get all shop items (cached for 120 seconds)
+router.get('/items', cacheMiddleware(120), async (req, res) => {
     try {
         const { category, search, featured, inStock } = req.query;
         
@@ -95,7 +96,8 @@ router.get('/items', async (req, res) => {
         if (result.success) {
             return res.json({
                 success: true,
-                items: result.data
+                items: result.data,
+                searchMeta: result.searchMeta || null
             });
         } else {
             return res.status(500).json({
@@ -113,7 +115,7 @@ router.get('/items', async (req, res) => {
 });
 
 // GET /api/shop/items/:id - Get single item
-router.get('/items/:id', async (req, res) => {
+router.get('/items/:id', cacheMiddleware(180), async (req, res) => {
     try {
         const result = await ShopItem.getItemById(req.params.id);
         
@@ -138,7 +140,7 @@ router.get('/items/:id', async (req, res) => {
 });
 
 // GET /api/shop/categories - Get all categories
-router.get('/categories', async (req, res) => {
+router.get('/categories', cacheMiddleware(300), async (req, res) => {
     try {
         const result = await ShopItem.getAllItems();
         
@@ -164,7 +166,7 @@ router.get('/categories', async (req, res) => {
 });
 
 // GET /api/shop/featured - Get featured items
-router.get('/featured', async (req, res) => {
+router.get('/featured', cacheMiddleware(120), async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 6;
         const result = await ShopItem.getFeaturedItems(limit);

@@ -11,12 +11,14 @@ if (!MONGODB_URI) {
   process.exit(1);
 }
 
-mongoose.connect(MONGODB_URI)
-.then(() => {
-  console.log('Connected to MongoDB database');
-})
-.catch((err) => {
-  console.error('MongoDB connection error:', err);
-});
+if (process.env.NODE_ENV !== 'test') {
+  mongoose.connect(MONGODB_URI)
+  .then(() => {
+    console.log('Connected to MongoDB database');
+  })
+  .catch((err) => {
+    console.error('MongoDB connection error:', err);
+  });
+}
 
 module.exports = mongoose; 

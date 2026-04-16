@@ -1,6 +1,7 @@
  import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../../styles/MatchResultUpdate.css';
+import { API_BASE_URL } from '../../utils/constants';
 
 const MatchResultUpdate = ({ eventId }) => {
     const [matches, setMatches] = useState([]);
@@ -17,7 +18,7 @@ const MatchResultUpdate = ({ eventId }) => {
     const fetchMatches = async () => {
         try {
             setLoading(true);
-            const response = await axios.get(`http://localhost:5000/api/matches/event/${eventId}`, {
+            const response = await axios.get(`${API_BASE_URL}/api/matches/event/${eventId}`, {
                 withCredentials: true
             });
 
@@ -38,7 +39,7 @@ const MatchResultUpdate = ({ eventId }) => {
             setSuccess('');
 
             const response = await axios.put(
-                `http://localhost:5000/api/matches/${matchId}/result`,
+                `${API_BASE_URL}/api/matches/${matchId}/result`,
                 {
                     score_a: parseInt(scores.score_a),
                     score_b: parseInt(scores.score_b)

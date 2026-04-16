@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import ManagerLayout from '../../components/layout/ManagerLayout';
 import './CreateTeam.css'; // Reuse the same CSS
+import { API_BASE_URL } from '../../utils/constants';
 
 const EditTeam = () => {
     const { id } = useParams();
@@ -36,7 +37,7 @@ const EditTeam = () => {
 
     const fetchTeamDetails = async () => {
         try {
-            const response = await axios.get(`http://localhost:5000/api/manager/team/${id}`, {
+            const response = await axios.get(`${API_BASE_URL}/api/manager/team/${id}`, {
                 withCredentials: true
             });
             if (response.data.success) {
@@ -100,7 +101,7 @@ const EditTeam = () => {
 
         try {
             const response = await axios.put(
-                `http://localhost:5000/api/manager/team/${id}`,
+                `${API_BASE_URL}/api/manager/team/${id}`,
                 formData,
                 { withCredentials: true }
             );

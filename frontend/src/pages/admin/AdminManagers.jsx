@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/layout/AdminLayout';
 import ViewModal from '../../components/admin/ViewModal';
 import axios from 'axios';
+import { API_BASE_URL } from '../../utils/constants';
 
 const AdminManagers = () => {
     const [managers, setManagers] = useState([]);
@@ -22,7 +23,7 @@ const AdminManagers = () => {
     const fetchManagers = async () => {
         try {
             setLoading(true);
-            const response = await axios.get('http://localhost:5000/api/admin/users/manager', { withCredentials: true });
+            const response = await axios.get(`${API_BASE_URL}/api/admin/users/manager`, { withCredentials: true });
             if (response.data.success) {
                 setManagers(response.data.users || []);
             }
@@ -36,7 +37,7 @@ const AdminManagers = () => {
     const handleView = async (managerId) => {
         try {
             setLoadingView(true);
-            const response = await axios.get(`http://localhost:5000/api/admin/api/managers/${managerId}`, { withCredentials: true });
+            const response = await axios.get(`${API_BASE_URL}/api/admin/api/managers/${managerId}`, { withCredentials: true });
             if (response.data.success) {
                 setSelectedManager(response.data.data);
                 setViewModalOpen(true);
@@ -52,7 +53,7 @@ const AdminManagers = () => {
     const handleDelete = async (managerId, managerName) => {
         if (!window.confirm(`Are you sure you want to delete ${managerName}? This action cannot be undone and will permanently remove this manager from the entire system.`)) return;
         try {
-            const response = await axios.delete(`http://localhost:5000/api/admin/users/manager/${managerId}`, { withCredentials: true });
+            const response = await axios.delete(`${API_BASE_URL}/api/admin/users/manager/${managerId}`, { withCredentials: true });
             if (response.data.success) {
                 // Update state immediately - remove deleted manager from list
                 setManagers(prevManagers => prevManagers.filter(manager => manager.id !== managerId));

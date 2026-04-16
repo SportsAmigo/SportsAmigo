@@ -4,6 +4,7 @@ import { selectUser, updateUserData } from '../../store/slices/authSlice';
 import ManagerLayout from '../../components/layout/ManagerLayout';
 import axios from 'axios';
 import './Profile.css';
+import { API_BASE_URL } from '../../utils/constants';
 
 const ManagerProfile = () => {
     const user = useSelector(selectUser);
@@ -32,7 +33,7 @@ const ManagerProfile = () => {
             });
             // Set preview from existing profile image
             if (user.profile_image) {
-                setImagePreview(`http://localhost:5000${user.profile_image}`);
+                setImagePreview(`${API_BASE_URL}${user.profile_image}`);
             }
         }
     }, [user]);
@@ -179,7 +180,7 @@ const ManagerProfile = () => {
             }
 
             const response = await axios.put(
-                'http://localhost:5000/api/manager/profile',
+                `${API_BASE_URL}/api/manager/profile`,
                 formDataToSend,
                 { 
                     withCredentials: true,

@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import ManagerLayout from '../../components/layout/ManagerLayout';
 import './EventRegister.css';
+import { API_BASE_URL } from '../../utils/constants';
 
 const EventRegister = () => {
   const { id } = useParams();
@@ -24,8 +25,8 @@ const EventRegister = () => {
       setLoading(true);
       console.log('Fetching event details for ID:', id);
       const [eventRes, teamsRes] = await Promise.all([
-        axios.get(`http://localhost:5000/api/manager/event/${id}/details`, { withCredentials: true }),
-        axios.get('http://localhost:5000/api/manager/my-teams', { withCredentials: true })
+        axios.get(`${API_BASE_URL}/api/manager/event/${id}/details`, { withCredentials: true }),
+        axios.get(`${API_BASE_URL}/api/manager/my-teams`, { withCredentials: true })
       ]);
       
       console.log('Event response:', eventRes.data);
@@ -66,7 +67,7 @@ const EventRegister = () => {
       setSubmitting(true);
       console.log('Registering team:', selectedTeam, 'for event:', id);
       const response = await axios.post(
-        `http://localhost:5000/api/manager/event/${id}/register`,
+        `${API_BASE_URL}/api/manager/event/${id}/register`,
         {
           team_id: selectedTeam,
           notes: notes.trim()

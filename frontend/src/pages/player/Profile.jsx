@@ -4,6 +4,7 @@ import { selectUser, updateUserData } from '../../store/slices/authSlice';
 import PlayerLayout from '../../components/layout/PlayerLayout';
 import axios from 'axios';
 import './Profile.css';
+import { API_BASE_URL } from '../../utils/constants';
 
 const Profile = () => {
     const user = useSelector(selectUser);
@@ -31,7 +32,7 @@ const Profile = () => {
             });
             // Set preview from existing profile image
             if (user.profile_image) {
-                setImagePreview(`http://localhost:5000${user.profile_image}`);
+                setImagePreview(`${API_BASE_URL}${user.profile_image}`);
             }
         }
     }, [user]);
@@ -113,7 +114,7 @@ const Profile = () => {
             }
 
             const response = await axios.put(
-                'http://localhost:5000/api/player/profile',
+                `${API_BASE_URL}/api/player/profile`,
                 formDataToSend,
                 { 
                     withCredentials: true,

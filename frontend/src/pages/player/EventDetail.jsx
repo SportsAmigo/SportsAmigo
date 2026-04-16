@@ -5,6 +5,7 @@ import { selectUser } from '../../store/slices/authSlice';
 import PlayerLayout from '../../components/layout/PlayerLayout';
 import axios from 'axios';
 import './EventDetail.css';
+import { API_BASE_URL } from '../../utils/constants';
 
 const EventDetail = () => {
     const { eventId } = useParams();
@@ -21,7 +22,7 @@ const EventDetail = () => {
     const fetchEventDetails = async () => {
         try {
             console.log('EventDetail - Fetching event with ID:', eventId);
-            const response = await axios.get(`http://localhost:5000/api/player/event/${eventId}`, {
+            const response = await axios.get(`${API_BASE_URL}/api/player/event/${eventId}`, {
                 withCredentials: true
             });
 

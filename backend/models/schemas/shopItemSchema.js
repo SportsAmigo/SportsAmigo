@@ -57,5 +57,7 @@ shopItemSchema.pre('save', function(next) {
 shopItemSchema.index({ name: 'text', description: 'text' });
 shopItemSchema.index({ category: 1 });
 shopItemSchema.index({ price: 1 });
+shopItemSchema.index({ category: 1, stock: 1, createdAt: -1 });
+shopItemSchema.index({ featured: 1, stock: 1, createdAt: -1 });
 
 module.exports = mongoose.model('ShopItem', shopItemSchema);

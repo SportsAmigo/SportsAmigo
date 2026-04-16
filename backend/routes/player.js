@@ -12,6 +12,7 @@ const playerProfileController = require('../controllers/playerProfileController'
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
+const cacheMiddleware = require('../middleware/cacheMiddleware');
 
 // Middleware to check if user is logged in as a player
 const isPlayer = (req, res, next) => {
@@ -552,17 +553,18 @@ router.get('/my-events', async (req, res) => {
 });
 
 // Browse Events (Events a player can join)
-router.get('/browse-events', async (req, res) => {
+router.get('/browse-events', cacheMiddleware(45), async (req, res) => {
     try {
-        // Get all events
-        const allEvents = await Event.getAllEvents();
+        const search = req.query.search ? String(req.query.search).trim() : '';
 
-        // Filter to only show approved events (exclude pending_approval, rejected, cancelled)
-        const events = allEvents.filter(event => 
-            ['upcoming', 'ongoing', 'completed', 'open'].includes(event.status)
-        );
+        // Query only browsable statuses directly in MongoDB for better performance.
+        const events = await Event.getBrowsableEvents({
+            statuses: ['upcoming', 'ongoing', 'completed', 'open'],
+            search,
+            limit: 250
+        });
 
-        console.log(`Player browse-events: Found ${events.length} approved events (filtered from ${allEvents.length} total)`);
+        console.log(`Player browse-events: Found ${events.length} approved events${search ? ` for search="${search}"` : ''}`);
 
         // Format events for display
         const formattedEvents = events.map(event => ({
@@ -589,6 +591,7 @@ router.get('/browse-events', async (req, res) => {
         // Return JSON for API calls
         res.json({
             success: true,
+            search,
             events: formattedEvents
         });
     } catch (err) {

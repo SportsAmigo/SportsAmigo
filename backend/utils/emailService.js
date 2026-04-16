@@ -1,27 +1,54 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-// Email configuration
-const EMAIL_CONFIG = {
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, // true for 465, false for other ports
-  auth: {
-    user: 'sportsamigoauth@gmail.com',
-    pass: 'kfzn gblg veuj lmsi' // Google App Password
+const resend = new Resend(process.env.RESEND_API_KEY);
+const DEFAULT_FROM_EMAIL = process.env.RESEND_FROM_EMAIL;
+const RESEND_TEST_EMAIL = process.env.RESEND_TEST_EMAIL;
+const RESEND_ALLOW_SANDBOX_REDIRECT = process.env.RESEND_ALLOW_SANDBOX_REDIRECT === 'true';
+
+const isSandboxSender = (fromEmail) => String(fromEmail).toLowerCase().includes('onboarding@resend.dev');
+
+/**
+ * Shared Resend email sender.
+ * Throws on API errors so calling routes can return proper 500 responses.
+ */
+const sendEmail = async ({ toEmail, subject, html, text }) => {
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error('RESEND_API_KEY is not configured');
   }
-};
 
-// Create reusable transporter
-const transporter = nodemailer.createTransport(EMAIL_CONFIG);
+  if (!DEFAULT_FROM_EMAIL) {
+    throw new Error('RESEND_FROM_EMAIL is not configured');
+  }
 
-// Verify transporter configuration
-transporter.verify((error, success) => {
+  let recipient = toEmail;
+
+  if (isSandboxSender(DEFAULT_FROM_EMAIL) && toEmail !== RESEND_TEST_EMAIL) {
+    if (RESEND_ALLOW_SANDBOX_REDIRECT && RESEND_TEST_EMAIL) {
+      recipient = RESEND_TEST_EMAIL;
+      console.warn(`Resend sandbox redirect active. Intended recipient ${toEmail} redirected to ${RESEND_TEST_EMAIL}.`);
+    } else {
+      throw new Error(
+        'Resend sandbox restriction: onboarding@resend.dev can only send to RESEND_TEST_EMAIL. ' +
+        'Set RESEND_TEST_EMAIL to your account email, enable RESEND_ALLOW_SANDBOX_REDIRECT=true for testing, ' +
+        'or verify a domain at resend.com/domains and use RESEND_FROM_EMAIL from that domain.'
+      );
+    }
+  }
+
+  const { data, error } = await resend.emails.send({
+    from: DEFAULT_FROM_EMAIL,
+    to: [recipient],
+    subject,
+    html,
+    text
+  });
+
   if (error) {
-    console.error('Email service configuration error:', error);
-  } else {
-    console.log('Email service is ready to send messages');
+    throw new Error(error.message || 'Resend API error');
   }
-});
+
+  return data;
+};
 
 /**
  * Common HTML template structure for all emails
@@ -130,23 +157,18 @@ const sendOTPEmail = async (toEmail, otp, userName = 'User') => {
     );
 
 
-    const mailOptions = {
-      from: {
-        name: 'SportsAmigo',
-        address: 'sportsamigoauth@gmail.com'
-      },
-      to: toEmail,
+    const data = await sendEmail({
+      toEmail,
       subject: 'Verify Your Email - SportsAmigo',
       html: htmlBody,
       text: `Hello ${userName},\n\nYour SportsAmigo verification code is: ${otp}\n\nThis code is valid for 10 minutes.\n\nIf you didn't request this code, please ignore this email.\n\nBest regards,\nTeam SportsAmigo`
-    };
+    });
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log('OTP email sent successfully:', info.messageId);
-    return { success: true, messageId: info.messageId };
+    console.log('OTP email sent successfully. ID:', data.id);
+    return { success: true, messageId: data.id };
   } catch (error) {
     console.error('Error sending OTP email:', error);
-    throw new Error('Failed to send OTP email');
+    throw error;
   }
 };
 
@@ -187,23 +209,18 @@ const sendPasswordResetOTPEmail = async (toEmail, otp, userName = 'User') => {
       '#f5576c' // Accent Color
     );
 
-    const mailOptions = {
-      from: {
-        name: 'SportsAmigo',
-        address: 'sportsamigoauth@gmail.com'
-      },
-      to: toEmail,
+    const data = await sendEmail({
+      toEmail,
       subject: 'Password Reset Request - SportsAmigo',
       html: htmlBody,
       text: `Hello ${userName},\n\nYour SportsAmigo password reset code is: ${otp}\n\nThis code is valid for 10 minutes.\n\nIf you didn't request a password reset, please ignore this email.\n\nBest regards,\nTeam SportsAmigo`
-    };
+    });
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log('Password reset OTP email sent successfully:', info.messageId);
-    return { success: true, messageId: info.messageId };
+    console.log('Password reset OTP email sent successfully. ID:', data.id);
+    return { success: true, messageId: data.id };
   } catch (error) {
     console.error('Error sending password reset email:', error);
-    throw new Error('Failed to send password reset email');
+    throw error;
   }
 };
 
@@ -243,20 +260,15 @@ const sendWelcomeEmail = async (toEmail, userName, userRole) => {
       '#667eea' // Accent Color
     );
 
-    const mailOptions = {
-      from: {
-        name: 'SportsAmigo',
-        address: 'sportsamigoauth@gmail.com'
-      },
-      to: toEmail,
+    const data = await sendEmail({
+      toEmail,
       subject: 'Welcome to SportsAmigo! 🎉',
       html: htmlBody,
       text: `Hello ${userName},\n\nYour email is verified! Welcome to SportsAmigo. Your role: ${userRole}. Get started now!\n\nBest regards,\nTeam SportsAmigo`
-    };
+    });
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log('Welcome email sent successfully:', info.messageId);
-    return { success: true, messageId: info.messageId };
+    console.log('Welcome email sent successfully. ID:', data.id);
+    return { success: true, messageId: data.id };
   } catch (error) {
     console.error('Error sending welcome email:', error);
     // Don't throw error for welcome email, just log it
