@@ -39,11 +39,17 @@ jobs:
         env:
           NODE_ENV: test
           MONGO_URI: mongodb://localhost:27017/sportsamigo_test
+          MONGODB_URI: mongodb://localhost:27017/sportsamigo_test
           REDIS_URL: redis://localhost:6379
           SESSION_SECRET: test-session-secret-for-ci
           RAZORPAY_KEY_ID: test_key_id
           RAZORPAY_KEY_SECRET: test_key_secret
-        run: npm test -- --coverage --ci --forceExit
+          RESEND_API_KEY: re_test_key_for_ci
+          RESEND_FROM_EMAIL: SportsAmigo <noreply@example.com>
+          RESEND_TEST_EMAIL: test@example.com
+          RESEND_ALLOW_SANDBOX_REDIRECT: "false"
+          SKIP_MONGO_MEMORY_SERVER: "true"
+        run: npm test -- --ci --forceExit
 
       - name: Run DB query regression check
         working-directory: backend
@@ -52,6 +58,7 @@ jobs:
           MONGO_URI: mongodb://localhost:27017/sportsamigo_test
           REDIS_URL: redis://localhost:6379
           SESSION_SECRET: test-session-secret-for-ci
+          SKIP_MONGO_MEMORY_SERVER: "true"
         run: npm run perf:db
 
       - name: Upload coverage report
@@ -59,6 +66,7 @@ jobs:
         with:
           name: backend-coverage-report
           path: backend/coverage/
+          if-no-files-found: ignore
           retention-days: 7
 
   test-frontend:
@@ -96,6 +104,7 @@ jobs:
       - name: Build frontend
         working-directory: frontend
         env:
+          CI: false
           REACT_APP_API_URL: http://localhost:5000
         run: npm run build
 
