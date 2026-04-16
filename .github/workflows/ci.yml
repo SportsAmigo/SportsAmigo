@@ -44,6 +44,10 @@ jobs:
           SESSION_SECRET: test-session-secret-for-ci
           RAZORPAY_KEY_ID: test_key_id
           RAZORPAY_KEY_SECRET: test_key_secret
+          RESEND_API_KEY: re_test_key_for_ci
+          RESEND_FROM_EMAIL: SportsAmigo <noreply@example.com>
+          RESEND_TEST_EMAIL: test@example.com
+          RESEND_ALLOW_SANDBOX_REDIRECT: "false"
           SKIP_MONGO_MEMORY_SERVER: "true"
         run: npm test -- --coverage --ci --forceExit
 
