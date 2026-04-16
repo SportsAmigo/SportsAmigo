@@ -1,0 +1,77 @@
+version: '3.9'
+
+services:
+  mongodb:
+    image: mongo:6
+    container_name: sportsamigo-mongo
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - app-network
+    healthcheck:
+      test: mongosh --eval 'db.adminCommand("ping")'
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: sportsamigo-redis
+    restart: unless-stopped
+    networks:
+      - app-network
+    healthcheck:
+      test: redis-cli ping
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sportsamigo-backend
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/sportsamigo
+      - REDIS_URL=redis://redis:6379
+      - NODE_ENV=production
+    ports:
+      - "5000:5000"
+    networks:
+      - app-network
+    healthcheck:
+      test: wget -qO- http://localhost:5000/health || exit 1
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - REACT_APP_API_URL=http://localhost:5000
+    container_name: sportsamigo-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3000:80"
+    networks:
+      - app-network
+
+volumes:
+  mongo_data:
+
+networks:
+  app-network:
+    driver: bridge

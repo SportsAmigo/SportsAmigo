@@ -130,4 +130,8 @@ const eventSchema = new Schema({
   }]
 });
 
+// Indexes for efficient queries
+eventSchema.index({ status: 1, created_at: -1 });
+eventSchema.index({ organizer_id: 1 });
+
 module.exports = mongoose.model('Event', eventSchema); 

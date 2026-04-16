@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import { selectUser } from '../../store/slices/authSlice';
 import OrganizerLayout from '../../components/layout/OrganizerLayout';
 import './EventMatches.css';
+import { API_BASE_URL } from '../../utils/constants';
 
 const EventMatches = () => {
     const { eventId } = useParams();
@@ -24,7 +25,7 @@ const EventMatches = () => {
     const fetchMatches = async () => {
         try {
             const response = await fetch(
-                `http://localhost:5000/api/matches/event/${eventId}`,
+                `${API_BASE_URL}/api/matches/event/${eventId}`,
                 { credentials: 'include' }
             );
             const data = await response.json();
@@ -44,7 +45,7 @@ const EventMatches = () => {
     const handleVerify = async (matchId) => {
         try {
             const response = await fetch(
-                `http://localhost:5000/api/matches/${matchId}/approve`,
+                `${API_BASE_URL}/api/matches/${matchId}/approve`,
                 {
                     method: 'POST',
                     credentials: 'include'
@@ -73,7 +74,7 @@ const EventMatches = () => {
 
         try {
             const response = await fetch(
-                `http://localhost:5000/api/matches/${disputeModal.matchId}/reject`,
+                `${API_BASE_URL}/api/matches/${disputeModal.matchId}/reject`,
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -252,7 +253,7 @@ const EventMatches = () => {
                         </button>
                         {(organizerPlan === 'pro' || organizerPlan === 'enterprise') ? (
                             <a
-                                href={`http://localhost:5000/api/organizer/events/${eventId}/export-matches-csv`}
+                                href={`${API_BASE_URL}/api/organizer/events/${eventId}/export-matches-csv`}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="btn-primary"

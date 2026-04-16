@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const ShopItem = require('../models/shopItem');
+const cacheMiddleware = require('../middleware/cacheMiddleware');
 
 /**
  * @swagger
@@ -75,8 +76,8 @@ const ShopItem = require('../models/shopItem');
  *         description: Featured items returned
  */
 
-// GET /api/shop/items - Get all shop items
-router.get('/items', async (req, res) => {
+// GET /api/shop/items - Get all shop items (cached for 120 seconds)
+router.get('/items', cacheMiddleware(120), async (req, res) => {
     try {
         const { category, search, featured, inStock } = req.query;
         

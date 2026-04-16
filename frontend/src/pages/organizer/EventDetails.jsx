@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import { selectUser } from '../../store/slices/authSlice';
 import OrganizerLayout from '../../components/layout/OrganizerLayout';
 import axios from 'axios';
+import { API_BASE_URL } from '../../utils/constants';
 
 const EventDetails = () => {
     const { id } = useParams();
@@ -30,7 +31,7 @@ const EventDetails = () => {
 
     const fetchEventDetails = async () => {
         try {
-            const response = await axios.get(`http://localhost:5000/api/organizer/event/${id}`, {
+            const response = await axios.get(`${API_BASE_URL}/api/organizer/event/${id}`, {
                 withCredentials: true
             });
 
@@ -52,7 +53,7 @@ const EventDetails = () => {
             const teamIdString = typeof teamId === 'object' ? teamId._id || teamId.id : teamId;
             
             const response = await axios.put(
-                `http://localhost:5000/api/organizer/event/${id}/approve-team/${teamIdString}`,
+                `${API_BASE_URL}/api/organizer/event/${id}/approve-team/${teamIdString}`,
                 {},
                 { withCredentials: true }
             );
@@ -74,7 +75,7 @@ const EventDetails = () => {
             const teamIdString = typeof teamId === 'object' ? teamId._id || teamId.id : teamId;
             
             const response = await axios.put(
-                `http://localhost:5000/api/organizer/event/${id}/reject-team/${teamIdString}`,
+                `${API_BASE_URL}/api/organizer/event/${id}/reject-team/${teamIdString}`,
                 {},
                 { withCredentials: true }
             );
@@ -94,7 +95,7 @@ const EventDetails = () => {
         }
 
         try {
-            const response = await axios.put(`http://localhost:5000/api/organizer/event/${id}/cancel`, {}, {
+            const response = await axios.put(`${API_BASE_URL}/api/organizer/event/${id}/cancel`, {}, {
                 withCredentials: true
             });
 
@@ -113,7 +114,7 @@ const EventDetails = () => {
         }
 
         try {
-            const response = await axios.delete(`http://localhost:5000/api/organizer/event/${id}`, {
+            const response = await axios.delete(`${API_BASE_URL}/api/organizer/event/${id}`, {
                 withCredentials: true
             });
 
@@ -469,7 +470,7 @@ const EventDetails = () => {
                                 </h2>
                                 {(user?.subscription?.plan === 'pro' || user?.subscription?.plan === 'enterprise') ? (
                                     <a
-                                        href={`http://localhost:5000/api/organizer/events/${id}/export-participants-csv`}
+                                        href={`${API_BASE_URL}/api/organizer/events/${id}/export-participants-csv`}
                                         target="_blank"
                                         rel="noreferrer"
                                         className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white"

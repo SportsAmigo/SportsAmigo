@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectUser, logoutUser } from '../../store/slices/authSlice';
 import '../../pages/admin/AdminDashboard.css';
+import { API_BASE_URL } from '../../utils/constants';
 
 const AdminLayout = ({ children }) => {
     const location = useLocation();

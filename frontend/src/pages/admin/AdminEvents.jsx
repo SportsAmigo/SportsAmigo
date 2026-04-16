@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/layout/AdminLayout';
 import ViewModal from '../../components/admin/ViewModal';
 import axios from 'axios';
+import { API_BASE_URL } from '../../utils/constants';
 
 const AdminEvents = () => {
     const [events, setEvents] = useState([]);
@@ -20,7 +21,7 @@ const AdminEvents = () => {
     const fetchEvents = async () => {
         try {
             setLoading(true);
-            const response = await axios.get('http://localhost:5000/api/admin/events', { withCredentials: true });
+            const response = await axios.get(`${API_BASE_URL}/api/admin/events`, { withCredentials: true });
             if (response.data.success) {
                 setEvents(response.data.events || []);
             }
@@ -34,7 +35,7 @@ const AdminEvents = () => {
     const handleView = async (eventId) => {
         try {
             setLoadingView(true);
-            const response = await axios.get(`http://localhost:5000/api/admin/api/events/${eventId}`, { withCredentials: true });
+            const response = await axios.get(`${API_BASE_URL}/api/admin/api/events/${eventId}`, { withCredentials: true });
             if (response.data.success) {
                 setSelectedEvent(response.data.data);
                 setViewModalOpen(true);
@@ -50,7 +51,7 @@ const AdminEvents = () => {
     const handleDelete = async (eventId, eventName) => {
         if (!window.confirm(`Delete event: ${eventName}? This action cannot be undone and will permanently remove this event from the entire system.`)) return;
         try {
-            const response = await axios.delete(`http://localhost:5000/api/admin/events/${eventId}`, { withCredentials: true });
+            const response = await axios.delete(`${API_BASE_URL}/api/admin/events/${eventId}`, { withCredentials: true });
             if (response.data.success) {
                 // Update state immediately - remove deleted event from list
                 setEvents(prevEvents => prevEvents.filter(event => event.id !== eventId));

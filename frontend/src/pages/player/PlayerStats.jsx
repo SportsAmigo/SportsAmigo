@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './PlayerStats.css';
+import { API_BASE_URL } from '../../utils/constants';
 
 const PlayerStats = () => {
     const navigate = useNavigate();
@@ -14,7 +15,7 @@ const PlayerStats = () => {
 
     const fetchStats = async () => {
         try {
-            const response = await fetch('http://localhost:5000/player/stats', {
+            const response = await fetch(`${API_BASE_URL}/player/stats`, {
                 credentials: 'include'
             });
             const data = await response.json();

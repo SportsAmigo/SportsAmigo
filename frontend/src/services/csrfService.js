@@ -10,7 +10,7 @@
  * 3. Or use the makeSecureRequest() wrapper for automatic handling
  */
 
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = API_BASE_URL;
 
 class CsrfService {
     constructor() {

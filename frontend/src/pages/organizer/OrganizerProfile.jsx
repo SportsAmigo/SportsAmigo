@@ -3,6 +3,7 @@ import OrganizerLayout from '../../components/layout/OrganizerLayout';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectUser, updateUserData } from '../../store/slices/authSlice';
 import axios from 'axios';
+import { API_BASE_URL } from '../../utils/constants';
 
 const OrganizerProfile = () => {
     const user = useSelector(selectUser);
@@ -46,7 +47,7 @@ const OrganizerProfile = () => {
                 profile_image: user.profile_image || ''
             });
             if (user.profile_image) {
-                setImagePreview(`http://localhost:5000${user.profile_image}`);
+                setImagePreview(`${API_BASE_URL}${user.profile_image}`);
             }
         }
         fetchAccountStats();
@@ -54,7 +55,7 @@ const OrganizerProfile = () => {
 
     const fetchAccountStats = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/organizer/stats', {
+            const response = await axios.get(`${API_BASE_URL}/api/organizer/stats`, {
                 withCredentials: true
             });
             if (response.data.success && response.data.stats) {
@@ -248,7 +249,7 @@ const OrganizerProfile = () => {
                 formData.append('profile_image', imageFile);
             }
 
-            const response = await axios.put('http://localhost:5000/api/organizer/profile', formData, {
+            const response = await axios.put(`${API_BASE_URL}/api/organizer/profile`, formData, {
                 withCredentials: true,
                 headers: {
                     'Content-Type': 'multipart/form-data'
@@ -266,7 +267,7 @@ const OrganizerProfile = () => {
             setProfile(response.data.user);
             
             if (response.data.user.profile_image) {
-                setImagePreview(`http://localhost:5000${response.data.user.profile_image}`);
+                setImagePreview(`${API_BASE_URL}${response.data.user.profile_image}`);
             }
 
             setImageFile(null);

@@ -5,6 +5,7 @@ import { selectUser } from '../../store/slices/authSlice';
 import AdminLayout from '../../components/layout/AdminLayout';
 import './AdminDashboard.css';
 import axios from 'axios';
+import { API_BASE_URL } from '../../utils/constants';
 
 const AdminDashboard = () => {
     const user = useSelector(selectUser);
@@ -27,7 +28,7 @@ const AdminDashboard = () => {
     const fetchDashboardData = async () => {
         try {
             setLoading(true);
-            const response = await axios.get('http://localhost:5000/api/admin/dashboard', { withCredentials: true });
+            const response = await axios.get(`${API_BASE_URL}/api/admin/dashboard`, { withCredentials: true });
             if (response.data.success) {
                 setStats(response.data.counts || {});
                 setActivities(response.data.activities || []);

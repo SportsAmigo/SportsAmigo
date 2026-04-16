@@ -4,6 +4,7 @@
  */
 
 import apiService from './apiService';
+import { API_BASE_URL } from '../utils/constants';
 
 const API_BASE = '/api/v1';
 
@@ -59,7 +60,7 @@ class VASService {
 
   /** Get the PDF receipt download URL for a VAS transaction */
   getReceiptURL(transactionId) {
-    const base = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    const base = process.env.REACT_APP_API_URL || API_BASE_URL;
     return `${base}${API_BASE}/organizers/vas/receipt/${transactionId}`;
   }
 

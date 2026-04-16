@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/layout/AdminLayout';
 import axios from 'axios';
+import { API_BASE_URL } from '../../utils/constants';
 
 const AdminUsers = () => {
     const [users, setUsers] = useState([]);
@@ -19,7 +20,7 @@ const AdminUsers = () => {
     const fetchAllUsers = async () => {
         try {
             setLoading(true);
-            const response = await axios.get('http://localhost:5000/api/admin/users', { withCredentials: true });
+            const response = await axios.get(`${API_BASE_URL}/api/admin/users`, { withCredentials: true });
             if (response.data.success) {
                 setUsers(response.data.users || []);
                 setStats(response.data.breakdown || {});

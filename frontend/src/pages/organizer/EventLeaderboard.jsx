@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import OrganizerLayout from '../../components/layout/OrganizerLayout';
 import './EventLeaderboard.css';
+import { API_BASE_URL } from '../../utils/constants';
 
 const EventLeaderboard = () => {
     const { eventId } = useParams();
@@ -17,7 +18,7 @@ const EventLeaderboard = () => {
     const fetchLeaderboard = async () => {
         try {
             const response = await fetch(
-                `http://localhost:5000/organizer/event/${eventId}/leaderboard`,
+                `${API_BASE_URL}/organizer/event/${eventId}/leaderboard`,
                 { credentials: 'include' }
             );
             const data = await response.json();

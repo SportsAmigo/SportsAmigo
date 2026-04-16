@@ -5,6 +5,7 @@ import { selectUser } from '../../store/slices/authSlice';
 import ManagerLayout from '../../components/layout/ManagerLayout';
 import axios from 'axios';
 import './MyTeams.css';
+import { API_BASE_URL } from '../../utils/constants';
 
 const MyTeams = () => {
     const user = useSelector(selectUser);
@@ -17,7 +18,7 @@ const MyTeams = () => {
 
     const fetchTeams = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/manager/my-teams', { withCredentials: true });
+            const response = await axios.get(`${API_BASE_URL}/api/manager/my-teams`, { withCredentials: true });
             if (response.data.success) {
                 setTeams(response.data.teams || []);
             }
@@ -34,7 +35,7 @@ const MyTeams = () => {
         }
 
         try {
-            const response = await axios.delete(`http://localhost:5000/api/manager/team/${teamId}`, { withCredentials: true });
+            const response = await axios.delete(`${API_BASE_URL}/api/manager/team/${teamId}`, { withCredentials: true });
             if (response.data.success) {
                 setTeams(teams.filter(team => team._id !== teamId));
                 alert('Team deleted successfully!');

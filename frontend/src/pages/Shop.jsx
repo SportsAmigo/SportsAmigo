@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectUser, selectAuthenticated, logoutUser } from '../store/slices/authSlice';
 import axios from 'axios';
+import { API_BASE_URL } from '../utils/constants';
 
 const Shop = () => {
     const user = useSelector(selectUser);
@@ -25,8 +26,8 @@ const Shop = () => {
         try {
             setLoading(true);
             const url = selectedCategory 
-                ? `http://localhost:5000/api/shop/items?category=${selectedCategory}`
-                : 'http://localhost:5000/api/shop/items';
+                ? `${API_BASE_URL}/api/shop/items?category=${selectedCategory}`
+                : `${API_BASE_URL}/api/shop/items`;
             
             const response = await axios.get(url);
             if (response.data.success) {
@@ -41,7 +42,7 @@ const Shop = () => {
 
     const fetchCategories = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/shop/categories');
+            const response = await axios.get(`${API_BASE_URL}/api/shop/categories`);
             if (response.data.success) {
                 setCategories(response.data.categories);
             }
@@ -58,7 +59,7 @@ const Shop = () => {
 
         try {
             setLoading(true);
-            const response = await axios.get(`http://localhost:5000/api/shop/items?search=${searchTerm}`);
+            const response = await axios.get(`${API_BASE_URL}/api/shop/items?search=${searchTerm}`);
             if (response.data.success) {
                 setProducts(response.data.items);
             }

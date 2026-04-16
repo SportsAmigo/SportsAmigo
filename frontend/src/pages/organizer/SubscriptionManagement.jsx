@@ -4,6 +4,7 @@ import OrganizerLayout from '../../components/layout/OrganizerLayout';
 import subscriptionService from '../../services/subscriptionService';
 import { updateUserData } from '../../store/slices/authSlice';
 import './OrganizerDashboard.css';
+import { API_BASE_URL } from '../../utils/constants';
 
 const SubscriptionManagement = () => {
   const dispatch = useDispatch();
@@ -209,7 +210,7 @@ const SubscriptionManagement = () => {
     if (!window.confirm('Cancel your subscription? You will be downgraded to the Free plan at end of billing.')) return;
     try {
       setLoading(true);
-      const res = await fetch('http://localhost:5000/api/subscription/cancel', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' } });
+      const res = await fetch(`${API_BASE_URL}/api/subscription/cancel`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' } });
       const data = await res.json();
       if (data.success) { setSuccess('Subscription cancelled. Access continues until end of billing period.'); fetchSubscription(); }
       else setError(data.message || 'Failed to cancel');

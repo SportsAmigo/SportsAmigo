@@ -5,6 +5,7 @@ import { selectUser } from '../../store/slices/authSlice';
 import PlayerLayout from '../../components/layout/PlayerLayout';
 import axios from 'axios';
 import './BrowseEvents.css';
+import { API_BASE_URL } from '../../utils/constants';
 
 const BrowseEvents = () => {
     const user = useSelector(selectUser);
@@ -19,7 +20,7 @@ const BrowseEvents = () => {
 
     const fetchEvents = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/player/api/events/browse', { 
+            const response = await axios.get(`${API_BASE_URL}/api/player/api/events/browse`, { 
                 withCredentials: true 
             });
             
@@ -41,7 +42,7 @@ const BrowseEvents = () => {
             if (sportFilter) params.append('sport', sportFilter);
 
             const response = await axios.get(
-                `http://localhost:5000/api/player/api/events/search?${params.toString()}`,
+                `${API_BASE_URL}/api/player/api/events/search?${params.toString()}`,
                 { withCredentials: true }
             );
 

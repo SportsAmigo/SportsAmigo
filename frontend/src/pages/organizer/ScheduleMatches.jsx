@@ -4,6 +4,7 @@ import axios from 'axios';
 import OrganizerLayout from '../../components/layout/OrganizerLayout';
 import './ScheduleMatches.css';
 import '../manager/ManagerDashboard.css';
+import { API_BASE_URL } from '../../utils/constants';
 
 const ScheduleMatches = () => {
     const { eventId } = useParams();
@@ -28,7 +29,7 @@ const ScheduleMatches = () => {
             console.log('🔍 Fetching event:', eventId);
             
             const response = await axios.get(
-                `http://localhost:5000/api/organizer/event/${eventId}`,
+                `${API_BASE_URL}/api/organizer/event/${eventId}`,
                 { withCredentials: true }
             );
 
@@ -99,7 +100,7 @@ const ScheduleMatches = () => {
     const checkExistingMatches = async () => {
         try {
             const response = await axios.get(
-                `http://localhost:5000/api/matches/event/${eventId}`,
+                `${API_BASE_URL}/api/matches/event/${eventId}`,
                 { withCredentials: true }
             );
 
@@ -126,7 +127,7 @@ const ScheduleMatches = () => {
 
         try {
             const response = await axios.post(
-                `http://localhost:5000/api/organizer/event/${eventId}/finalize-schedule`,
+                `${API_BASE_URL}/api/organizer/event/${eventId}/finalize-schedule`,
                 {},
                 { withCredentials: true }
             );
@@ -348,7 +349,7 @@ const ScheduleMatches = () => {
             console.log('🏆 Matches data:', matches);
 
             const response = await axios.post(
-                `http://localhost:5000/api/organizer/event/${eventId}/schedule-matches`,
+                `${API_BASE_URL}/api/organizer/event/${eventId}/schedule-matches`,
                 { matches },
                 { 
                     withCredentials: true,

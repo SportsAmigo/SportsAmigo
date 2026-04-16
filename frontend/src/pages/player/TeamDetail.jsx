@@ -5,6 +5,7 @@ import { selectUser } from '../../store/slices/authSlice';
 import PlayerLayout from '../../components/layout/PlayerLayout';
 import axios from 'axios';
 import './TeamDetail.css';
+import { API_BASE_URL } from '../../utils/constants';
 
 const TeamDetail = () => {
     const { teamId } = useParams();
@@ -22,7 +23,7 @@ const TeamDetail = () => {
     const fetchTeamDetails = async () => {
         try {
             console.log('TeamDetail - Fetching team with ID:', teamId);
-            const response = await axios.get(`http://localhost:5000/api/player/team/${teamId}`, {
+            const response = await axios.get(`${API_BASE_URL}/api/player/team/${teamId}`, {
                 withCredentials: true
             });
 
@@ -42,7 +43,7 @@ const TeamDetail = () => {
     const handleJoinRequest = async () => {
         try {
             const response = await axios.post(
-                `http://localhost:5000/api/player/teams/${teamId}/join`,
+                `${API_BASE_URL}/api/player/teams/${teamId}/join`,
                 {},
                 { withCredentials: true }
             );
@@ -64,7 +65,7 @@ const TeamDetail = () => {
 
         try {
             const response = await axios.post(
-                `http://localhost:5000/api/player/teams/leave/${teamId}`,
+                `${API_BASE_URL}/api/player/teams/leave/${teamId}`,
                 {},
                 { withCredentials: true }
             );
