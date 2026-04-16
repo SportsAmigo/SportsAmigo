@@ -104,6 +104,7 @@ describe('POST /api/v1/subscriptions/create-order', () => {
 
 describe('POST /api/v1/subscriptions/verify-payment', () => {
     test('invalid/tampered signature returns 400', async () => {
+        const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
         const agent = await createOrganizerAgent();
         
         const res = await agent
@@ -117,6 +118,8 @@ describe('POST /api/v1/subscriptions/verify-payment', () => {
             });
         
         expect(res.status).toBe(400);
+        expect(errorSpy).toHaveBeenCalledWith('[v1/subscriptions/verify-payment] Signature verification FAILED');
+        errorSpy.mockRestore();
     });
 });
 
