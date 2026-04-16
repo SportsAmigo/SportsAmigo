@@ -6,6 +6,11 @@ let mongoServer;
 async function connectTestDB() {
     mongoServer = await MongoMemoryServer.create();
     const uri = mongoServer.getUri();
+
+    // Ensure app-level Mongo/session config uses the same ephemeral test database.
+    process.env.MONGO_URI = uri;
+    process.env.MONGODB_URI = uri;
+
     await mongoose.connect(uri);
 }
 

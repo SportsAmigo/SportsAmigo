@@ -5,22 +5,15 @@ import { MemoryRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 
-// Mock axios and api service
-jest.mock('../services/api', () => ({
+jest.mock('../services/authService', () => ({
     __esModule: true,
     default: {
-        post: jest.fn(),
-        get: jest.fn(),
-        interceptors: {
-            request: { use: jest.fn() },
-            response: { use: jest.fn() }
-        }
+        sendLoginOTP: jest.fn(),
+        verifyLoginOTP: jest.fn(),
+        forgotPassword: jest.fn(),
+        verifyResetOTP: jest.fn(),
+        resetPassword: jest.fn()
     }
-}));
-
-jest.mock('react-router-dom', () => ({
-    ...jest.requireActual('react-router-dom'),
-    useNavigate: () => jest.fn()
 }));
 
 // Create a minimal mock store
@@ -34,7 +27,7 @@ const createMockStore = (initialState = {}) => {
 
 // Import Login after mocks
 import Login from '../pages/Login';
-import api from '../services/api';
+import authService from '../services/authService';
 
 describe('LoginPage', () => {
     test('renders email input, password input, and submit button', () => {
@@ -55,15 +48,15 @@ describe('LoginPage', () => {
         const passwordInput = screen.getByPlaceholderText(/password/i) || screen.getByLabelText(/password/i);
         expect(passwordInput).toBeInTheDocument();
         
-        // Should have a login/sign in button
-        const submitButton = screen.getByRole('button', { name: /login|sign in|log in/i });
+        // Current flow uses OTP step-1 button label.
+        const submitButton = screen.getByRole('button', { name: /continue/i });
         expect(submitButton).toBeInTheDocument();
     });
 
     test('shows error message on failed login', async () => {
         const store = createMockStore();
-        api.post.mockRejectedValueOnce({
-            response: { status: 401, data: { success: false, message: 'Invalid email or password' } }
+        authService.sendLoginOTP.mockRejectedValueOnce({
+            message: 'Invalid email or password'
         });
 
         render(
@@ -80,7 +73,7 @@ describe('LoginPage', () => {
         fireEvent.change(emailInput, { target: { value: 'wrong@test.com' } });
         fireEvent.change(passwordInput, { target: { value: 'wrongPass' } });
         
-        const submitButton = screen.getByRole('button', { name: /login|sign in|log in/i });
+        const submitButton = screen.getByRole('button', { name: /continue/i });
         fireEvent.click(submitButton);
 
         // Wait for error message to appear
@@ -94,8 +87,9 @@ describe('LoginPage', () => {
 
     test('calls login service with correct credentials', async () => {
         const store = createMockStore();
-        api.post.mockResolvedValueOnce({
-            data: { success: true, user: { id: '1', email: 'test@test.com', role: 'player' } }
+        authService.sendLoginOTP.mockResolvedValueOnce({
+            success: true,
+            message: 'OTP sent successfully'
         });
 
         render(
@@ -112,11 +106,11 @@ describe('LoginPage', () => {
         fireEvent.change(emailInput, { target: { value: 'test@test.com' } });
         fireEvent.change(passwordInput, { target: { value: 'password123' } });
         
-        const submitButton = screen.getByRole('button', { name: /login|sign in|log in/i });
+        const submitButton = screen.getByRole('button', { name: /continue/i });
         fireEvent.click(submitButton);
 
         await waitFor(() => {
-            expect(api.post).toHaveBeenCalled();
+            expect(authService.sendLoginOTP).toHaveBeenCalledWith('test@test.com', 'password123', 'player');
         }, { timeout: 3000 });
     });
 });

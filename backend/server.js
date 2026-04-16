@@ -338,13 +338,15 @@ app.use((err, req, res, next) => {
     });
 });
 
-const { startKeepAlive } = require('./utils/keepAlive');
+if (process.env.NODE_ENV !== 'test') {
+    const { startKeepAlive } = require('./utils/keepAlive');
 
-app.listen(port, () => {
-    console.log(`Backend server running on http://localhost:${port}`);
-    console.log(`Frontend should be running on http://localhost:3000`);
-    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-    startKeepAlive();
-});
+    app.listen(port, () => {
+        console.log(`Backend server running on http://localhost:${port}`);
+        console.log(`Frontend should be running on http://localhost:3000`);
+        console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+        startKeepAlive();
+    });
+}
 
 module.exports = app;

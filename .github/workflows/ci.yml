@@ -45,6 +45,15 @@ jobs:
           RAZORPAY_KEY_SECRET: test_key_secret
         run: npm test -- --coverage --ci --forceExit
 
+      - name: Run DB query regression check
+        working-directory: backend
+        env:
+          NODE_ENV: test
+          MONGO_URI: mongodb://localhost:27017/sportsamigo_test
+          REDIS_URL: redis://localhost:6379
+          SESSION_SECRET: test-session-secret-for-ci
+        run: npm run perf:db
+
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:
@@ -75,7 +84,14 @@ jobs:
         env:
           CI: true
           REACT_APP_API_URL: http://localhost:5000
-        run: npm test -- --watchAll=false --passWithNoTests
+        run: npm test -- --watchAll=false --coverage --passWithNoTests
+
+      - name: Upload frontend coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage-report
+          path: frontend/coverage/
+          retention-days: 7
 
       - name: Build frontend
         working-directory: frontend

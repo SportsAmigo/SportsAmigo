@@ -96,7 +96,8 @@ router.get('/items', cacheMiddleware(120), async (req, res) => {
         if (result.success) {
             return res.json({
                 success: true,
-                items: result.data
+                items: result.data,
+                searchMeta: result.searchMeta || null
             });
         } else {
             return res.status(500).json({
@@ -114,7 +115,7 @@ router.get('/items', cacheMiddleware(120), async (req, res) => {
 });
 
 // GET /api/shop/items/:id - Get single item
-router.get('/items/:id', async (req, res) => {
+router.get('/items/:id', cacheMiddleware(180), async (req, res) => {
     try {
         const result = await ShopItem.getItemById(req.params.id);
         
@@ -139,7 +140,7 @@ router.get('/items/:id', async (req, res) => {
 });
 
 // GET /api/shop/categories - Get all categories
-router.get('/categories', async (req, res) => {
+router.get('/categories', cacheMiddleware(300), async (req, res) => {
     try {
         const result = await ShopItem.getAllItems();
         
@@ -165,7 +166,7 @@ router.get('/categories', async (req, res) => {
 });
 
 // GET /api/shop/featured - Get featured items
-router.get('/featured', async (req, res) => {
+router.get('/featured', cacheMiddleware(120), async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 6;
         const result = await ShopItem.getFeaturedItems(limit);

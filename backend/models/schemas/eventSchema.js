@@ -133,5 +133,8 @@ const eventSchema = new Schema({
 // Indexes for efficient queries
 eventSchema.index({ status: 1, created_at: -1 });
 eventSchema.index({ organizer_id: 1 });
+eventSchema.index({ status: 1, event_date: 1 });
+eventSchema.index({ status: 1, sport_type: 1, event_date: 1 });
+eventSchema.index({ title: 'text', description: 'text', location: 'text' });
 
 module.exports = mongoose.model('Event', eventSchema); 

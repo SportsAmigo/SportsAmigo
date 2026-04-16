@@ -1,28 +1,43 @@
 const Redis = require('ioredis');
 
-const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+if (process.env.NODE_ENV === 'test') {
+    const mockClient = {
+        get: async () => null,
+        set: async () => 'OK',
+        del: async () => 0,
+        scan: async () => ['0', []],
+        ping: async () => 'PONG',
+        on: () => mockClient,
+        quit: async () => true,
+        disconnect: () => true
+    };
 
-const redisClient = new Redis(redisUrl, {
-    maxRetriesPerRequest: 3,
-    enableReadyCheck: true,
-    retryStrategy(times) {
-        const delay = Math.min(times * 50, 2000);
-        return delay;
-    },
-    // Handle TLS for Upstash (rediss:// URLs)
-    ...(redisUrl.startsWith('rediss://') ? { tls: { rejectUnauthorized: false } } : {})
-});
+    module.exports = mockClient;
+} else {
+    const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 
-redisClient.on('connect', () => {
-    console.log('[Redis] Connected successfully');
-});
+    const redisClient = new Redis(redisUrl, {
+        maxRetriesPerRequest: 3,
+        enableReadyCheck: true,
+        retryStrategy(times) {
+            const delay = Math.min(times * 50, 2000);
+            return delay;
+        },
+        // Handle TLS for Upstash (rediss:// URLs)
+        ...(redisUrl.startsWith('rediss://') ? { tls: { rejectUnauthorized: false } } : {})
+    });
 
-redisClient.on('error', (err) => {
-    console.error('[Redis] Connection error:', err.message);
-});
+    redisClient.on('connect', () => {
+        console.log('[Redis] Connected successfully');
+    });
 
-redisClient.on('ready', () => {
-    console.log('[Redis] Ready to accept commands');
-});
+    redisClient.on('error', (err) => {
+        console.error('[Redis] Connection error:', err.message);
+    });
 
-module.exports = redisClient;
+    redisClient.on('ready', () => {
+        console.log('[Redis] Ready to accept commands');
+    });
+
+    module.exports = redisClient;
+}

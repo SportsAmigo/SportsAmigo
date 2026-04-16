@@ -8,6 +8,8 @@
     "dev": "nodemon server.js",
     "test": "jest --runInBand --forceExit",
     "test:coverage": "jest --runInBand --forceExit --coverage",
+    "perf:db": "node scripts/db-query-regression-check.js",
+    "perf:redis": "node scripts/benchmark-redis-cache.js",
     "seed:shop": "node seedShop.js",
     "seed:wallet": "node seedWallet.js",
     "seed:demo": "node scripts/seedDemoUsers.js"

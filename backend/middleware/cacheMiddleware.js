@@ -12,6 +12,14 @@ const redisClient = require('../config/redis');
  */
 function cacheMiddleware(ttlSeconds = 60) {
     return async (req, res, next) => {
+        if (req.method !== 'GET') {
+            return next();
+        }
+
+        if (req.query.nocache === '1' || req.get('cache-control') === 'no-cache') {
+            return next();
+        }
+
         const cacheKey = 'cache:' + req.originalUrl;
 
         try {

@@ -64,6 +64,8 @@ const Team = require('../models/team');
 const TeamSchema = require('../models/schemas/teamSchema');
 const EventSchema = require('../models/schemas/eventSchema');
 const Registration = require('../models/registration');
+const cacheMiddleware = require('../middleware/cacheMiddleware');
+const { invalidateCacheByPrefixes } = require('../utils/cacheInvalidation');
 
 /**
  * API Routes for AJAX functionality in dashboard pages
@@ -99,7 +101,7 @@ const Registration = require('../models/registration');
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/dashboard-stats', async (req, res) => {
+router.get('/dashboard-stats', cacheMiddleware(30), async (req, res) => {
     try {
         console.log('API: Fetching dashboard stats');
         
@@ -195,6 +197,11 @@ router.post('/teams/:teamId/join', async (req, res) => {
         const teamName = team ? team.name : 'the team';
         
         console.log('Team join request successful:', { teamId, teamName });
+
+        await invalidateCacheByPrefixes([
+            '/api/dashboard-stats',
+            '/player/browse-events'
+        ]);
         
         res.json({ 
             success: true, 
@@ -282,6 +289,11 @@ router.post('/teams/:teamId/leave', async (req, res) => {
         );
         
         await team.save();
+
+        await invalidateCacheByPrefixes([
+            '/api/dashboard-stats',
+            '/player/browse-events'
+        ]);
         
         res.json({ 
             success: true, 
@@ -391,6 +403,11 @@ router.post('/events/:eventId/register', async (req, res) => {
         });
         
         await registration.save();
+
+        await invalidateCacheByPrefixes([
+            '/api/dashboard-stats',
+            '/player/browse-events'
+        ]);
         
         res.json({ 
             success: true, 
@@ -477,6 +494,12 @@ router.post('/events/:eventId/unregister', async (req, res) => {
         }
         
         const event = await EventSchema.findById(eventId);
+
+        await invalidateCacheByPrefixes([
+            '/api/dashboard-stats',
+            '/player/browse-events'
+        ]);
+
         res.json({ 
             success: true, 
             message: `Successfully unregistered from ${event?.title || 'event'}` 
@@ -626,38 +649,34 @@ router.post('/search-events', async (req, res) => {
         
         console.log(`API: Searching events for "${query}" in category "${category}"`);
         
-        // Build search criteria
-        let searchCriteria = {};
-        
-        if (query) {
-            searchCriteria.$or = [
-                { name: { $regex: query, $options: 'i' } },
-                { description: { $regex: query, $options: 'i' } },
-                { location: { $regex: query, $options: 'i' } }
-            ];
-        }
-        
-        if (category) {
-            searchCriteria.sport_type = { $regex: category, $options: 'i' };
-        }
-        
-        // Search events
-        const events = await EventSchema.find(searchCriteria)
-            .limit(10)
-            .sort({ event_date: 1 })
-            .populate('organizer_id', 'first_name last_name');
+        const events = await Event.searchEvents({
+            query,
+            category,
+            statuses: ['upcoming', 'ongoing', 'completed', 'open'],
+            limit: 20
+        });
+
+        const organizerIds = [...new Set(events.map(event => event.organizer_id).filter(Boolean).map(String))];
+        const organizers = organizerIds.length > 0
+            ? await User.find({ _id: { $in: organizerIds } }).select('_id first_name last_name').lean()
+            : [];
+
+        const organizerMap = organizers.reduce((map, organizer) => {
+            map[String(organizer._id)] = organizer;
+            return map;
+        }, {});
         
         // Format events for response
         const formattedEvents = events.map(event => ({
             id: event._id,
-            title: event.title,
-            description: event.description,
-            date: event.event_date.toLocaleDateString(),
-            location: event.location,
+            title: event.title || event.name,
+            description: event.description || '',
+            date: event.event_date ? new Date(event.event_date).toLocaleDateString() : '',
+            location: event.location || '',
             sport: event.sport_type || event.category,
-            organizer: event.organizer_id ? 
-                `${event.organizer_id.first_name} ${event.organizer_id.last_name}` : 
-                'Unknown'
+            organizer: organizerMap[String(event.organizer_id)]
+                ? `${organizerMap[String(event.organizer_id)].first_name} ${organizerMap[String(event.organizer_id)].last_name}`
+                : 'Unknown'
         }));
         
         res.json({ 
