@@ -11,7 +11,7 @@ const options = {
     },
     servers: [
       { url: 'http://localhost:5000', description: 'Development' },
-      { url: 'https://api.sportsamigo.com', description: 'Production' }
+      { url: 'https://sportsamigo.onrender.com', description: 'Production (Render)' }
     ],
     components: {
       securitySchemes: {
@@ -268,7 +268,12 @@ const options = {
       { name: 'Commission', description: 'Commission tracking and payout management' },
       { name: 'Moderator', description: 'Organizer verification and event approval workflows' },
       { name: 'Tier', description: 'Organizer tier progression system' },
-      { name: 'General', description: 'General platform APIs' }
+      { name: 'General', description: 'General platform APIs' },
+      { name: 'B2B — Subscriptions', description: 'B2B flow: organizer subscription management (create, verify, cancel)' },
+      { name: 'B2B — VAS', description: 'B2B flow: value-added services for organizers' },
+      { name: 'B2C — Shop', description: 'B2C flow: player-facing sports shop' },
+      { name: 'B2C — Wallet', description: 'B2C flow: player wallet operations' },
+      { name: 'B2C — Events', description: 'B2C flow: player event discovery, registration, and payments' }
     ]
   },
   apis: ['./routes/*.js', './routes/v1/*.js']

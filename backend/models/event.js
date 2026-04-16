@@ -4,8 +4,12 @@
 const Event = require('./schemas/eventSchema');
 const Team = require('./schemas/teamSchema');
 const User = require('./schemas/userSchema');
+const { invalidateCacheByPrefixes } = require('../utils/cacheInvalidation');
 // Comment out the registration import if not needed for now
 // const Registration = require('../models/registration'); 
+
+const ENABLE_ATLAS_SEARCH = process.env.ENABLE_ATLAS_SEARCH === 'true';
+const ATLAS_EVENT_SEARCH_INDEX = process.env.ATLAS_EVENT_SEARCH_INDEX || 'event_search';
 
 /**
  * Helper function to determine event status based on dates
@@ -38,6 +42,175 @@ function determineEventStatus(event) {
  * Event model for event management
  */
 module.exports = {
+  /**
+   * Search events with optional text + category filters.
+   * Uses Atlas Search when enabled, otherwise MongoDB text/regex fallback.
+   */
+  searchEvents: async function(options = {}) {
+    try {
+      const {
+        query,
+        category,
+        statuses,
+        limit = 20
+      } = options;
+
+      const normalizedQuery = String(query || '').trim();
+      const normalizedCategory = String(category || '').trim();
+
+      if (ENABLE_ATLAS_SEARCH && normalizedQuery) {
+        try {
+          const shouldClauses = [
+            {
+              text: {
+                query: normalizedQuery,
+                path: ['title', 'description', 'location'],
+                fuzzy: { maxEdits: 1, prefixLength: 2 }
+              }
+            },
+            {
+              autocomplete: {
+                query: normalizedQuery,
+                path: 'title',
+                fuzzy: { maxEdits: 1, prefixLength: 1 }
+              }
+            }
+          ];
+
+          const filterClauses = [];
+
+          if (normalizedCategory) {
+            filterClauses.push({ text: { query: normalizedCategory, path: 'sport_type' } });
+          }
+
+          if (Array.isArray(statuses) && statuses.length > 0) {
+            filterClauses.push({ in: { path: 'status', value: statuses } });
+          }
+
+          const pipeline = [
+            {
+              $search: {
+                index: ATLAS_EVENT_SEARCH_INDEX,
+                compound: {
+                  should: shouldClauses,
+                  minimumShouldMatch: 1,
+                  ...(filterClauses.length > 0 ? { filter: filterClauses } : {})
+                }
+              }
+            },
+            { $addFields: { score: { $meta: 'searchScore' } } },
+            { $sort: { score: -1, event_date: 1 } },
+            { $limit: limit }
+          ];
+
+          const atlasEvents = await Event.aggregate(pipeline);
+          if (atlasEvents.length > 0) {
+            return atlasEvents;
+          }
+        } catch (atlasErr) {
+          console.warn('[Search] Event Atlas Search fallback:', atlasErr.message);
+        }
+      }
+
+      const mongoQuery = {};
+
+      if (Array.isArray(statuses) && statuses.length > 0) {
+        mongoQuery.status = { $in: statuses };
+      }
+
+      if (normalizedCategory) {
+        mongoQuery.sport_type = { $regex: normalizedCategory, $options: 'i' };
+      }
+
+      let projection = {};
+      let sort = { event_date: 1 };
+
+      if (normalizedQuery) {
+        try {
+          mongoQuery.$text = { $search: normalizedQuery };
+          projection = { score: { $meta: 'textScore' } };
+          sort = { score: { $meta: 'textScore' }, event_date: 1 };
+        } catch (_) {
+          const escaped = normalizedQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          mongoQuery.$or = [
+            { title: { $regex: escaped, $options: 'i' } },
+            { description: { $regex: escaped, $options: 'i' } },
+            { location: { $regex: escaped, $options: 'i' } }
+          ];
+          sort = { event_date: 1 };
+        }
+      }
+
+      return await Event.find(mongoQuery, projection)
+        .sort(sort)
+        .limit(limit)
+        .lean();
+    } catch (err) {
+      console.error('Error searching events:', err);
+      throw err;
+    }
+  },
+
+  /**
+   * Get browsable events for player discovery.
+   * Supports status filtering and optional text search.
+   *
+   * @param {object} options
+   * @param {string[]} options.statuses
+   * @param {string} [options.search]
+   * @param {number} [options.limit]
+   * @returns {Promise<Array>}
+   */
+  getBrowsableEvents: async function(options = {}) {
+    try {
+      const {
+        statuses = ['upcoming', 'ongoing', 'completed', 'open'],
+        search,
+        limit = 200
+      } = options;
+
+      const query = { status: { $in: statuses } };
+      const projection = {};
+      let sort = { event_date: 1 };
+
+      if (search && String(search).trim()) {
+        query.$text = { $search: String(search).trim() };
+        projection.score = { $meta: 'textScore' };
+        sort = { score: { $meta: 'textScore' }, event_date: 1 };
+      }
+
+      const events = await Event.find(query, projection)
+        .sort(sort)
+        .limit(limit)
+        .lean();
+
+      if (events.length === 0) {
+        return [];
+      }
+
+      const organizerIds = [...new Set(events.map(event => String(event.organizer_id)))];
+      const organizers = await User.find({ _id: { $in: organizerIds } })
+        .select('_id first_name last_name')
+        .lean();
+
+      const organizersMap = organizers.reduce((map, organizer) => {
+        map[String(organizer._id)] = organizer;
+        return map;
+      }, {});
+
+      return events.map(event => {
+        const organizer = organizersMap[String(event.organizer_id)];
+        return {
+          ...event,
+          organizer_name: organizer ? `${organizer.first_name} ${organizer.last_name}`.trim() : ''
+        };
+      });
+    } catch (err) {
+      console.error('Error getting browsable events:', err);
+      throw err;
+    }
+  },
+
   /**
    * Create a new event
    * @param {object} eventData - Event data
@@ -273,6 +446,11 @@ module.exports = {
       if (!event) {
         throw new Error('Event not found');
       }
+
+      await invalidateCacheByPrefixes([
+        '/api/dashboard-stats',
+        '/player/browse-events'
+      ]);
       
       return event;
     } catch (err) {

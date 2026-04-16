@@ -5,6 +5,7 @@ import { selectUser } from '../../store/slices/authSlice';
 import PlayerLayout from '../../components/layout/PlayerLayout';
 import axios from 'axios';
 import './MyEvents.css';
+import { API_BASE_URL } from '../../utils/constants';
 
 const MyEvents = () => {
     const user = useSelector(selectUser);
@@ -17,7 +18,7 @@ const MyEvents = () => {
 
     const fetchMyEvents = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/player/my-events', { withCredentials: true });
+            const response = await axios.get(`${API_BASE_URL}/api/player/my-events`, { withCredentials: true });
             if (response.data.success) {
                 console.log('MyEvents - Fetched events:', response.data.events);
                 setEvents(response.data.events);

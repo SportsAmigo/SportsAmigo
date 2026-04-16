@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/layout/AdminLayout';
 import axios from 'axios';
+import { API_BASE_URL } from '../../utils/constants';
 
 const AdminStats = () => {
     const [stats, setStats] = useState({
@@ -17,7 +18,7 @@ const AdminStats = () => {
     const fetchStats = async () => {
         try {
             setLoading(true);
-            const response = await axios.get('http://localhost:5000/api/admin/dashboard', { withCredentials: true });
+            const response = await axios.get(`${API_BASE_URL}/api/admin/dashboard`, { withCredentials: true });
             if (response.data.success) {
                 setStats(response.data.counts || {});
             }

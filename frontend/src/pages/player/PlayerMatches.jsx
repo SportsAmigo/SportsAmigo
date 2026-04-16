@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './PlayerMatches.css';
+import { API_BASE_URL } from '../../utils/constants';
 
 const PlayerMatches = () => {
     const [matches, setMatches] = useState([]);
@@ -17,10 +18,10 @@ const PlayerMatches = () => {
         try {
             setLoading(true);
             const [matchesRes, statsRes] = await Promise.all([
-                axios.get('http://localhost:5000/player/my-matches', {
+                axios.get(`${API_BASE_URL}/player/my-matches`, {
                     withCredentials: true
                 }),
-                axios.get('http://localhost:5000/player/stats', {
+                axios.get(`${API_BASE_URL}/player/stats`, {
                     withCredentials: true
                 })
             ]);

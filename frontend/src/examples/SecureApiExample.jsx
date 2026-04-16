@@ -8,6 +8,7 @@
 import React, { useState, useEffect } from 'react';
 import apiService from '../services/apiService';
 import { clearCsrfToken } from '../services/csrfService';
+import { API_BASE_URL } from '../utils/constants';
 
 const ExampleSecureComponent = () => {
     const [events, setEvents] = useState([]);
@@ -251,7 +252,7 @@ export const handleFileUpload = async (file) => {
         // For file uploads, you need to handle headers differently
         const token = await apiService.getCsrfToken();
         
-        const response = await fetch('http://localhost:5000/api/upload', {
+        const response = await fetch(`${API_BASE_URL}/api/upload`, {
             method: 'POST',
             credentials: 'include',
             headers: {

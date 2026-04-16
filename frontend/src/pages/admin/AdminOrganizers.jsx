@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/layout/AdminLayout';
 import ViewModal from '../../components/admin/ViewModal';
 import axios from 'axios';
+import { API_BASE_URL } from '../../utils/constants';
 
 const AdminOrganizers = () => {
     const [organizers, setOrganizers] = useState([]);
@@ -22,7 +23,7 @@ const AdminOrganizers = () => {
     const fetchOrganizers = async () => {
         try {
             setLoading(true);
-            const response = await axios.get('http://localhost:5000/api/admin/users/organizer', { withCredentials: true });
+            const response = await axios.get(`${API_BASE_URL}/api/admin/users/organizer`, { withCredentials: true });
             if (response.data.success) {
                 setOrganizers(response.data.users || []);
             }
@@ -36,7 +37,7 @@ const AdminOrganizers = () => {
     const handleView = async (organizerId) => {
         try {
             setLoadingView(true);
-            const response = await axios.get(`http://localhost:5000/api/admin/api/organizers/${organizerId}`, { withCredentials: true });
+            const response = await axios.get(`${API_BASE_URL}/api/admin/api/organizers/${organizerId}`, { withCredentials: true });
             if (response.data.success) {
                 setSelectedOrganizer(response.data.data);
                 setViewModalOpen(true);
@@ -52,7 +53,7 @@ const AdminOrganizers = () => {
     const handleDelete = async (organizerId, organizerName) => {
         if (!window.confirm(`Are you sure you want to delete ${organizerName}? This action cannot be undone and will permanently remove this organizer from the entire system.`)) return;
         try {
-            const response = await axios.delete(`http://localhost:5000/api/admin/users/organizer/${organizerId}`, { withCredentials: true });
+            const response = await axios.delete(`${API_BASE_URL}/api/admin/users/organizer/${organizerId}`, { withCredentials: true });
             if (response.data.success) {
                 // Update state immediately - remove deleted organizer from list
                 setOrganizers(prevOrganizers => prevOrganizers.filter(organizer => organizer.id !== organizerId));

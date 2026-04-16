@@ -13,6 +13,7 @@ const morgan = require('morgan');
 const rfs = require('rotating-file-stream');
 const multer = require('multer');
 const { body, validationResult } = require('express-validator');
+const redisClient = require('./config/redis');
 
 const User = require('./models/user');
 const app = express();
@@ -33,12 +34,21 @@ app.use(helmet({
     crossOriginEmbedderPolicy: false
 }));
 
+const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'https://sports-amigo.vercel.app',
+    process.env.FRONTEND_URL
+].filter(Boolean);
+
 app.use(cors({
-    origin: [
-        'http://localhost:3000',
-        'http://localhost:3001',
-        'https://sports-amigo.vercel.app'
-    ],
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(null, false);
+        }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'CSRF-Token']
@@ -124,8 +134,13 @@ const csrfProtection = csrf({
     ignoreMethods: ['GET', 'HEAD', 'OPTIONS']
 });
 
+// Skip CSRF protection in test environment
+if (process.env.NODE_ENV === 'test') {
+    app.use((req, res, next) => next());
+} else {
 app.use((req, res, next) => {
     if (req.path === '/api/health' ||
+        req.path === '/health' ||
         req.path === '/api/csrf-token' ||
         req.path.startsWith('/auth/') ||
         req.path.startsWith('/api/auth/') ||
@@ -138,6 +153,7 @@ app.use((req, res, next) => {
     }
     csrfProtection(req, res, next);
 });
+} // end else (non-test CSRF block)
 
 app.get('/api/csrf-token', csrfProtection, (req, res) => {
     res.json({ csrfToken: req.csrfToken() });
@@ -158,6 +174,7 @@ app.use((req, res, next) => {
     next();
 });
 
+const healthRouter = require('./routes/health');
 const authRoutes = require('./routes/auth');
 const authApiRoutes = require('./routes/auth-api');
 const organizerRoutes = require('./routes/organizer');
@@ -190,6 +207,8 @@ try {
     console.error('Error loading admin routes:', err.message);
     adminRoutes = null;
 }
+
+app.use('/health', healthRouter);
 
 app.get('/api/health', (req, res) => {
     res.json({
@@ -319,10 +338,15 @@ app.use((err, req, res, next) => {
     });
 });
 
-app.listen(port, () => {
-    console.log(`Backend server running on http://localhost:${port}`);
-    console.log(`Frontend should be running on http://localhost:3000`);
-    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+    const { startKeepAlive } = require('./utils/keepAlive');
+
+    app.listen(port, () => {
+        console.log(`Backend server running on http://localhost:${port}`);
+        console.log(`Frontend should be running on http://localhost:3000`);
+        console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+        startKeepAlive();
+    });
+}
 
 module.exports = app;

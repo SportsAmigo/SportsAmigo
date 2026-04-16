@@ -5,6 +5,7 @@ import { selectUser } from '../../store/slices/authSlice';
 import ManagerLayout from '../../components/layout/ManagerLayout';
 import axios from 'axios';
 import './TeamManage.css';
+import { API_BASE_URL } from '../../utils/constants';
 
 const TeamManage = () => {
     const { id } = useParams();
@@ -20,7 +21,7 @@ const TeamManage = () => {
 
     const fetchTeamDetails = async () => {
         try {
-            const response = await axios.get(`http://localhost:5000/api/manager/team/${id}`, { 
+            const response = await axios.get(`${API_BASE_URL}/api/manager/team/${id}`, { 
                 withCredentials: true 
             });
             if (response.data.success) {
@@ -39,7 +40,7 @@ const TeamManage = () => {
     const handleApproveRequest = async (requestId, playerId) => {
         try {
             console.log('Approving request:', { requestId, playerId, teamId: id });
-            const url = `http://localhost:5000/api/manager/team/${id}/approve-request`;
+            const url = `${API_BASE_URL}/api/manager/team/${id}/approve-request`;
             console.log('Request URL:', url);
             
             const response = await axios.post(
@@ -71,7 +72,7 @@ const TeamManage = () => {
 
         try {
             const response = await axios.post(
-                `http://localhost:5000/api/manager/team/${id}/reject-request`,
+                `${API_BASE_URL}/api/manager/team/${id}/reject-request`,
                 { requestId },
                 { withCredentials: true }
             );
@@ -95,7 +96,7 @@ const TeamManage = () => {
 
         try {
             const response = await axios.post(
-                `http://localhost:5000/api/manager/team/${id}/remove-member`,
+                `${API_BASE_URL}/api/manager/team/${id}/remove-member`,
                 { playerId },
                 { withCredentials: true }
             );

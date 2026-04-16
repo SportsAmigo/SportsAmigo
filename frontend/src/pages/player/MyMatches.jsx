@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PlayerLayout from '../../components/layout/PlayerLayout';
 import './MyMatches.css';
+import { API_BASE_URL } from '../../utils/constants';
 
 const MyMatches = () => {
     const navigate = useNavigate();
@@ -17,7 +18,7 @@ const MyMatches = () => {
 
     const fetchMatches = async () => {
         try {
-            const response = await fetch('http://localhost:5000/api/player/my-matches', {
+            const response = await fetch(`${API_BASE_URL}/api/player/my-matches`, {
                 credentials: 'include'
             });
             const data = await response.json();

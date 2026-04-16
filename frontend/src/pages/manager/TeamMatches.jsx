@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import ManagerLayout from '../../components/layout/ManagerLayout';
 import './TeamMatches.css';
+import { API_BASE_URL } from '../../utils/constants';
 
 const TeamMatches = () => {
     const { teamId } = useParams();
@@ -21,14 +22,14 @@ const TeamMatches = () => {
         try {
             // Fetch team details
             const teamRes = await axios.get(
-                `http://localhost:5000/api/matches/teams/${teamId}`,
+                `${API_BASE_URL}/api/matches/teams/${teamId}`,
                 { withCredentials: true }
             );
             setTeam(teamRes.data.team);
 
             // Fetch team's matches
             const matchesRes = await axios.get(
-                `http://localhost:5000/api/matches/team/${teamId}/all`,
+                `${API_BASE_URL}/api/matches/team/${teamId}/all`,
                 { withCredentials: true }
             );
             
@@ -79,7 +80,7 @@ const TeamMatches = () => {
     const submitScore = async (matchId) => {
         try {
             const response = await axios.put(
-                `http://localhost:5000/api/matches/${matchId}/result`,
+                `${API_BASE_URL}/api/matches/${matchId}/result`,
                 {
                     score_a: parseInt(scores.score_a),
                     score_b: parseInt(scores.score_b)

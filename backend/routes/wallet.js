@@ -131,7 +131,9 @@ const User = require('../models/schemas/userSchema');
 
 // Middleware to check if user is authenticated and is a player
 const isPlayerAuthenticated = (req, res, next) => {
-    if (!req.session || !req.session.user || !req.session.user.id) {
+    const sessionUserId = req.session?.user?.id || req.session?.user?._id;
+
+    if (!req.session || !req.session.user || !sessionUserId) {
         return res.status(401).json({ success: false, error: 'Authentication required' });
     }
     
@@ -144,7 +146,9 @@ const isPlayerAuthenticated = (req, res, next) => {
 
 // Middleware to check player authentication for page renders
 const isPlayerAuthenticatedPage = (req, res, next) => {
-    if (!req.session || !req.session.user || !req.session.user.id) {
+    const sessionUserId = req.session?.user?.id || req.session?.user?._id;
+
+    if (!req.session || !req.session.user || !sessionUserId) {
         req.session.flashMessage = {
             type: 'error',
             message: 'Please login to access your wallet'
@@ -206,7 +210,7 @@ router.get('/', isPlayerAuthenticatedPage, async (req, res) => {
  */
 router.get('/balance', isPlayerAuthenticated, async (req, res) => {
     try {
-        const playerId = req.session.user.id;
+        const playerId = req.session.user.id || req.session.user._id;
         
         // Get balance from database (more accurate than calculation)
         const user = await User.findById(playerId);
@@ -234,7 +238,7 @@ router.get('/balance', isPlayerAuthenticated, async (req, res) => {
  */
 router.post('/add', isPlayerAuthenticated, async (req, res) => {
     try {
-        const playerId = req.session.user.id;
+        const playerId = req.session.user.id || req.session.user._id;
         const { amount, paymentMethod = 'Online Banking' } = req.body;
 
         // Validate amount
@@ -302,7 +306,7 @@ router.post('/add', isPlayerAuthenticated, async (req, res) => {
  */
 router.get('/transactions', isPlayerAuthenticated, async (req, res) => {
     try {
-        const playerId = req.session.user.id;
+        const playerId = req.session.user.id || req.session.user._id;
         const { page = 1, limit = 20, type = 'all' } = req.query;
         
         const pageNum = parseInt(page);

@@ -7,7 +7,7 @@ A full-stack sports event management system with role-based access for Organizer
 
 ### Frontend
 - **React** 19.2.0 - UI library
-- **React Router DOM** 7.9.5 - Client-side routing
+- **React Router DOM** 6.28.2 - Client-side routing
 - **Redux Toolkit** 2.11.0 - State management
 - **Redux Persist** - Persist Redux state
 - **Axios** - HTTP client for API requests
@@ -21,7 +21,7 @@ A full-stack sports event management system with role-based access for Organizer
 - **connect-mongo** - MongoDB session store
 - **CORS** - Cross-origin resource sharing
 - **Multer** - File upload handling
-- **Nodemailer** - Email notifications
+- **Resend** - Email notifications
 
 ## Setup and Installation
 
@@ -78,6 +78,24 @@ Frontend will run on `http://localhost:3000`
 cd backend
 npm run seed:shop     # Seed shop items
 npm run seed:wallet   # Seed wallet data
+```
+
+## One-Command Local Demo (Docker)
+
+Use Docker Compose to run MongoDB, Redis, backend, and frontend together:
+
+```bash
+docker compose up --build
+```
+
+Then open:
+- Frontend: `http://localhost:3000`
+- Backend health: `http://localhost:5000/health`
+
+Stop all services:
+
+```bash
+docker compose down
 ```
 
 ## Project Structure

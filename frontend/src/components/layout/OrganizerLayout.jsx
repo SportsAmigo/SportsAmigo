@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectUser, logoutUser } from '../../store/slices/authSlice';
 import { FaCrown, FaStar } from 'react-icons/fa';
+import { API_BASE_URL } from '../../utils/constants';
 
 const PLAN_BADGE = {
     pro: {
@@ -36,7 +37,7 @@ const OrganizerLayout = ({ children }) => {
 
     // Fetch subscription directly — never rely on auth flow to carry it
     useEffect(() => {
-        fetch('http://localhost:5000/api/v1/subscriptions/current', { credentials: 'include' })
+        fetch(`${API_BASE_URL}/api/v1/subscriptions/current`, { credentials: 'include' })
             .then(r => r.json())
             .then(data => {
                 const plan = data?.data?.plan || data?.subscription?.plan || null;

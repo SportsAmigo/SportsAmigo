@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import { selectUser } from '../../store/slices/authSlice';
 import OrganizerLayout from '../../components/layout/OrganizerLayout';
 import axios from 'axios';
+import { API_BASE_URL } from '../../utils/constants';
 
 const EditEvent = () => {
     const { id } = useParams();
@@ -39,7 +40,7 @@ const EditEvent = () => {
 
     const fetchEventDetails = async () => {
         try {
-            const response = await axios.get(`http://localhost:5000/api/organizer/event/${id}`, {
+            const response = await axios.get(`${API_BASE_URL}/api/organizer/event/${id}`, {
                 withCredentials: true
             });
 
@@ -234,7 +235,7 @@ const EditEvent = () => {
 
         try {
             const response = await axios.put(
-                `http://localhost:5000/api/organizer/event/${id}`,
+                `${API_BASE_URL}/api/organizer/event/${id}`,
                 formData,
                 { withCredentials: true }
             );

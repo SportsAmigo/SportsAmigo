@@ -5,6 +5,7 @@ import { selectUser } from '../../store/slices/authSlice';
 import PlayerLayout from '../../components/layout/PlayerLayout';
 import axios from 'axios';
 import './Wallet.css';
+import { API_BASE_URL } from '../../utils/constants';
 
 const Wallet = () => {
     const user = useSelector(selectUser);
@@ -25,7 +26,7 @@ const Wallet = () => {
 
     const fetchWalletData = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/wallet', { withCredentials: true });
+            const response = await axios.get(`${API_BASE_URL}/api/wallet`, { withCredentials: true });
             if (response.data.success) {
                 setWalletData(response.data.wallet);
             }
@@ -39,7 +40,7 @@ const Wallet = () => {
     const handleAddFunds = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post('http://localhost:5000/api/wallet/add-funds', 
+            const response = await axios.post(`${API_BASE_URL}/api/wallet/add-funds`, 
                 { amount: parseFloat(fundAmount) },
                 { withCredentials: true }
             );

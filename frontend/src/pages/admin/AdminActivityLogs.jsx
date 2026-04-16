@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/layout/AdminLayout';
 import axios from 'axios';
+import { API_BASE_URL } from '../../utils/constants';
 
 const AdminActivityLogs = () => {
     const [activities, setActivities] = useState([]);
@@ -16,7 +17,7 @@ const AdminActivityLogs = () => {
         try {
             setLoading(true);
             // Fetch real activity logs from dedicated endpoint
-            const response = await axios.get('http://localhost:5000/api/admin/activity-logs', { 
+            const response = await axios.get(`${API_BASE_URL}/api/admin/activity-logs`, { 
                 withCredentials: true,
                 params: { limit: 100 } // Get more activities for comprehensive view
             });

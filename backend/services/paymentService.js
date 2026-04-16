@@ -8,9 +8,7 @@
 
 const mongoose = require('mongoose');
 const crypto = require('crypto');
-
-// In-memory idempotency store (use Redis in production)
-const processedTransactions = new Map();
+const redisClient = require('../config/redis');
 
 /**
  * Generate a unique, collision-resistant transaction ID
@@ -64,10 +62,17 @@ function lookupVASPrice(serviceType, tier) {
  * @returns {Object} { success, transactionId, status, receiptData? }
  */
 async function processPayment({ type, userId, amount, idempotencyKey, onSuccess }) {
-  // Idempotency guard
-  if (idempotencyKey && processedTransactions.has(idempotencyKey)) {
-    const cached = processedTransactions.get(idempotencyKey);
-    return { success: true, transactionId: cached.transactionId, status: 'SUCCESS', cached: true, receiptData: cached.receiptData };
+  // Idempotency guard using Redis
+  if (idempotencyKey) {
+    try {
+      const isDuplicate = await redisClient.get('idempotency:' + idempotencyKey);
+      if (isDuplicate) {
+        const cached = JSON.parse(isDuplicate);
+        return { success: true, transactionId: cached.transactionId, status: 'SUCCESS', cached: true, receiptData: cached.receiptData };
+      }
+    } catch (err) {
+      console.error('[Redis] Idempotency check error:', err.message);
+    }
   }
 
   const transactionId = generateTransactionId(type === 'subscription' ? 'SUB' : 'VAS');
@@ -112,11 +117,13 @@ async function processPayment({ type, userId, amount, idempotencyKey, onSuccess 
       }
     }
 
-    // Cache for idempotency
+    // Cache for idempotency in Redis (expires after 24 hours)
     if (idempotencyKey) {
-      processedTransactions.set(idempotencyKey, { transactionId, receiptData, timestamp: Date.now() });
-      // Clean up old entries after 1 hour
-      setTimeout(() => processedTransactions.delete(idempotencyKey), 60 * 60 * 1000);
+      try {
+        await redisClient.set('idempotency:' + idempotencyKey, JSON.stringify({ transactionId, receiptData }), 'EX', 86400);
+      } catch (err) {
+        console.error('[Redis] Idempotency write error:', err.message);
+      }
     }
 
     return {

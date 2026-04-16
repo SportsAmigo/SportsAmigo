@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/layout/AdminLayout';
 import ViewModal from '../../components/admin/ViewModal';
 import axios from 'axios';
+import { API_BASE_URL } from '../../utils/constants';
 
 const AdminTeams = () => {
     const [teams, setTeams] = useState([]);
@@ -20,7 +21,7 @@ const AdminTeams = () => {
     const fetchTeams = async () => {
         try {
             setLoading(true);
-            const response = await axios.get('http://localhost:5000/api/admin/teams', { withCredentials: true });
+            const response = await axios.get(`${API_BASE_URL}/api/admin/teams`, { withCredentials: true });
             if (response.data.success) {
                 setTeams(response.data.teams || []);
             }
@@ -34,7 +35,7 @@ const AdminTeams = () => {
     const handleView = async (teamId) => {
         try {
             setLoadingView(true);
-            const response = await axios.get(`http://localhost:5000/api/admin/api/teams/${teamId}`, { withCredentials: true });
+            const response = await axios.get(`${API_BASE_URL}/api/admin/api/teams/${teamId}`, { withCredentials: true });
             if (response.data.success) {
                 setSelectedTeam(response.data.data);
                 setViewModalOpen(true);
@@ -50,7 +51,7 @@ const AdminTeams = () => {
     const handleDelete = async (teamId, teamName) => {
         if (!window.confirm(`Delete team: ${teamName}? This action cannot be undone and will permanently remove this team from the entire system.`)) return;
         try {
-            const response = await axios.delete(`http://localhost:5000/api/admin/teams/${teamId}`, { withCredentials: true });
+            const response = await axios.delete(`${API_BASE_URL}/api/admin/teams/${teamId}`, { withCredentials: true });
             if (response.data.success) {
                 // Update state immediately - remove deleted team from list
                 setTeams(prevTeams => prevTeams.filter(team => team.id !== teamId));

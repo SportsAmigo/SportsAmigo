@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { selectUser, logoutUser } from '../../store/slices/authSlice';
 import axios from 'axios';
 import './ManagerDashboard.css';
+import { API_BASE_URL } from '../../utils/constants';
 
 const ManagerDashboard = () => {
     const user = useSelector(selectUser);
@@ -34,7 +35,7 @@ const ManagerDashboard = () => {
 
     const fetchDashboardData = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/manager/dashboard', { withCredentials: true });
+            const response = await axios.get(`${API_BASE_URL}/api/manager/dashboard`, { withCredentials: true });
             if (response.data.success) {
                 setDashboardData({
                     teamCount: response.data.teamCount || 0,
@@ -55,11 +56,11 @@ const ManagerDashboard = () => {
     const fetchMatchHistory = async () => {
         try {
             setLoadingHistory(true);
-            const response = await axios.get('http://localhost:5000/api/manager/dashboard', { withCredentials: true });
+            const response = await axios.get(`${API_BASE_URL}/api/manager/dashboard`, { withCredentials: true });
             if (response.data.success && response.data.teams && response.data.teams.length > 0) {
                 // Fetch match history for the first team (or all teams)
                 const teamId = response.data.teams[0]._id;
-                const historyResponse = await axios.get(`http://localhost:5000/api/matches/team/${teamId}/history`, {
+                const historyResponse = await axios.get(`${API_BASE_URL}/api/matches/team/${teamId}/history`, {
                     withCredentials: true
                 });
                 
@@ -77,13 +78,13 @@ const ManagerDashboard = () => {
     const fetchUpcomingMatches = async () => {
         try {
             setLoadingUpcoming(true);
-            const response = await axios.get('http://localhost:5000/api/manager/dashboard', { withCredentials: true });
+            const response = await axios.get(`${API_BASE_URL}/api/manager/dashboard`, { withCredentials: true });
             if (response.data.success && response.data.teams && response.data.teams.length > 0) {
                 // Fetch upcoming matches for all teams
                 const allUpcoming = [];
                 for (const team of response.data.teams) {
                     try {
-                        const upcomingResponse = await axios.get(`http://localhost:5000/api/matches/team/${team._id}/upcoming`, {
+                        const upcomingResponse = await axios.get(`${API_BASE_URL}/api/matches/team/${team._id}/upcoming`, {
                             withCredentials: true
                         });
                         
@@ -132,7 +133,7 @@ const ManagerDashboard = () => {
                     <div className="sidebar-user-profile">
                         <div className="sidebar-user-avatar">
                             {user?.profile_image ? (
-                                <img src={`http://localhost:5000${user.profile_image}`} alt="Profile" />
+                                <img src={`${API_BASE_URL}${user.profile_image}`} alt="Profile" />
                             ) : (
                                 <i className="fa fa-user"></i>
                             )}

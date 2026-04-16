@@ -5,6 +5,7 @@ import { selectUser } from '../../store/slices/authSlice';
 import ManagerLayout from '../../components/layout/ManagerLayout';
 import axios from 'axios';
 import './EventDetails.css';
+import { API_BASE_URL } from '../../utils/constants';
 
 const EventDetails = () => {
     const { id } = useParams();
@@ -21,7 +22,7 @@ const EventDetails = () => {
 
     const fetchEventDetails = async () => {
         try {
-            const response = await axios.get(`http://localhost:5000/api/manager/event/${id}/details`, { 
+            const response = await axios.get(`${API_BASE_URL}/api/manager/event/${id}/details`, { 
                 withCredentials: true 
             });
             if (response.data.success) {

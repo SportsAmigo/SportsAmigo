@@ -10,7 +10,7 @@
  * 3. Or use the makeSecureRequest() wrapper for automatic handling
  */
 
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 class CsrfService {
     constructor() {

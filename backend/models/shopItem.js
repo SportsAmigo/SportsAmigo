@@ -1,4 +1,12 @@
 const ShopItem = require('./schemas/shopItemSchema');
+const { invalidateCacheByPrefixes } = require('../utils/cacheInvalidation');
+
+function escapeRegex(input) {
+    return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+const ENABLE_ATLAS_SEARCH = process.env.ENABLE_ATLAS_SEARCH === 'true';
+const ATLAS_SHOP_SEARCH_INDEX = process.env.ATLAS_SHOP_SEARCH_INDEX || 'shop_search';
 
 /**
  * ShopItem model
@@ -26,7 +34,9 @@ module.exports = {
                 query.stock = { $gt: 0 };
             }
             
-            const items = await ShopItem.find(query).sort({ createdAt: -1 });
+            const items = await ShopItem.find(query)
+                .sort({ createdAt: -1 })
+                .lean();
             return { success: true, data: items };
         } catch (error) {
             console.error('Error fetching shop items:', error);
@@ -41,20 +51,98 @@ module.exports = {
      */
     searchItems: async function(searchTerm) {
         try {
-            const query = {
-                $and: [
-                    {
-                        $or: [
-                            { name: { $regex: searchTerm, $options: 'i' } },
-                            { description: { $regex: searchTerm, $options: 'i' } },
-                            { category: { $regex: searchTerm, $options: 'i' } }
-                        ]
-                    }
-                ]
-            };
+            const normalizedTerm = String(searchTerm || '').trim();
+            if (!normalizedTerm) {
+                return { success: true, data: [] };
+            }
 
-            const items = await ShopItem.find(query).sort({ name: 1 });
-            return { success: true, data: items };
+            if (ENABLE_ATLAS_SEARCH) {
+                try {
+                    const atlasResults = await ShopItem.aggregate([
+                        {
+                            $search: {
+                                index: ATLAS_SHOP_SEARCH_INDEX,
+                                compound: {
+                                    should: [
+                                        {
+                                            text: {
+                                                query: normalizedTerm,
+                                                path: ['name', 'description', 'category'],
+                                                fuzzy: { maxEdits: 1, prefixLength: 2 }
+                                            }
+                                        },
+                                        {
+                                            autocomplete: {
+                                                query: normalizedTerm,
+                                                path: 'name',
+                                                fuzzy: { maxEdits: 1, prefixLength: 1 }
+                                            }
+                                        }
+                                    ],
+                                    minimumShouldMatch: 1
+                                }
+                            }
+                        },
+                        {
+                            $addFields: {
+                                score: { $meta: 'searchScore' }
+                            }
+                        },
+                        { $sort: { score: -1, featured: -1, stock: -1, name: 1 } },
+                        { $limit: 50 }
+                    ]);
+
+                    if (atlasResults.length > 0) {
+                        return {
+                            success: true,
+                            data: atlasResults,
+                            searchMeta: { engine: 'atlas-search', fuzzy: true }
+                        };
+                    }
+                } catch (atlasErr) {
+                    // Atlas Search can be unavailable in non-Atlas/local environments.
+                    console.warn('[Search] Atlas Search fallback to Mongo text index:', atlasErr.message);
+                }
+            }
+
+            // Fast path: leverage text index relevance scoring when available.
+            const textItems = await ShopItem.find(
+                { $text: { $search: normalizedTerm } },
+                { score: { $meta: 'textScore' } }
+            )
+                .sort({ score: { $meta: 'textScore' }, featured: -1, stock: -1, name: 1 })
+                .limit(50)
+                .lean();
+
+            if (textItems.length > 0) {
+                return {
+                    success: true,
+                    data: textItems,
+                    searchMeta: { engine: 'mongodb-text' }
+                };
+            }
+
+            // Fallback path: anchored regex for prefix search on short/new terms.
+            const escaped = escapeRegex(normalizedTerm);
+            const startsWithRegex = new RegExp(`^${escaped}`, 'i');
+            const containsRegex = new RegExp(escaped, 'i');
+
+            const items = await ShopItem.find({
+                $or: [
+                    { name: startsWithRegex },
+                    { category: startsWithRegex },
+                    { description: containsRegex }
+                ]
+            })
+                .sort({ featured: -1, stock: -1, name: 1 })
+                .limit(50)
+                .lean();
+
+            return {
+                success: true,
+                data: items,
+                searchMeta: { engine: 'regex-fallback' }
+            };
         } catch (error) {
             console.error('Error searching shop items:', error);
             return { success: false, error: error.message };
@@ -88,6 +176,13 @@ module.exports = {
         try {
             const item = new ShopItem(itemData);
             await item.save();
+
+            await invalidateCacheByPrefixes([
+                '/api/shop/items',
+                '/api/shop/categories',
+                '/api/shop/featured'
+            ]);
+
             return { success: true, data: item };
         } catch (error) {
             console.error('Error creating shop item:', error);
@@ -114,6 +209,13 @@ module.exports = {
 
             item.stock -= quantity;
             await item.save();
+
+            await invalidateCacheByPrefixes([
+                '/api/shop/items',
+                '/api/shop/items/',
+                '/api/shop/categories',
+                '/api/shop/featured'
+            ]);
             
             return { success: true, data: item };
         } catch (error) {
