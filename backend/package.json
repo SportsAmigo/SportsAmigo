@@ -54,6 +54,8 @@
   "jest": {
     "testEnvironment": "node",
     "testTimeout": 30000,
+    "globalSetup": "./jest.globalSetup.js",
+    "globalTeardown": "./jest.globalTeardown.js",
     "testMatch": ["**/__tests__/**/*.test.js"],
     "setupFiles": ["./jest.setup.js"],
     "coverageDirectory": "coverage",

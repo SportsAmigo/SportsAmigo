@@ -1,23 +1,27 @@
-const { MongoMemoryServer } = require('mongodb-memory-server');
+/**
+ * testServer.js — uses the single MongoMemoryServer started by globalSetup.
+ * Each test file calls connectTestDB / disconnectTestDB in beforeAll / afterAll.
+ */
 const mongoose = require('mongoose');
 
-let mongoServer;
-
 async function connectTestDB() {
-    mongoServer = await MongoMemoryServer.create();
-    const uri = mongoServer.getUri();
+    // URI was set by jest.globalSetup.js
+    const uri = process.env.MONGO_URI || process.env.__MONGO_URI__;
+    if (!uri) throw new Error('[testServer] MONGO_URI not set — is jest.globalSetup.js configured?');
 
-    // Ensure app-level Mongo/session config uses the same ephemeral test database.
-    process.env.MONGO_URI = uri;
-    process.env.MONGODB_URI = uri;
-
-    await mongoose.connect(uri);
+    if (mongoose.connection.readyState === 0) {
+        await mongoose.connect(uri);
+    }
 }
 
 async function disconnectTestDB() {
-    await mongoose.connection.dropDatabase();
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    // Drop all collections between test suites (not the entire DB) to stay isolated
+    const collections = mongoose.connection.collections;
+    for (const key in collections) {
+        await collections[key].deleteMany({});
+    }
+    // Do NOT call mongoose.disconnect() or mongoServer.stop() here —
+    // globalTeardown handles that after all suites are done.
 }
 
 async function clearCollections() {
