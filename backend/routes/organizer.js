@@ -3,9 +3,7 @@ const router = express.Router();
 const { Event, Team, User } = require('../models');
 const EventSchema = require('../models/schemas/eventSchema');
 const { eventController, userController } = require('../controllers');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+const { uploadProfileImage, uploadPhoto } = require('../middleware/uploadCloudinary');
 
 // Middleware to check if user is logged in as organizer
 function isOrganizer(req, res, next) {
@@ -19,40 +17,13 @@ function isOrganizer(req, res, next) {
 // Apply isOrganizer middleware to all routes
 router.use(isOrganizer);
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadDir = path.join(__dirname, '../public/uploads/profile');
-        
-        // Create directory if it doesn't exist
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
-        
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        // Use user ID and timestamp to make the filename unique
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const extension = path.extname(file.originalname);
-        cb(null, 'profile-' + req.session.user._id + '-' + uniqueSuffix + extension);
-    }
-});
-
-const upload = multer({
-    storage: storage,
-    limits: { fileSize: 5000000 }, // 5MB limit
-    fileFilter: (req, file, cb) => {
-        const filetypes = /jpeg|jpg|png|gif/;
-        const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-        const mimetype = filetypes.test(file.mimetype);
-        if (mimetype && extname) {
-            return cb(null, true);
-        } else {
-            cb('Error: Images only!');
-        }
-    }
-});
+function resolveUploadedImagePath(file) {
+    if (!file) return null;
+    if (file.secure_url) return file.secure_url;
+    if (file.path && /^https?:\/\//i.test(String(file.path))) return file.path;
+    if (file.filename) return `/uploads/profile/${file.filename}`;
+    return null;
+}
 
 // Organizer dashboard
 router.get('/', async (req, res) => {
@@ -1248,7 +1219,7 @@ router.get('/settings', (req, res) => {
 });
 
 // POST - Update Profile
-router.post('/profile/update', upload.single('profile_image'), async (req, res) => {
+router.post('/profile/update', uploadProfileImage, async (req, res) => {
     try {
         console.log('Profile update request received:', req.body);
         
@@ -1285,9 +1256,7 @@ router.post('/profile/update', upload.single('profile_image'), async (req, res) 
         
         // If a profile image was uploaded, add it to the profile data
         if (req.file) {
-            // Create a path that the browser can access
-            const imagePath = `/uploads/profile/${req.file.filename}`;
-            updatedProfile.profile_image = imagePath;
+            updatedProfile.profile_image = resolveUploadedImagePath(req.file);
         }
         
         // Update the user profile in the database
@@ -1342,7 +1311,7 @@ router.post('/profile/change-password', (req, res) => {
 });
 
 // Update profile photo handler
-router.post('/update-photo', isOrganizer, upload.single('photo'), async (req, res) => {
+router.post('/update-photo', isOrganizer, uploadPhoto, async (req, res) => {
     try {
         if (!req.file) {
             req.session.message = {
@@ -1355,7 +1324,7 @@ router.post('/update-photo', isOrganizer, upload.single('photo'), async (req, re
         const userId = req.session.user._id;
         
         // Set the path to the uploaded file - ensure it starts with a slash for consistency
-        const profileImagePath = `/uploads/profile/${req.file.filename}`;
+        const profileImagePath = resolveUploadedImagePath(req.file);
         
         // Update user in database using the updateUser method from our model
         const updatedUser = await User.updateUser(userId, {
@@ -1978,7 +1947,7 @@ router.get('/stats', async (req, res) => {
 });
 
 // PUT /api/organizer/profile - Update organizer profile with image upload
-router.put('/profile', upload.single('profile_image'), async (req, res) => {
+router.put('/profile', uploadProfileImage, async (req, res) => {
     try {
         const userId = req.session.user._id;
         
@@ -1994,7 +1963,7 @@ router.put('/profile', upload.single('profile_image'), async (req, res) => {
         
         // If a profile image was uploaded
         if (req.file) {
-            updatedProfile.profile_image = `/uploads/profile/${req.file.filename}`;
+            updatedProfile.profile_image = resolveUploadedImagePath(req.file);
         }
         
         // Update user in database
