@@ -3,9 +3,8 @@ const router = express.Router();
 const { Team, User, Event } = require('../models');
 const TeamSchema = require('../models/schemas/teamSchema');
 const { teamController, eventController, userController } = require('../controllers');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+const { uploadProfileImage, uploadPhoto } = require('../middleware/uploadCloudinary');
+const { searchEvents } = require('../services/searchService');
 
 // Middleware to check if user is logged in as manager
 function isManager(req, res, next) {
@@ -337,40 +336,13 @@ router.use(isManager);
  *         description: Pending matches returned
  */
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadDir = path.join(__dirname, '../public/uploads/profile');
-        
-        // Create directory if it doesn't exist
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
-        
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        // Use user ID and timestamp to make the filename unique
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const extension = path.extname(file.originalname);
-        cb(null, 'profile-' + req.session.user._id + '-' + uniqueSuffix + extension);
-    }
-});
-
-const upload = multer({
-    storage: storage,
-    limits: { fileSize: 5000000 }, // 5MB limit
-    fileFilter: (req, file, cb) => {
-        const filetypes = /jpeg|jpg|png|gif/;
-        const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-        const mimetype = filetypes.test(file.mimetype);
-        if (mimetype && extname) {
-            return cb(null, true);
-        } else {
-            cb('Error: Images only!');
-        }
-    }
-});
+function resolveUploadedImagePath(file) {
+    if (!file) return null;
+    if (file.secure_url) return file.secure_url;
+    if (file.path && /^https?:\/\//i.test(String(file.path))) return file.path;
+    if (file.filename) return `/uploads/profile/${file.filename}`;
+    return null;
+}
 
 // Manager dashboard
 router.get('/', async (req, res) => {
@@ -539,7 +511,7 @@ router.get('/dashboard', async (req, res) => {
 });
 
 // Update profile (API endpoint for React)
-router.put('/profile', upload.single('profile_image'), async (req, res) => {
+router.put('/profile', uploadProfileImage, async (req, res) => {
     try {
         const userId = req.session.user._id;
         
@@ -557,7 +529,7 @@ router.put('/profile', upload.single('profile_image'), async (req, res) => {
         
         // If a new image was uploaded, add the path
         if (req.file) {
-            updatedProfile.profile_image = '/uploads/profile/' + req.file.filename;
+            updatedProfile.profile_image = resolveUploadedImagePath(req.file);
         }
         
         console.log('Updating profile with data:', updatedProfile);
@@ -1402,7 +1374,7 @@ router.post('/change-password', isManager, async (req, res) => {
 });
 
 // Update profile photo handler
-router.post('/update-photo', isManager, upload.single('photo'), async (req, res) => {
+router.post('/update-photo', isManager, uploadPhoto, async (req, res) => {
     try {
         if (!req.file) {
             req.session.message = {
@@ -1415,7 +1387,7 @@ router.post('/update-photo', isManager, upload.single('photo'), async (req, res)
         const userId = req.session.user._id;
         
         // Set the path to the uploaded file - ensure it starts with a slash for consistency
-        const profileImagePath = `/uploads/profile/${req.file.filename}`;
+        const profileImagePath = resolveUploadedImagePath(req.file);
         
         // Update user in database using the updateUser method from our model
         const updatedUser = await User.updateUser(userId, {
@@ -1508,17 +1480,40 @@ router.get('/browse-events', async (req, res) => {
                 });
             }
             
-            // Get all approved events (exclude pending_approval, rejected, cancelled)
-            const allEvents = await Event.getAllEvents();
-            const events = allEvents.filter(event => 
-                ['upcoming', 'ongoing', 'completed', 'open'].includes(event.status)
-            );
-            console.log(`Retrieved ${events.length} approved events (filtered from ${allEvents.length} total)`);
+            const search = String(req.query.search || '').trim();
+            const page = Math.max(1, Number(req.query.page) || 1);
+            const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 20));
+
+            let events = [];
+            let searchMeta = null;
+            let pagination = null;
+
+            if (search) {
+                const searchResult = await searchEvents({
+                    search,
+                    page,
+                    limit,
+                    statuses: ['upcoming', 'ongoing', 'completed', 'open']
+                });
+
+                events = searchResult.data || [];
+                searchMeta = searchResult.searchMeta || null;
+                pagination = searchResult.pagination || null;
+                console.log(`Manager browse-events search returned ${events.length} results`);
+            } else {
+                // Keep existing non-search behavior for backward compatibility.
+                const allEvents = await Event.getAllEvents();
+                events = allEvents.filter(event =>
+                    ['upcoming', 'ongoing', 'completed', 'open'].includes(event.status)
+                );
+                console.log(`Retrieved ${events.length} approved events (filtered from ${allEvents.length} total)`);
+            }
             
             // Format events for display
             const formattedEvents = events.map(event => {
                 // Check if this event is already registered by any team of this manager
-                const isRegistered = registeredEventIds.has(event._id.toString());
+                const eventId = String(event._id || event.id || event.event_id || '');
+                const isRegistered = registeredEventIds.has(eventId);
                 
                 // Find registration status if registered
                 let registrationStatus = null;
@@ -1533,10 +1528,10 @@ router.get('/browse-events', async (req, res) => {
                 
                 // Ensure all required fields exist with fallbacks
                 return {
-                    id: event._id,
+                    id: eventId,
                     name: event.title || 'Unnamed Event',
                     description: event.description || '',
-                    date: event.event_date || new Date().toISOString().split('T')[0],
+                    date: event.event_date || event.date || new Date().toISOString().split('T')[0],
                     location: event.location || 'TBD',
                     sport: event.sport_type || 'General',
                     status: 'Open',
@@ -1564,6 +1559,8 @@ router.get('/browse-events', async (req, res) => {
                 events: formattedEvents,
                 pastEvents: registeredEvents || [],
                 teams: teams,
+                searchMeta,
+                pagination,
                 message: message
             });
         } catch (err) {

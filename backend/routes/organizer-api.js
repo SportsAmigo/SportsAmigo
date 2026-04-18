@@ -1,9 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
 const bcrypt = require('bcrypt');
+const { uploadProfileImage } = require('../middleware/uploadCloudinary');
 
 // Middleware to check if user is logged in as organizer
 function isOrganizerAPI(req, res, next) {
@@ -295,36 +293,13 @@ router.use(isOrganizerAPI);
  *         description: CSV stream returned
  */
 
-// Configure multer for profile image uploads
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadDir = path.join(__dirname, '../public/uploads/profile');
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const extension = path.extname(file.originalname);
-        cb(null, 'profile-' + req.session.user._id + '-' + uniqueSuffix + extension);
-    }
-});
-
-const upload = multer({
-    storage: storage,
-    limits: { fileSize: 5000000 }, // 5MB
-    fileFilter: (req, file, cb) => {
-        const filetypes = /jpeg|jpg|png|gif/;
-        const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-        const mimetype = filetypes.test(file.mimetype);
-        if (mimetype && extname) {
-            return cb(null, true);
-        } else {
-            cb('Error: Images only!');
-        }
-    }
-});
+function resolveUploadedImagePath(file) {
+    if (!file) return null;
+    if (file.secure_url) return file.secure_url;
+    if (file.path && /^https?:\/\//i.test(String(file.path))) return file.path;
+    if (file.filename) return `/uploads/profile/${file.filename}`;
+    return null;
+}
 
 // GET /api/organizer/stats - Dashboard statistics
 router.get('/stats', async (req, res) => {
@@ -846,7 +821,7 @@ router.get('/profile', async (req, res) => {
 });
 
 // PUT /api/organizer/profile - Update organizer profile (with image upload)
-router.put('/profile', upload.single('profile_image'), async (req, res) => {
+router.put('/profile', uploadProfileImage, async (req, res) => {
     try {
         const User = require('../models/user');
         const userId = req.session.user._id;
@@ -876,7 +851,7 @@ router.put('/profile', upload.single('profile_image'), async (req, res) => {
         
         // If profile image was uploaded
         if (req.file) {
-            updateData.profile_image = `/uploads/profile/${req.file.filename}`;
+            updateData.profile_image = resolveUploadedImagePath(req.file);
         }
         
         console.log('Update data prepared:', updateData);

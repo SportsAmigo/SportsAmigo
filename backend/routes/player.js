@@ -9,10 +9,9 @@ const userController = require('../controllers/userController');
 const eventController = require('../controllers/eventController');
 const teamController = require('../controllers/teamController');
 const playerProfileController = require('../controllers/playerProfileController');
-const path = require('path');
-const fs = require('fs');
-const multer = require('multer');
 const cacheMiddleware = require('../middleware/cacheMiddleware');
+const { uploadProfileImage, uploadPhoto } = require('../middleware/uploadCloudinary');
+const { searchEvents, searchTeams } = require('../services/searchService');
 
 // Middleware to check if user is logged in as a player
 const isPlayer = (req, res, next) => {
@@ -425,42 +424,13 @@ router.use(isPlayer);
  *         description: Team join request submitted
  */
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        const uploadDir = path.join(__dirname, '../public/uploads/profile');
-
-        // Create directory if it doesn't exist
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
-
-        cb(null, uploadDir);
-    },
-    filename: function (req, file, cb) {
-        // Use user ID and timestamp to make the filename unique
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const extension = path.extname(file.originalname);
-        cb(null, 'profile-' + req.session.user._id + '-' + uniqueSuffix + extension);
-    }
-});
-
-// File filter to only allow image files
-const fileFilter = (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-        cb(null, true);
-    } else {
-        cb(new Error('Only image files are allowed!'), false);
-    }
-};
-
-const upload = multer({
-    storage: storage,
-    fileFilter: fileFilter,
-    limits: {
-        fileSize: 5 * 1024 * 1024 // 5MB max file size
-    }
-});
+function resolveUploadedImagePath(file) {
+    if (!file) return null;
+    if (file.secure_url) return file.secure_url;
+    if (file.path && /^https?:\/\//i.test(String(file.path))) return file.path;
+    if (file.filename) return `/uploads/profile/${file.filename}`;
+    return null;
+}
 
 // Root route for /player - redirect to dashboard
 router.get('/', (req, res) => {
@@ -886,10 +856,10 @@ router.get('/performance', playerProfileController.getPlayerPerformance);
 // Profile
 router.get('/profile', playerProfileController.renderPlayerProfile);
 router.get('/profile/edit', playerProfileController.renderPlayerProfileEdit);
-router.post('/profile/update', upload.single('profile_image'), playerProfileController.updatePlayerProfile);
+router.post('/profile/update', uploadProfileImage, playerProfileController.updatePlayerProfile);
 
 // Update profile (API endpoint for React)
-router.put('/profile', upload.single('profile_image'), async (req, res) => {
+router.put('/profile', uploadProfileImage, async (req, res) => {
     try {
         // Check if user session exists
         if (!req.session.user || !req.session.user._id) {
@@ -916,7 +886,7 @@ router.put('/profile', upload.single('profile_image'), async (req, res) => {
 
         // If a new image was uploaded, add the path
         if (req.file) {
-            updatedProfile.profile_image = '/uploads/profile/' + req.file.filename;
+            updatedProfile.profile_image = resolveUploadedImagePath(req.file);
         }
 
         console.log('Updating profile with data:', updatedProfile);
@@ -1353,7 +1323,7 @@ router.post('/update-sports', isPlayer, (req, res) => {
 });
 
 // Update profile photo handler
-router.post('/update-photo', isPlayer, upload.single('photo'), async (req, res) => {
+router.post('/update-photo', isPlayer, uploadPhoto, async (req, res) => {
     try {
         if (!req.file) {
             req.session.message = {
@@ -1366,7 +1336,7 @@ router.post('/update-photo', isPlayer, upload.single('photo'), async (req, res) 
         const userId = req.session.user._id;
 
         // Set the path to the uploaded file - ensure it starts with a slash for consistency
-        const profileImagePath = `/uploads/profile/${req.file.filename}`;
+        const profileImagePath = resolveUploadedImagePath(req.file);
 
         // Update user in database using the updateUser method from our model
         const updatedUser = await User.updateUser(userId, {
@@ -1510,30 +1480,17 @@ router.get('/api/events/browse', async (req, res) => {
 // API route for event search with filters
 router.get('/api/events/search', async (req, res) => {
     try {
-        const { search, category } = req.query;
-        let query = {
-            status: 'upcoming',
-            registrationDeadline: { $gte: new Date() }
-        };
+        const { search, category, page, limit } = req.query;
 
-        // Add search term filter
-        if (search) {
-            query.$or = [
-                { title: { $regex: search, $options: 'i' } },
-                { description: { $regex: search, $options: 'i' } },
-                { location: { $regex: search, $options: 'i' } }
-            ];
-        }
+        const eventResult = await searchEvents({
+            search,
+            page,
+            limit,
+            statuses: ['upcoming', 'ongoing', 'completed', 'open']
+        });
 
-        // Add category filter
-        if (category) {
-            query.category = { $regex: category, $options: 'i' };
-        }
-
-        const events = await EventSchema.find(query).sort({ eventDate: 1 });
-
-        // Enrich with organizer tier (batch query to avoid N+1)
-        const organizerIds = [...new Set(events.map(e => e.organizer_id?.toString()).filter(Boolean))];
+        const events = eventResult.data || [];
+        const organizerIds = [...new Set(events.map(e => (e.organizer_id || e.organizerId || e.organizer)?.toString()).filter(Boolean))];
         const User = require('../models/user');
         const organizers = await User.find({ _id: { $in: organizerIds } }).select('subscription').lean();
         const organizerMap = {};
@@ -1541,7 +1498,8 @@ router.get('/api/events/search', async (req, res) => {
 
         const enrichedEvents = events.map(event => {
             const ev = event.toObject ? event.toObject() : { ...event };
-            ev.organizerTier = organizerMap[ev.organizer_id?.toString()] || 'free';
+            const organizerId = (ev.organizer_id || ev.organizerId || ev.organizer || '').toString();
+            ev.organizerTier = organizerMap[organizerId] || 'free';
             return ev;
         });
 
@@ -1556,7 +1514,9 @@ router.get('/api/events/search', async (req, res) => {
         res.json({
             success: true,
             events: enrichedEvents,
-            count: enrichedEvents.length
+            count: enrichedEvents.length,
+            pagination: eventResult.pagination || null,
+            searchMeta: eventResult.searchMeta || null
         });
     } catch (error) {
         console.error('Error searching events:', error);
@@ -1648,37 +1608,23 @@ router.post('/api/events/:eventId/join', async (req, res) => {
 // API route for team search with filters
 router.get('/api/teams/search', async (req, res) => {
     try {
-        console.log('Team search API called with query:', req.query);
-        const { search, sport } = req.query;
-        let query = {};
+        const { search, sport, page, limit } = req.query;
 
-        // Add search term filter
-        if (search) {
-            query.$or = [
-                { name: { $regex: search, $options: 'i' } },
-                { description: { $regex: search, $options: 'i' } },
-                { location: { $regex: search, $options: 'i' } }
-            ];
-        }
+        const result = await searchTeams({
+            search,
+            sportType: sport,
+            page,
+            limit
+        });
 
-        // Add sport filter
-        if (sport) {
-            query.sport_type = { $regex: sport, $options: 'i' };
-        }
-
-        console.log('Team search query:', query);
-
-        const teams = await TeamSchema.find(query)
-            .populate('manager_id', 'first_name last_name email')
-            .populate('members', 'first_name last_name')
-            .sort({ name: 1 });
-
-        console.log('Found teams:', teams.length);
+        const teams = result.data || [];
 
         res.json({
             success: true,
             teams: teams,
-            count: teams.length
+            count: teams.length,
+            pagination: result.pagination || null,
+            searchMeta: result.searchMeta || null
         });
     } catch (error) {
         console.error('Error searching teams:', error);
