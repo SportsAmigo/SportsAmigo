@@ -15,17 +15,7 @@ services:
       timeout: 5s
       retries: 5
 
-  redis:
-    image: redis:7-alpine
-    container_name: sportsamigo-redis
-    restart: unless-stopped
-    networks:
-      - app-network
-    healthcheck:
-      test: redis-cli ping
-      interval: 10s
-      timeout: 3s
-      retries: 5
+
 
   backend:
     build:
@@ -36,12 +26,11 @@ services:
     depends_on:
       mongodb:
         condition: service_healthy
-      redis:
-        condition: service_healthy
     env_file: .env
     environment:
       - MONGO_URI=mongodb://mongodb:27017/sportsamigo
-      - REDIS_URL=redis://redis:6379
+      - UPSTASH_REDIS_REST_URL=${UPSTASH_REDIS_REST_URL}
+      - UPSTASH_REDIS_REST_TOKEN=${UPSTASH_REDIS_REST_TOKEN}
       - NODE_ENV=production
     ports:
       - "5000:5000"

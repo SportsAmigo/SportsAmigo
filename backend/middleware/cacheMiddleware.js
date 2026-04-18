@@ -40,7 +40,7 @@ function cacheMiddleware(ttlSeconds = 60) {
             res.setHeader('X-Cache', 'MISS');
             try {
                 if (res.statusCode === 200) {
-                    await redisClient.set(cacheKey, JSON.stringify(data), 'EX', ttlSeconds);
+                    await redisClient.set(cacheKey, JSON.stringify(data), { ex: ttlSeconds });
                 }
             } catch (err) {
                 console.error('[Cache] Redis write error:', err.message);
