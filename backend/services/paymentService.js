@@ -120,7 +120,7 @@ async function processPayment({ type, userId, amount, idempotencyKey, onSuccess 
     // Cache for idempotency in Redis (expires after 24 hours)
     if (idempotencyKey) {
       try {
-        await redisClient.set('idempotency:' + idempotencyKey, JSON.stringify({ transactionId, receiptData }), 'EX', 86400);
+        await redisClient.set('idempotency:' + idempotencyKey, JSON.stringify({ transactionId, receiptData }), { ex: 86400 });
       } catch (err) {
         console.error('[Redis] Idempotency write error:', err.message);
       }

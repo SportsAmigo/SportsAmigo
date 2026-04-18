@@ -5,12 +5,11 @@ async function deleteByPattern(pattern) {
   let deleted = 0;
 
   do {
-    const reply = await redisClient.scan(cursor, 'MATCH', pattern, 'COUNT', 200);
-    cursor = reply[0];
-    const keys = reply[1] || [];
+    const [nextCursor, keys] = await redisClient.scan(cursor, { match: pattern, count: 200 });
+    cursor = nextCursor;
 
-    if (keys.length > 0) {
-      deleted += await redisClient.del(keys);
+    if (keys && keys.length > 0) {
+      deleted += await redisClient.del(...keys);
     }
   } while (cursor !== '0');
 

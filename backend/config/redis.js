@@ -1,4 +1,4 @@
-const Redis = require('ioredis');
+const { Redis } = require("@upstash/redis");
 
 if (process.env.NODE_ENV === 'test') {
     const mockClient = {
@@ -14,30 +14,29 @@ if (process.env.NODE_ENV === 'test') {
 
     module.exports = mockClient;
 } else {
-    const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+    // Fail fast if Upstash credentials are missing
+    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+        console.error('[Redis] ERROR: UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are strictly required.');
+        process.exit(1);
+    }
 
-    const redisClient = new Redis(redisUrl, {
-        maxRetriesPerRequest: 3,
-        enableReadyCheck: true,
-        retryStrategy(times) {
-            const delay = Math.min(times * 50, 2000);
-            return delay;
-        },
-        // Handle TLS for Upstash (rediss:// URLs)
-        ...(redisUrl.startsWith('rediss://') ? { tls: { rejectUnauthorized: false } } : {})
+    const redisClient = new Redis({
+        url: process.env.UPSTASH_REDIS_REST_URL,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN
     });
 
-    redisClient.on('connect', () => {
-        console.log('[Redis] Connected successfully');
-    });
-
-    redisClient.on('error', (err) => {
-        console.error('[Redis] Connection error:', err.message);
-    });
-
-    redisClient.on('ready', () => {
-        console.log('[Redis] Ready to accept commands');
-    });
+    // Startup connection verification test since REST clients are stateless
+    (async () => {
+        try {
+            await redisClient.set("startup_test", "working");
+            const val = await redisClient.get("startup_test");
+            if (val === "working") {
+                console.log('[Redis] Upstash successfully connected. Test key verified.');
+            }
+        } catch (err) {
+            console.error('[Redis] Upstash REST connection test failed:', err.message);
+        }
+    })();
 
     module.exports = redisClient;
 }
