@@ -1,8 +1,22 @@
 const DEFAULT_TIMEOUT_MS = Number(process.env.SOLR_TIMEOUT_MS || 1500);
 
+function normalizeSolrBaseUrl(rawUrl) {
+  const value = String(rawUrl || '').trim();
+  if (!value) return '';
+
+  // Accept either provider URL styles:
+  // - https://host
+  // - https://host/solr
+  // - https://host/solr/
+  // Internal request builder appends /solr/<collection> paths.
+  return value
+    .replace(/\/$/, '')
+    .replace(/\/solr$/i, '');
+}
+
 const solrConfig = {
   enabled: process.env.ENABLE_SOLR_SEARCH === 'true',
-  baseUrl: String(process.env.SOLR_BASE_URL || '').replace(/\/$/, ''),
+  baseUrl: normalizeSolrBaseUrl(process.env.SOLR_BASE_URL),
   username: process.env.SOLR_USERNAME || '',
   password: process.env.SOLR_PASSWORD || '',
   eventCollection: process.env.SOLR_EVENT_COLLECTION || 'events',
