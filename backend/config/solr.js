@@ -21,6 +21,7 @@ const solrConfig = {
   password: process.env.SOLR_PASSWORD || '',
   eventCollection: process.env.SOLR_EVENT_COLLECTION || 'events',
   teamCollection: process.env.SOLR_TEAM_COLLECTION || 'teams',
+  userCollection: process.env.SOLR_USER_COLLECTION || 'users',
   timeoutMs: DEFAULT_TIMEOUT_MS
 };
 
