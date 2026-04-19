@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const { uploadProfileImage } = require('../middleware/uploadCloudinary');
+const cacheMiddleware = require('../middleware/cacheMiddleware');
+const { invalidateCacheByPrefixes } = require('../utils/cacheInvalidation');
 
 // Middleware to check if user is logged in as organizer
 function isOrganizerAPI(req, res, next) {
@@ -302,7 +304,7 @@ function resolveUploadedImagePath(file) {
 }
 
 // GET /api/organizer/stats - Dashboard statistics
-router.get('/stats', async (req, res) => {
+router.get('/stats', cacheMiddleware(60), async (req, res) => {
     try {
         const Event = require('../models/event');
         const organizerId = req.session.user._id;
@@ -345,7 +347,7 @@ router.get('/stats', async (req, res) => {
 });
 
 // GET /api/organizer/events - Get all organizer events
-router.get('/events', async (req, res) => {
+router.get('/events', cacheMiddleware(45), async (req, res) => {
     try {
         const Event = require('../models/event');
         const organizerId = req.session.user._id;
@@ -478,6 +480,10 @@ router.post('/create-event', async (req, res) => {
         };
         
         const newEvent = await Event.createEvent(eventData);
+
+        // Invalidate organizer's stats + events list cache
+        const organizerId = req.session.user._id.toString();
+        await invalidateCacheByPrefixes(['/api/organizer/stats', '/api/organizer/events'], organizerId);
         
         res.status(201).json({
             success: true,
@@ -502,7 +508,7 @@ router.post('/create-event', async (req, res) => {
 });
 
 // GET /api/organizer/event/:id - Get single event details
-router.get('/event/:id', async (req, res) => {
+router.get('/event/:id', cacheMiddleware(60), async (req, res) => {
     try {
         const Event = require('../models/event');
         const TeamSchema = require('../models/schemas/teamSchema');
@@ -669,6 +675,14 @@ router.put('/event/:id', async (req, res) => {
         };
         
         await Event.updateEvent(req.params.id, updateData);
+
+        // Invalidate this event's cache + events list + stats
+        const organizerId = req.session.user._id.toString();
+        await invalidateCacheByPrefixes([
+            `/api/organizer/event/${req.params.id}`,
+            '/api/organizer/events',
+            '/api/organizer/stats'
+        ], organizerId);
         
         // Fetch updated event to return fresh data
         const updatedEvent = await Event.getEventById(req.params.id);
@@ -715,6 +729,14 @@ router.delete('/event/:id', async (req, res) => {
         }
         
         await Event.deleteEvent(req.params.id);
+
+        // Invalidate this event's cache + events list + stats
+        const organizerId = req.session.user._id.toString();
+        await invalidateCacheByPrefixes([
+            `/api/organizer/event/${req.params.id}`,
+            '/api/organizer/events',
+            '/api/organizer/stats'
+        ], organizerId);
         
         res.json({
             success: true,
@@ -749,6 +771,14 @@ router.put('/event/:id/cancel', async (req, res) => {
         }
         
         await Event.cancelEvent(req.params.id);
+
+        // Invalidate this event's cache + events list + stats
+        const organizerId = req.session.user._id.toString();
+        await invalidateCacheByPrefixes([
+            `/api/organizer/event/${req.params.id}`,
+            '/api/organizer/events',
+            '/api/organizer/stats'
+        ], organizerId);
         
         res.json({
             success: true,
@@ -765,7 +795,7 @@ router.put('/event/:id/cancel', async (req, res) => {
 });
 
 // GET /api/organizer/profile - Get organizer profile
-router.get('/profile', async (req, res) => {
+router.get('/profile', cacheMiddleware(300), async (req, res) => {
     try {
         const User = require('../models/user');
         const Event = require('../models/event');
@@ -1008,6 +1038,12 @@ router.put('/event/:eventId/approve-team/:teamId', isOrganizerAPI, async (req, r
             });
         }
 
+        // Invalidate event detail + stats cache for this organizer
+        await invalidateCacheByPrefixes([
+            `/api/organizer/event/${eventId}`,
+            '/api/organizer/stats'
+        ], organizerId.toString());
+
         res.json({ 
             success: true, 
             message: 'Team registration approved successfully' 
@@ -1052,6 +1088,12 @@ router.put('/event/:eventId/reject-team/:teamId', isOrganizerAPI, async (req, re
                 message: 'Failed to reject team. Team may not be found.' 
             });
         }
+
+        // Invalidate event detail + stats cache for this organizer
+        await invalidateCacheByPrefixes([
+            `/api/organizer/event/${eventId}`,
+            '/api/organizer/stats'
+        ], organizerId.toString());
 
         res.json({ 
             success: true, 
@@ -1163,6 +1205,12 @@ router.post('/event/:eventId/schedule-matches', async (req, res) => {
 
         console.log(`✅ Successfully created ${createdMatches.length} matches`);
 
+        // Invalidate the event detail cache so match list is fresh
+        await invalidateCacheByPrefixes(
+            [`/api/organizer/event/${eventId}`],
+            req.session.user._id.toString()
+        );
+
         res.status(201).json({
             success: true,
             message: `Successfully scheduled ${createdMatches.length} out of ${matches.length} matches`,
@@ -1236,6 +1284,12 @@ router.post('/event/:eventId/finalize-schedule', async (req, res) => {
         });
 
         console.log('✅ Schedule finalized successfully');
+
+        // Invalidate event detail + stats cache
+        await invalidateCacheByPrefixes([
+            `/api/organizer/event/${eventId}`,
+            '/api/organizer/stats'
+        ], req.session.user._id.toString());
 
         res.json({
             success: true,
