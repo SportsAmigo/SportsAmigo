@@ -75,10 +75,6 @@ import AdminVASRevenue from './pages/admin/AdminVASRevenue';
 import AdminCommissions from './pages/admin/AdminCommissions';
 import AdminVerificationHub from './pages/admin/AdminVerificationHub';
 import AdminCoordinators from './pages/admin/AdminCoordinators';
-import AdminTiers from './pages/admin/AdminTiers';
-import AdminOperationalProof from './pages/admin/AdminOperationalProof';
-import AdminAcademicProof from './pages/admin/AdminAcademicProof';
-import AdminSearchDemo from './pages/admin/AdminSearchDemo';
 
 // Coordinator Pages
 import CoordinatorHome from './pages/coordinator/CoordinatorHome';
@@ -545,30 +541,38 @@ const AppContent = () => {
           }
         />
         <Route
-          path="/admin/search-demo"
+          path="/admin/events"
           element={
             <ProtectedRoute allowedRoles={['admin']}>
-              <AdminSearchDemo />
+              <AdminEvents />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/verification"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminVerificationHub />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/stats"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminStats />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/activity-logs"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminActivityLogs />
             </ProtectedRoute>
           }
         />
 
-        <Route
-          path="/admin/tiers"
-          element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <AdminTiers />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/academic-proof"
-          element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <AdminAcademicProof />
-            </ProtectedRoute>
-          }
-        />
         <Route
           path="/admin/matches"
           element={
