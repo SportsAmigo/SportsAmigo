@@ -57,7 +57,7 @@ const corsOptions = {
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'CSRF-Token'],
-    exposedHeaders: ['Set-Cookie']
+    exposedHeaders: ['Set-Cookie', 'X-Cache-Status', 'X-Cache-TTL']
 };
 
 app.use(cors(corsOptions));

@@ -5,6 +5,8 @@ const TeamSchema = require('../models/schemas/teamSchema');
 const { teamController, eventController, userController } = require('../controllers');
 const { uploadProfileImage, uploadPhoto } = require('../middleware/uploadCloudinary');
 const { searchEvents } = require('../services/searchService');
+const cacheMiddleware = require('../middleware/cacheMiddleware');
+const { invalidateCacheByPrefixes } = require('../utils/cacheInvalidation');
 
 // Middleware to check if user is logged in as manager
 function isManager(req, res, next) {
@@ -345,7 +347,7 @@ function resolveUploadedImagePath(file) {
 }
 
 // Manager dashboard
-router.get('/', async (req, res) => {
+router.get('/', cacheMiddleware(30), async (req, res) => {
     try {
         // Get teams managed by this user
         const teams = await Team.getTeamsByManager(req.session.user._id);
@@ -457,7 +459,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.get('/dashboard', async (req, res) => {
+router.get('/dashboard', cacheMiddleware(30), async (req, res) => {
     try {
         // Get teams managed by this user
         const teams = await Team.getTeamsByManager(req.session.user._id);
@@ -701,7 +703,7 @@ router.get('/profile', async (req, res) => {
 });
 
 // My Teams
-router.get('/my-teams', async (req, res) => {
+router.get('/my-teams', cacheMiddleware(60), async (req, res) => {
     try {
         const teams = await Team.getManagerTeams(req.session.user._id);
         console.log('Manager teams:', teams);
@@ -806,6 +808,14 @@ router.post('/create-team', async (req, res) => {
         try {
             const team = await Team.createTeam(teamData);
             console.log(`Team created with ID: ${team._id}`);
+
+            // Invalidate this manager's team list + dashboard cache
+            const managerId = req.session.user._id.toString();
+            await invalidateCacheByPrefixes([
+                '/api/manager/my-teams',
+                '/api/manager/',
+                '/api/manager/dashboard'
+            ], managerId);
             
             if (isAjax) {
                 return res.json({
@@ -923,6 +933,14 @@ router.put('/team/:id', async (req, res) => {
         
         // Update the team
         const updatedTeam = await Team.updateTeam(teamId, updatedData);
+
+        // Invalidate this manager's team cache
+        await invalidateCacheByPrefixes([
+            `/api/manager/team/${teamId}`,
+            '/api/manager/my-teams',
+            '/api/manager/',
+            '/api/manager/dashboard'
+        ], managerId.toString());
         
         return res.json({
             success: true,
@@ -939,7 +957,7 @@ router.put('/team/:id', async (req, res) => {
 });
 
 // Manage Team
-router.get('/team/:id', async (req, res) => {
+router.get('/team/:id', cacheMiddleware(60), async (req, res) => {
     try {
     const teamId = req.params.id;
         const team = await Team.getTeamById(teamId);
@@ -1094,7 +1112,7 @@ router.post('/team/:id/edit', (req, res) => {
 });
 
 // Join Requests
-router.get('/join-requests', async (req, res) => {
+router.get('/join-requests', cacheMiddleware(30), async (req, res) => {
     try {
         const requests = await Team.getManagerJoinRequests(req.session.user._id);
         console.log('Join requests:', requests);
@@ -1176,6 +1194,15 @@ router.post('/team/:teamId/approve-request', async (req, res) => {
         const result = await Team.processJoinRequest(requestId, 'approved');
         
         if (result) {
+            // Invalidate join-requests + team members + dashboard
+            const managerId = req.session.user._id.toString();
+            await invalidateCacheByPrefixes([
+                '/api/manager/join-requests',
+                `/api/manager/team/${teamId}`,
+                '/api/manager/my-teams',
+                '/api/manager/',
+                '/api/manager/dashboard'
+            ], managerId);
             res.json({
                 success: true,
                 message: 'Join request approved successfully!'
@@ -1214,6 +1241,12 @@ router.post('/team/:teamId/reject-request', async (req, res) => {
         const result = await Team.processJoinRequest(requestId, 'rejected');
         
         if (result) {
+            // Invalidate join-requests cache
+            const managerId = req.session.user._id.toString();
+            await invalidateCacheByPrefixes(
+                ['/api/manager/join-requests'],
+                managerId
+            );
             res.json({
                 success: true,
                 message: 'Join request rejected'
@@ -1440,7 +1473,7 @@ router.post('/update-photo', isManager, uploadPhoto, async (req, res) => {
 });
 
 // Browse Events route
-router.get('/browse-events', async (req, res) => {
+router.get('/browse-events', cacheMiddleware(60), async (req, res) => {
     try {
         console.log('Accessing browse-events route');
         
@@ -1698,6 +1731,15 @@ router.post('/event/:id/register', async (req, res) => {
         
         console.log('Calling registerTeamForEvent with data:', registerData);
         await Event.registerTeamForEvent(eventId, registerData);
+
+        // Invalidate my-events + browse-events + dashboard cache for this manager
+        const mgrId = req.session.user._id.toString();
+        await invalidateCacheByPrefixes([
+            '/api/manager/my-events',
+            '/api/manager/browse-events',
+            '/api/manager/',
+            '/api/manager/dashboard'
+        ], mgrId);
         
         return res.json({
             success: true,
@@ -1763,7 +1805,7 @@ router.get('/my-team', (req, res) => {
 });
 
 // Add my-events route
-router.get('/my-events', async (req, res) => {
+router.get('/my-events', cacheMiddleware(45), async (req, res) => {
     try {
         console.log('Accessing my-events route with user ID:', req.session.user._id);
         const managerId = req.session.user._id;
