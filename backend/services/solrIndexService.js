@@ -16,6 +16,10 @@ function toIso(value) {
   return date.toISOString();
 }
 
+function escLucene(value) {
+  return String(value || '').replace(/([+\-!(){}\[\]^"~*?:\\/]|&&|\|\|)/g, '\\$1');
+}
+
 function mapEventDoc(event) {
   return {
     id: String(event._id),
@@ -128,6 +132,25 @@ async function indexSingleUser(userDoc, { commit = true } = {}) {
   if (commit) await solrCommit(userCollection);
 }
 
+async function deleteSingleEvent(eventId, { commit = true } = {}) {
+  if (!isConfigured() || !eventId) return;
+  await solrDeleteByQuery(solrConfig.eventCollection, `id:${escLucene(String(eventId))}`, false);
+  if (commit) await solrCommit(solrConfig.eventCollection);
+}
+
+async function deleteSingleTeam(teamId, { commit = true } = {}) {
+  if (!isConfigured() || !teamId) return;
+  await solrDeleteByQuery(solrConfig.teamCollection, `id:${escLucene(String(teamId))}`, false);
+  if (commit) await solrCommit(solrConfig.teamCollection);
+}
+
+async function deleteSingleUser(userId, { commit = true } = {}) {
+  if (!isConfigured() || !userId) return;
+  const userCollection = solrConfig.userCollection || 'users';
+  await solrDeleteByQuery(userCollection, `id:${escLucene(String(userId))}`, false);
+  if (commit) await solrCommit(userCollection);
+}
+
 module.exports = {
   mapEventDoc,
   mapTeamDoc,
@@ -137,5 +160,8 @@ module.exports = {
   reindexUsers,
   indexSingleEvent,
   indexSingleTeam,
-  indexSingleUser
+  indexSingleUser,
+  deleteSingleEvent,
+  deleteSingleTeam,
+  deleteSingleUser
 };

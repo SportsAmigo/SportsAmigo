@@ -22,22 +22,59 @@ const AdminEvents = () => {
     const [statusFilter, setStatusFilter] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(8);
+    const [searchPagination, setSearchPagination] = useState({ page: 1, limit: 8, total: 0, totalPages: 1 });
     const [entityModal, setEntityModal] = useState(null);
     const [confirmDelete, setConfirmDelete] = useState(null);
     const [toast, setToast] = useState(null);
+    const isSearchMode = searchTerm.trim().length > 0;
 
     const showToast = (msg, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3000); };
 
     const fetchEvents = useCallback(async () => {
         try {
             setLoading(true);
-            const res = await axios.get(`${API_BASE_URL}/api/admin/events`, { withCredentials: true });
+            const res = await axios.get(`${API_BASE_URL}/api/admin/events`, {
+                params: { limit: 5000 },
+                withCredentials: true
+            });
             if (res.data.success) setEvents(res.data.events || []);
         } catch (e) { console.error('Error:', e); }
         finally { setLoading(false); }
     }, []);
 
     useEffect(() => { fetchEvents(); }, [fetchEvents]);
+
+    // Debounced server-side Solr search
+    useEffect(() => {
+        if (!isSearchMode) return;
+        const timer = setTimeout(async () => {
+            try {
+                setLoading(true);
+                const res = await axios.get(`${API_BASE_URL}/api/admin/events`, {
+                    params: {
+                        q: searchTerm,
+                        status: statusFilter !== 'all' ? statusFilter : undefined,
+                        page: currentPage,
+                        limit: itemsPerPage
+                    },
+                    withCredentials: true
+                });
+                if (res.data.success) {
+                    setEvents(res.data.events || []);
+                    setSearchPagination(res.data.pagination || { page: 1, limit: itemsPerPage, total: res.data.total || 0, totalPages: 1 });
+                }
+            } catch (e) { console.error('Search error:', e); }
+            finally { setLoading(false); }
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [searchTerm, statusFilter, currentPage, itemsPerPage, isSearchMode]);
+
+    useEffect(() => {
+        if (searchTerm === '') {
+            setSearchPagination({ page: 1, limit: itemsPerPage, total: 0, totalPages: 1 });
+            fetchEvents();
+        }
+    }, [searchTerm, fetchEvents, itemsPerPage]);
 
     const handleDelete = async (event) => {
         try {
@@ -47,17 +84,20 @@ const AdminEvents = () => {
         } catch (e) { showToast('Delete failed', 'error'); }
     };
 
-    const filtered = events.filter(e => {
-        const textMatch = (e.title || e.name || '').toLowerCase().includes(searchTerm.toLowerCase());
-        const statusMatch = statusFilter === 'all' || (e.status || '').toLowerCase() === statusFilter;
-        return textMatch && statusMatch;
-    });
+    const filtered = isSearchMode
+        ? events
+        : events.filter(e => {
+            const statusMatch = statusFilter === 'all' || (e.status || '').toLowerCase() === statusFilter;
+            return statusMatch;
+        });
 
     useEffect(() => { setCurrentPage(1); }, [searchTerm, statusFilter]);
-    const indexOfLast = currentPage * itemsPerPage;
-    const indexOfFirst = indexOfLast - itemsPerPage;
-    const currentRows = filtered.slice(indexOfFirst, indexOfLast);
-    const totalPages = Math.ceil(filtered.length / itemsPerPage);
+    const indexOfLast = isSearchMode ? (searchPagination.page * searchPagination.limit) : (currentPage * itemsPerPage);
+    const indexOfFirst = isSearchMode ? ((searchPagination.page - 1) * searchPagination.limit) : (indexOfLast - itemsPerPage);
+    const currentRows = isSearchMode ? filtered : filtered.slice(indexOfFirst, indexOfLast);
+    const totalPages = isSearchMode ? (searchPagination.totalPages || 1) : Math.ceil(filtered.length / itemsPerPage);
+    const totalRows = isSearchMode ? (searchPagination.total || filtered.length) : filtered.length;
+    const activePage = isSearchMode ? (searchPagination.page || 1) : currentPage;
 
     const totalUpcoming = events.filter(e => e.status === 'upcoming').length;
     const totalCompleted = events.filter(e => e.status === 'completed').length;
@@ -121,7 +161,7 @@ const AdminEvents = () => {
                 <div className="bg-white rounded-xl shadow-md overflow-hidden">
                     <div className="px-6 py-4 border-b bg-emerald-50 flex justify-between items-center">
                         <h2 className="text-xl font-bold text-gray-800">Events</h2>
-                        <span className="px-4 py-2 bg-emerald-600 text-white rounded-full text-sm font-semibold">{filtered.length} Total</span>
+                        <span className="px-4 py-2 bg-emerald-600 text-white rounded-full text-sm font-semibold">{totalRows} Total</span>
                     </div>
                     {loading ? (
                         <div className="p-12 text-center"><i className="fas fa-spinner fa-spin text-4xl text-gray-400"></i><p className="text-gray-600 mt-4">Loading events...</p></div>
@@ -175,11 +215,11 @@ const AdminEvents = () => {
                     )}
                     {!loading && totalPages > 1 && (
                         <div className="px-6 py-4 border-t bg-gray-50 flex items-center justify-between">
-                            <p className="text-sm text-gray-600">Showing {indexOfFirst + 1}–{Math.min(indexOfLast, filtered.length)} of {filtered.length}</p>
+                            <p className="text-sm text-gray-600">Showing {indexOfFirst + 1}–{Math.min(indexOfLast, totalRows)} of {totalRows}</p>
                             <div className="flex gap-2">
-                                <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-4 py-2 border rounded-lg text-sm disabled:opacity-50 hover:bg-gray-100">Previous</button>
-                                <span className="px-4 py-2 text-sm">{currentPage} / {totalPages}</span>
-                                <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="px-4 py-2 border rounded-lg text-sm disabled:opacity-50 hover:bg-gray-100">Next</button>
+                                <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={activePage === 1} className="px-4 py-2 border rounded-lg text-sm disabled:opacity-50 hover:bg-gray-100">Previous</button>
+                                <span className="px-4 py-2 text-sm">{activePage} / {totalPages}</span>
+                                <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={activePage === totalPages} className="px-4 py-2 border rounded-lg text-sm disabled:opacity-50 hover:bg-gray-100">Next</button>
                             </div>
                         </div>
                     )}

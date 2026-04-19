@@ -11,6 +11,9 @@
     "perf:db": "node scripts/db-query-regression-check.js",
     "perf:redis": "node scripts/benchmark-redis-cache.js",
     "reindex:solr": "node scripts/reindex-solr.js",
+    "verify:solr": "node scripts/verify-solr-index.js",
+    "sync:solr": "node scripts/solr-sync.js --full-reindex",
+    "sync:solr:watch": "node scripts/solr-sync.js --full-reindex --watch",
     "seed:shop": "node seedShop.js",
     "seed:wallet": "node seedWallet.js",
     "seed:demo": "node scripts/seedDemoUsers.js"
