@@ -1,5 +1,6 @@
 const EventSchema = require('../models/schemas/eventSchema');
 const TeamSchema = require('../models/schemas/teamSchema');
+const UserSchema = require('../models/schemas/userSchema');
 const {
   solrConfig,
   isConfigured,
@@ -96,11 +97,45 @@ async function indexSingleTeam(teamDoc, { commit = true } = {}) {
   if (commit) await solrCommit(solrConfig.teamCollection);
 }
 
+function mapUserDoc(user) {
+  return {
+    id: String(user._id),
+    first_name: user.first_name || '',
+    last_name: user.last_name || '',
+    email: user.email || '',
+    role: user.role || '',
+    phone: user.phone || '',
+    status: user.status || 'active',
+    updated_at: toIso(user.updatedAt || user.created_at || Date.now())
+  };
+}
+
+async function reindexUsers({ commit = true } = {}) {
+  if (!isConfigured()) throw new Error('Solr is not configured.');
+  const userCollection = solrConfig.userCollection || 'users';
+  const users = await UserSchema.find({}).lean();
+  const docs = users.map(mapUserDoc);
+  await solrDeleteByQuery(userCollection, '*:*', false);
+  if (docs.length > 0) await solrUpdate(userCollection, docs, false);
+  if (commit) await solrCommit(userCollection);
+  return docs.length;
+}
+
+async function indexSingleUser(userDoc, { commit = true } = {}) {
+  if (!isConfigured()) return;
+  const userCollection = solrConfig.userCollection || 'users';
+  await solrUpdate(userCollection, [mapUserDoc(userDoc)], false);
+  if (commit) await solrCommit(userCollection);
+}
+
 module.exports = {
   mapEventDoc,
   mapTeamDoc,
+  mapUserDoc,
   reindexEvents,
   reindexTeams,
+  reindexUsers,
   indexSingleEvent,
-  indexSingleTeam
+  indexSingleTeam,
+  indexSingleUser
 };

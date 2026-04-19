@@ -35,6 +35,86 @@ const ensureAdminAuth = (req, res, next) => {
 // Apply admin authentication middleware to all routes
 router.use(ensureAdminAuth);
 
+// ─── Solr / SearchStax Search Endpoint ─────────────────────────────────────────
+router.get('/search', async (req, res) => {
+  const startTime = Date.now();
+  try {
+    const { q = '', type = 'all', page = 1, limit = 20, role } = req.query;
+    const { searchEvents, searchTeams, searchUsers } = require('../services/searchService');
+    const { solrConfig } = require('../config/solr');
+
+    const results = {};
+    const engines = [];
+
+    if (type === 'all' || type === 'events') {
+      const eventResult = await searchEvents({ search: q, page: Number(page), limit: Number(limit) });
+      results.events = eventResult;
+      if (eventResult.searchMeta) engines.push(eventResult.searchMeta.engine);
+    }
+    if (type === 'all' || type === 'teams') {
+      const teamResult = await searchTeams({ search: q, page: Number(page), limit: Number(limit) });
+      results.teams = teamResult;
+      if (teamResult.searchMeta) engines.push(teamResult.searchMeta.engine);
+    }
+    if (type === 'all' || type === 'users') {
+      const userResult = await searchUsers({ search: q, page: Number(page), limit: Number(limit), role });
+      results.users = userResult;
+      if (userResult.searchMeta) engines.push(userResult.searchMeta.engine);
+    }
+
+    const elapsed = Date.now() - startTime;
+    const engine = engines.includes('solr') ? 'SearchStax-Solr' : 'MongoDB-Fallback';
+
+    // These headers are visible in the browser Network tab for professor demo
+    res.set('X-Search-Engine', engine);
+    res.set('X-Search-Time', `${elapsed}ms`);
+    res.set('X-Search-Provider', 'SearchStax (Apache Solr)');
+    res.set('X-Solr-Enabled', String(solrConfig.enabled));
+    res.set('X-Solr-BaseUrl', solrConfig.baseUrl ? 'configured' : 'not-set');
+
+    return res.json({
+      success: true,
+      query: q,
+      type,
+      results,
+      searchMeta: {
+        engine,
+        provider: 'SearchStax (Apache Solr)',
+        solrEnabled: solrConfig.enabled,
+        solrConfigured: !!solrConfig.baseUrl,
+        responseTimeMs: elapsed,
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (err) {
+    console.error('Admin search error:', err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ─── Solr Reindex Endpoint (for demo) ──────────────────────────────────────────
+router.post('/search/reindex', async (req, res) => {
+  try {
+    const { reindexEvents, reindexTeams, reindexUsers } = require('../services/solrIndexService');
+    const startTime = Date.now();
+
+    const eventCount = await reindexEvents({ commit: true });
+    const teamCount = await reindexTeams({ commit: true });
+    let userCount = 0;
+    try { userCount = await reindexUsers({ commit: true }); } catch (e) { console.warn('User reindex skipped:', e.message); }
+
+    const elapsed = Date.now() - startTime;
+    res.set('X-Solr-Reindex-Time', `${elapsed}ms`);
+    return res.json({
+      success: true,
+      data: { events: eventCount, teams: teamCount, users: userCount, timeMs: elapsed }
+    });
+  } catch (err) {
+    console.error('Solr reindex error:', err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 /**
  * @swagger
  * /api/admin/dashboard:

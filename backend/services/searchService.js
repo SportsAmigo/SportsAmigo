@@ -118,7 +118,63 @@ async function searchTeams({ search = '', page = 1, limit = 20, sportType } = {}
   };
 }
 
+async function searchUsers({ search = '', page = 1, limit = 20, role } = {}) {
+  const User = require('../models/schemas/userSchema');
+  const normalizedPage = Math.max(1, Number(page) || 1);
+  const normalizedLimit = Math.min(50, Math.max(1, Number(limit) || 20));
+
+  if (solrConfig.enabled && isConfigured()) {
+    try {
+      const start = (normalizedPage - 1) * normalizedLimit;
+      const q = buildSolrQuery(search);
+      const fq = role ? [`role:${esc(role)}`] : [];
+
+      const result = await solrQuery(solrConfig.userCollection || 'users', {
+        q,
+        wt: 'json',
+        defType: 'edismax',
+        qf: 'first_name^4 last_name^4 email^3 role^1 phone^1',
+        start,
+        rows: normalizedLimit,
+        ...(fq.length ? { fq } : {})
+      });
+
+      const docs = result?.response?.docs || [];
+      const total = result?.response?.numFound || 0;
+
+      return {
+        success: true,
+        data: docs,
+        pagination: { page: normalizedPage, limit: normalizedLimit, total },
+        searchMeta: { engine: 'solr' }
+      };
+    } catch (err) {
+      console.warn('[Search] Solr users fallback:', err.message);
+    }
+  }
+
+  // MongoDB fallback
+  const query = String(search || '').trim().toLowerCase();
+  const filter = {};
+  if (role) filter.role = role;
+  const users = await User.find(filter).lean();
+  const filtered = users.filter((u) => {
+    if (!query) return true;
+    return [u.first_name, u.last_name, u.email, u.role, u.phone]
+      .filter(Boolean)
+      .some(f => String(f).toLowerCase().includes(query));
+  });
+
+  return {
+    success: true,
+    data: filtered.slice(0, normalizedLimit),
+    pagination: { page: normalizedPage, limit: normalizedLimit, total: filtered.length },
+    searchMeta: { engine: 'fallback-mongodb' }
+  };
+}
+
 module.exports = {
   searchEvents,
-  searchTeams
+  searchTeams,
+  searchUsers
 };

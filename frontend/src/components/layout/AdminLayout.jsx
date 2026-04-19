@@ -134,6 +134,7 @@ const AdminLayout = ({ children }) => {
                         {/* Divider */}
                         <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', margin: '8px 16px' }}></div>
 
+                        <NavLink to="/admin/search-demo" icon="fa-search" label="SearchStax Demo" />
                         <NavLink to="/admin/academic-proof" icon="fa-graduation-cap" label="Academic Proof" />
                         <NavLink to="/admin/proof" icon="fa-shield-alt" label="Proof Center" />
                     </nav>

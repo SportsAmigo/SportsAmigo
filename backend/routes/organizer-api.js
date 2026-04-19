@@ -295,6 +295,48 @@ router.use(isOrganizerAPI);
  *         description: CSV stream returned
  */
 
+// ─── Solr / SearchStax Search for Organizer ────────────────────────────────────
+router.get('/search-events', async (req, res) => {
+    const startTime = Date.now();
+    try {
+        const { searchEvents } = require('../services/searchService');
+        const { solrConfig } = require('../config/solr');
+        const { q = '', page = 1, limit = 20 } = req.query;
+
+        const result = await searchEvents({ search: q, page: Number(page), limit: Number(limit) });
+        const elapsed = Date.now() - startTime;
+        const engine = result.searchMeta?.engine === 'solr' ? 'SearchStax-Solr' : 'MongoDB-Fallback';
+
+        res.set('X-Search-Engine', engine);
+        res.set('X-Search-Time', `${elapsed}ms`);
+        res.set('X-Search-Provider', 'SearchStax (Apache Solr)');
+        return res.json({ success: true, ...result, searchMeta: { ...result.searchMeta, responseTimeMs: elapsed } });
+    } catch (err) {
+        console.error('Organizer search-events error:', err);
+        return res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+router.get('/search-teams', async (req, res) => {
+    const startTime = Date.now();
+    try {
+        const { searchTeams } = require('../services/searchService');
+        const { q = '', page = 1, limit = 20, sportType } = req.query;
+
+        const result = await searchTeams({ search: q, page: Number(page), limit: Number(limit), sportType });
+        const elapsed = Date.now() - startTime;
+        const engine = result.searchMeta?.engine === 'solr' ? 'SearchStax-Solr' : 'MongoDB-Fallback';
+
+        res.set('X-Search-Engine', engine);
+        res.set('X-Search-Time', `${elapsed}ms`);
+        res.set('X-Search-Provider', 'SearchStax (Apache Solr)');
+        return res.json({ success: true, ...result, searchMeta: { ...result.searchMeta, responseTimeMs: elapsed } });
+    } catch (err) {
+        console.error('Organizer search-teams error:', err);
+        return res.status(500).json({ success: false, message: err.message });
+    }
+});
+
 function resolveUploadedImagePath(file) {
     if (!file) return null;
     if (file.secure_url) return file.secure_url;
@@ -308,25 +350,25 @@ router.get('/stats', cacheMiddleware(60), async (req, res) => {
     try {
         const Event = require('../models/event');
         const organizerId = req.session.user._id;
-        
+
         const events = await Event.getEventsByOrganizer(organizerId);
-        
+
         const now = new Date();
-        const upcomingEvents = events.filter(e => 
-            new Date(e.start_date || e.event_date) > now && 
+        const upcomingEvents = events.filter(e =>
+            new Date(e.start_date || e.event_date) > now &&
             e.status !== 'cancelled' &&
             e.status !== 'completed'
         ).length;
-        
-        const completedEvents = events.filter(e => 
-            e.status === 'completed' || 
+
+        const completedEvents = events.filter(e =>
+            e.status === 'completed' ||
             new Date(e.end_date || e.event_date) < now
         ).length;
-        
-        const totalParticipants = events.reduce((sum, event) => 
+
+        const totalParticipants = events.reduce((sum, event) =>
             sum + (event.registered_teams || event.team_registrations?.length || 0), 0
         );
-        
+
         res.json({
             success: true,
             stats: {
@@ -338,10 +380,10 @@ router.get('/stats', cacheMiddleware(60), async (req, res) => {
         });
     } catch (error) {
         console.error('Error fetching organizer stats:', error);
-        res.status(500).json({ 
-            success: false, 
+        res.status(500).json({
+            success: false,
             message: 'Failed to fetch statistics',
-            error: error.message 
+            error: error.message
         });
     }
 });
@@ -351,27 +393,27 @@ router.get('/events', cacheMiddleware(45), async (req, res) => {
     try {
         const Event = require('../models/event');
         const organizerId = req.session.user._id;
-        
+
         const events = await Event.getEventsByOrganizer(organizerId);
-        
+
         // Filter for approved events only (for VAS purchases, etc.)
-        const approvedEvents = events.filter(event => 
-            event.status === 'approved' || 
-            event.status === 'upcoming' || 
-            event.status === 'ongoing' || 
+        const approvedEvents = events.filter(event =>
+            event.status === 'approved' ||
+            event.status === 'upcoming' ||
+            event.status === 'ongoing' ||
             event.status === 'completed'
         );
-        
+
         const formattedEvents = approvedEvents.map(event => {
             const now = new Date();
             const startDate = new Date(event.start_date || event.event_date);
             const endDate = new Date(event.end_date || event.event_date);
-            
+
             let status = event.status || 'scheduled';
             if (endDate < now) status = 'completed';
             else if (startDate <= now && endDate >= now) status = 'ongoing';
             else if (startDate > now) status = 'upcoming';
-            
+
             return {
                 _id: event._id,
                 name: event.title || event.name,
@@ -387,14 +429,14 @@ router.get('/events', cacheMiddleware(45), async (req, res) => {
                 created_at: event.created_at || new Date()
             };
         });
-        
+
         res.json({ success: true, events: formattedEvents });
     } catch (error) {
         console.error('Error fetching events:', error);
-        res.status(500).json({ 
-            success: false, 
+        res.status(500).json({
+            success: false,
             message: 'Failed to fetch events',
-            error: error.message 
+            error: error.message
         });
     }
 });
@@ -404,24 +446,24 @@ router.post('/create-event', async (req, res) => {
     try {
         const Event = require('../models/event');
         const User = require('../models/user');
-        
+
         // Check if organizer is verified
         const organizer = await User.getUserById(req.session.user._id);
         if (!organizer) {
-            return res.status(404).json({ 
-                success: false, 
-                message: 'Organizer account not found' 
+            return res.status(404).json({
+                success: false,
+                message: 'Organizer account not found'
             });
         }
-        
+
         if (organizer.verificationStatus !== 'verified') {
-            return res.status(403).json({ 
-                success: false, 
+            return res.status(403).json({
+                success: false,
                 message: 'Your account must be verified by a coordinator before you can create events. Please wait for approval.',
                 verificationStatus: organizer.verificationStatus
             });
         }
-        
+
         // Validation
         if (!req.body.name) {
             return res.status(400).json({ success: false, message: 'Event name is required' });
@@ -435,33 +477,33 @@ router.post('/create-event', async (req, res) => {
         if (!req.body.location) {
             return res.status(400).json({ success: false, message: 'Location is required' });
         }
-        
+
         // Check if start date is in the future
         if (new Date(req.body.start_date) <= new Date()) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Event start date must be in the future' 
+            return res.status(400).json({
+                success: false,
+                message: 'Event start date must be in the future'
             });
         }
-        
+
         // Check if end date is after start date
         if (req.body.end_date && new Date(req.body.end_date) < new Date(req.body.start_date)) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'End date must be after start date' 
+            return res.status(400).json({
+                success: false,
+                message: 'End date must be after start date'
             });
         }
-        
+
         // Check if registration deadline is before start date
         if (req.body.registration_deadline) {
             if (new Date(req.body.registration_deadline) >= new Date(req.body.start_date)) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: 'Registration deadline must be before event start date' 
+                return res.status(400).json({
+                    success: false,
+                    message: 'Registration deadline must be before event start date'
                 });
             }
         }
-        
+
         const eventData = {
             organizer_id: req.session.user._id,
             title: req.body.name,
@@ -478,13 +520,13 @@ router.post('/create-event', async (req, res) => {
             status: 'pending_approval',
             team_registrations: []
         };
-        
+
         const newEvent = await Event.createEvent(eventData);
 
         // Invalidate organizer's stats + events list cache
         const organizerId = req.session.user._id.toString();
         await invalidateCacheByPrefixes(['/api/organizer/stats', '/api/organizer/events'], organizerId);
-        
+
         res.status(201).json({
             success: true,
             message: 'Event created successfully! It will be visible to players once approved by a coordinator.',
@@ -499,10 +541,10 @@ router.post('/create-event', async (req, res) => {
         });
     } catch (error) {
         console.error('Error creating event:', error);
-        res.status(500).json({ 
-            success: false, 
+        res.status(500).json({
+            success: false,
             message: 'Failed to create event',
-            error: error.message 
+            error: error.message
         });
     }
 });
@@ -512,18 +554,18 @@ router.get('/event/:id', cacheMiddleware(60), async (req, res) => {
     try {
         const Event = require('../models/event');
         const TeamSchema = require('../models/schemas/teamSchema');
-        
+
         const event = await Event.getEventById(req.params.id);
-        
+
         if (!event) {
             return res.status(404).json({ success: false, message: 'Event not found' });
         }
-        
+
         // Check if current user is the organizer
         if (event.organizer_id.toString() !== req.session.user._id.toString()) {
-            return res.status(403).json({ 
-                success: false, 
-                message: 'You do not have permission to view this event' 
+            return res.status(403).json({
+                success: false,
+                message: 'You do not have permission to view this event'
             });
         }
 
@@ -550,7 +592,7 @@ router.get('/event/:id', cacheMiddleware(60), async (req, res) => {
                         const manager = await UserSchema.findById(team.manager_id)
                             .select('first_name last_name')
                             .exec();
-                        
+
                         // Get player details from members
                         let players = [];
                         if (team.members && team.members.length > 0) {
@@ -585,7 +627,7 @@ router.get('/event/:id', cacheMiddleware(60), async (req, res) => {
                 })
             );
         }
-        
+
         const formattedEvent = {
             _id: event._id,
             name: event.title,
@@ -602,14 +644,14 @@ router.get('/event/:id', cacheMiddleware(60), async (req, res) => {
             registered_teams: teamRegistrations.length,
             team_registrations: teamRegistrations
         };
-        
+
         res.json({ success: true, event: formattedEvent });
     } catch (error) {
         console.error('Error fetching event:', error);
-        res.status(500).json({ 
-            success: false, 
+        res.status(500).json({
+            success: false,
             message: 'Failed to fetch event details',
-            error: error.message 
+            error: error.message
         });
     }
 });
@@ -619,22 +661,22 @@ router.put('/event/:id', async (req, res) => {
     try {
         const Event = require('../models/event');
         const event = await Event.getEventById(req.params.id);
-        
+
         if (!event) {
             return res.status(404).json({ success: false, message: 'Event not found' });
         }
-        
+
         // Check permission
         if (event.organizer_id.toString() !== req.session.user._id.toString()) {
-            return res.status(403).json({ 
-                success: false, 
-                message: 'You do not have permission to update this event' 
+            return res.status(403).json({
+                success: false,
+                message: 'You do not have permission to update this event'
             });
         }
-        
+
         // Backend validation for event name and location
         const validationErrors = {};
-        
+
         if (req.body.name) {
             if (/^\d+$/.test(req.body.name.trim())) {
                 validationErrors.name = 'Event name cannot contain only numbers. Please include at least one letter.';
@@ -642,7 +684,7 @@ router.put('/event/:id', async (req, res) => {
                 validationErrors.name = 'Event name must contain at least one letter.';
             }
         }
-        
+
         if (req.body.location) {
             if (/^\d+$/.test(req.body.location.trim())) {
                 validationErrors.location = 'Location cannot contain only numbers. Please include at least one letter.';
@@ -650,15 +692,15 @@ router.put('/event/:id', async (req, res) => {
                 validationErrors.location = 'Location must contain at least one letter.';
             }
         }
-        
+
         if (Object.keys(validationErrors).length > 0) {
-            return res.status(400).json({ 
-                success: false, 
+            return res.status(400).json({
+                success: false,
                 message: 'Validation failed',
                 errors: validationErrors
             });
         }
-        
+
         const updateData = {
             title: req.body.name || req.body.title || event.title,
             description: req.body.description !== undefined ? req.body.description : event.description,
@@ -673,7 +715,7 @@ router.put('/event/:id', async (req, res) => {
             registration_deadline: req.body.registration_deadline || event.registration_deadline,
             status: req.body.status || event.status
         };
-        
+
         await Event.updateEvent(req.params.id, updateData);
 
         // Invalidate this event's cache + events list + stats
@@ -683,10 +725,10 @@ router.put('/event/:id', async (req, res) => {
             '/api/organizer/events',
             '/api/organizer/stats'
         ], organizerId);
-        
+
         // Fetch updated event to return fresh data
         const updatedEvent = await Event.getEventById(req.params.id);
-        
+
         res.json({
             success: true,
             message: 'Event updated successfully',
@@ -702,10 +744,10 @@ router.put('/event/:id', async (req, res) => {
         });
     } catch (error) {
         console.error('Error updating event:', error);
-        res.status(500).json({ 
-            success: false, 
+        res.status(500).json({
+            success: false,
             message: 'Failed to update event',
-            error: error.message 
+            error: error.message
         });
     }
 });
@@ -715,19 +757,19 @@ router.delete('/event/:id', async (req, res) => {
     try {
         const Event = require('../models/event');
         const event = await Event.getEventById(req.params.id);
-        
+
         if (!event) {
             return res.status(404).json({ success: false, message: 'Event not found' });
         }
-        
+
         // Check permission
         if (event.organizer_id.toString() !== req.session.user._id.toString()) {
-            return res.status(403).json({ 
-                success: false, 
-                message: 'You do not have permission to delete this event' 
+            return res.status(403).json({
+                success: false,
+                message: 'You do not have permission to delete this event'
             });
         }
-        
+
         await Event.deleteEvent(req.params.id);
 
         // Invalidate this event's cache + events list + stats
@@ -737,17 +779,17 @@ router.delete('/event/:id', async (req, res) => {
             '/api/organizer/events',
             '/api/organizer/stats'
         ], organizerId);
-        
+
         res.json({
             success: true,
             message: 'Event deleted successfully'
         });
     } catch (error) {
         console.error('Error deleting event:', error);
-        res.status(500).json({ 
-            success: false, 
+        res.status(500).json({
+            success: false,
             message: 'Failed to delete event',
-            error: error.message 
+            error: error.message
         });
     }
 });
@@ -757,19 +799,19 @@ router.put('/event/:id/cancel', async (req, res) => {
     try {
         const Event = require('../models/event');
         const event = await Event.getEventById(req.params.id);
-        
+
         if (!event) {
             return res.status(404).json({ success: false, message: 'Event not found' });
         }
-        
+
         // Check permission
         if (event.organizer_id.toString() !== req.session.user._id.toString()) {
-            return res.status(403).json({ 
-                success: false, 
-                message: 'You do not have permission to cancel this event' 
+            return res.status(403).json({
+                success: false,
+                message: 'You do not have permission to cancel this event'
             });
         }
-        
+
         await Event.cancelEvent(req.params.id);
 
         // Invalidate this event's cache + events list + stats
@@ -779,17 +821,17 @@ router.put('/event/:id/cancel', async (req, res) => {
             '/api/organizer/events',
             '/api/organizer/stats'
         ], organizerId);
-        
+
         res.json({
             success: true,
             message: 'Event cancelled successfully'
         });
     } catch (error) {
         console.error('Error cancelling event:', error);
-        res.status(500).json({ 
-            success: false, 
+        res.status(500).json({
+            success: false,
             message: 'Failed to cancel event',
-            error: error.message 
+            error: error.message
         });
     }
 });
@@ -799,26 +841,26 @@ router.get('/profile', cacheMiddleware(300), async (req, res) => {
     try {
         const User = require('../models/user');
         const Event = require('../models/event');
-        
+
         const user = await User.getUserById(req.session.user._id);
-        
+
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
-        
+
         // Get event statistics
         const events = await Event.getEventsByOrganizer(req.session.user._id);
-        const upcomingEvents = events.filter(e => 
+        const upcomingEvents = events.filter(e =>
             new Date(e.start_date || e.event_date) > new Date()
         ).length;
-        
-        const memberSince = user.created_at 
+
+        const memberSince = user.created_at
             ? new Date(user.created_at).toLocaleDateString('en-US', {
                 month: 'long',
                 year: 'numeric'
             })
             : 'November 2025';
-        
+
         res.json({
             success: true,
             user: {
@@ -842,10 +884,10 @@ router.get('/profile', cacheMiddleware(300), async (req, res) => {
         });
     } catch (error) {
         console.error('Error fetching profile:', error);
-        res.status(500).json({ 
-            success: false, 
+        res.status(500).json({
+            success: false,
             message: 'Failed to fetch profile',
-            error: error.message 
+            error: error.message
         });
     }
 });
@@ -855,19 +897,19 @@ router.put('/profile', uploadProfileImage, async (req, res) => {
     try {
         const User = require('../models/user');
         const userId = req.session.user._id;
-        
+
         console.log('=== Profile Update Request ===');
         console.log('User ID:', userId);
         console.log('Request body:', req.body);
         console.log('File uploaded:', req.file ? req.file.filename : 'No file');
-        
+
         const updateData = {
             first_name: req.body.first_name,
             last_name: req.body.last_name,
             phone: req.body.phone,
             bio: req.body.bio
         };
-        
+
         // Handle nested profile fields (age, address, organization)
         if (req.body.age !== undefined && req.body.age !== '') {
             updateData['profile.age'] = parseInt(req.body.age, 10);
@@ -878,41 +920,41 @@ router.put('/profile', uploadProfileImage, async (req, res) => {
         if (req.body.organization !== undefined && req.body.organization !== '') {
             updateData['profile.organization_name'] = req.body.organization;
         }
-        
+
         // If profile image was uploaded
         if (req.file) {
             updateData.profile_image = resolveUploadedImagePath(req.file);
         }
-        
+
         console.log('Update data prepared:', updateData);
-        
+
         // Use User model's findByIdAndUpdate directly
         const mongoose = require('mongoose');
         const UserModel = mongoose.model('User');
-        
+
         const updatedUser = await UserModel.findByIdAndUpdate(
-            userId, 
+            userId,
             { $set: updateData },
             { new: true, runValidators: true }
         );
-        
+
         if (!updatedUser) {
             console.error('User not found or update failed');
-            return res.status(500).json({ 
-                success: false, 
-                message: 'Failed to update profile in database' 
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to update profile in database'
             });
         }
-        
+
         console.log('Profile updated successfully');
-        
+
         // Prepare session user object
         const sessionUser = updatedUser.toObject ? updatedUser.toObject() : updatedUser;
         sessionUser.name = sessionUser.first_name + (sessionUser.last_name ? ' ' + sessionUser.last_name : '');
-        
+
         // Update session
         req.session.user = sessionUser;
-        
+
         await new Promise((resolve, reject) => {
             req.session.save((err) => {
                 if (err) {
@@ -923,9 +965,9 @@ router.put('/profile', uploadProfileImage, async (req, res) => {
                 }
             });
         });
-        
+
         console.log('Session updated successfully');
-        
+
         res.json({
             success: true,
             message: 'Profile updated successfully',
@@ -948,10 +990,10 @@ router.put('/profile', uploadProfileImage, async (req, res) => {
         console.error('=== Profile Update Error ===');
         console.error('Error message:', error.message);
         console.error('Error stack:', error.stack);
-        res.status(500).json({ 
-            success: false, 
+        res.status(500).json({
+            success: false,
             message: 'Failed to update profile',
-            error: error.message 
+            error: error.message
         });
     }
 });
@@ -962,47 +1004,47 @@ router.put('/change-password', async (req, res) => {
         const User = require('../models/user');
         const userId = req.session.user._id;
         const { oldPassword, newPassword } = req.body;
-        
+
         if (!oldPassword || !newPassword) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Old password and new password are required' 
+            return res.status(400).json({
+                success: false,
+                message: 'Old password and new password are required'
             });
         }
-        
+
         // Get user from database
         const user = await User.getUserById(userId);
-        
+
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
-        
+
         // Verify old password
         const isMatch = await bcrypt.compare(oldPassword, user.password);
-        
+
         if (!isMatch) {
-            return res.status(401).json({ 
-                success: false, 
-                message: 'Current password is incorrect' 
+            return res.status(401).json({
+                success: false,
+                message: 'Current password is incorrect'
             });
         }
-        
+
         // Hash new password
         const hashedPassword = await bcrypt.hash(newPassword, 10);
-        
+
         // Update password in database
         await User.updateUser(userId, { password: hashedPassword });
-        
-        res.json({ 
-            success: true, 
-            message: 'Password changed successfully' 
+
+        res.json({
+            success: true,
+            message: 'Password changed successfully'
         });
     } catch (error) {
         console.error('Error changing password:', error);
-        res.status(500).json({ 
-            success: false, 
+        res.status(500).json({
+            success: false,
             message: 'Failed to change password',
-            error: error.message 
+            error: error.message
         });
     }
 });
@@ -1016,15 +1058,15 @@ router.put('/event/:eventId/approve-team/:teamId', isOrganizerAPI, async (req, r
 
         // Get event and verify ownership
         const event = await Event.getEventById(eventId);
-        
+
         if (!event) {
             return res.status(404).json({ success: false, message: 'Event not found' });
         }
 
         if (event.organizer_id.toString() !== organizerId.toString()) {
-            return res.status(403).json({ 
-                success: false, 
-                message: 'You are not authorized to approve teams for this event' 
+            return res.status(403).json({
+                success: false,
+                message: 'You are not authorized to approve teams for this event'
             });
         }
 
@@ -1032,9 +1074,9 @@ router.put('/event/:eventId/approve-team/:teamId', isOrganizerAPI, async (req, r
         const updated = await Event.approveTeamRegistration(eventId, teamId);
 
         if (!updated) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Failed to approve team. Team may not be found or already approved.' 
+            return res.status(400).json({
+                success: false,
+                message: 'Failed to approve team. Team may not be found or already approved.'
             });
         }
 
@@ -1044,16 +1086,16 @@ router.put('/event/:eventId/approve-team/:teamId', isOrganizerAPI, async (req, r
             '/api/organizer/stats'
         ], organizerId.toString());
 
-        res.json({ 
-            success: true, 
-            message: 'Team registration approved successfully' 
+        res.json({
+            success: true,
+            message: 'Team registration approved successfully'
         });
     } catch (error) {
         console.error('Approve team error:', error);
-        res.status(500).json({ 
-            success: false, 
+        res.status(500).json({
+            success: false,
             message: 'Error approving team registration',
-            error: error.message 
+            error: error.message
         });
     }
 });
@@ -1067,15 +1109,15 @@ router.put('/event/:eventId/reject-team/:teamId', isOrganizerAPI, async (req, re
 
         // Get event and verify ownership
         const event = await Event.getEventById(eventId);
-        
+
         if (!event) {
             return res.status(404).json({ success: false, message: 'Event not found' });
         }
 
         if (event.organizer_id.toString() !== organizerId.toString()) {
-            return res.status(403).json({ 
-                success: false, 
-                message: 'You are not authorized to reject teams for this event' 
+            return res.status(403).json({
+                success: false,
+                message: 'You are not authorized to reject teams for this event'
             });
         }
 
@@ -1083,9 +1125,9 @@ router.put('/event/:eventId/reject-team/:teamId', isOrganizerAPI, async (req, re
         const updated = await Event.rejectTeamRegistration(eventId, teamId);
 
         if (!updated) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Failed to reject team. Team may not be found.' 
+            return res.status(400).json({
+                success: false,
+                message: 'Failed to reject team. Team may not be found.'
             });
         }
 
@@ -1095,16 +1137,16 @@ router.put('/event/:eventId/reject-team/:teamId', isOrganizerAPI, async (req, re
             '/api/organizer/stats'
         ], organizerId.toString());
 
-        res.json({ 
-            success: true, 
-            message: 'Team registration rejected' 
+        res.json({
+            success: true,
+            message: 'Team registration rejected'
         });
     } catch (error) {
         console.error('Reject team error:', error);
-        res.status(500).json({ 
-            success: false, 
+        res.status(500).json({
+            success: false,
             message: 'Error rejecting team registration',
-            error: error.message 
+            error: error.message
         });
     }
 });
@@ -1122,7 +1164,7 @@ router.post('/event/:eventId/schedule-matches', async (req, res) => {
 
         // Verify event exists and organizer owns it
         const event = await Event.getEventById(eventId);
-        
+
         if (!event) {
             return res.status(404).json({
                 success: false,
@@ -1151,7 +1193,7 @@ router.post('/event/:eventId/schedule-matches', async (req, res) => {
         // Create each match
         for (let i = 0; i < matches.length; i++) {
             const matchData = matches[i];
-            
+
             try {
                 // Validate required fields
                 if (!matchData.team_a || !matchData.team_b) {
@@ -1241,7 +1283,7 @@ router.post('/event/:eventId/finalize-schedule', async (req, res) => {
 
         // Get event
         const event = await Event.getEventById(eventId);
-        
+
         if (!event) {
             return res.status(404).json({
                 success: false,
@@ -1267,7 +1309,7 @@ router.post('/event/:eventId/finalize-schedule', async (req, res) => {
 
         // Check if matches exist
         const matchCount = await Match.countDocuments({ event_id: eventId });
-        
+
         if (matchCount === 0) {
             return res.status(400).json({
                 success: false,
@@ -1334,11 +1376,11 @@ router.get('/events/:eventId/export-participants-csv', async (req, res) => {
                 const managerEmail = manager?.email || 'N/A';
                 const members = team.members?.length || 0;
                 const regDate = reg.registered_at ? new Date(reg.registered_at).toLocaleDateString() : 'N/A';
-                rows.push(`"${(team.name || '').replace(/"/g,'""')}","${managerName.replace(/"/g,'""')}","${managerEmail}","${members}","${regDate}"`);
+                rows.push(`"${(team.name || '').replace(/"/g, '""')}","${managerName.replace(/"/g, '""')}","${managerEmail}","${members}","${regDate}"`);
             } catch (e) { /* skip */ }
         }
         const csv = rows.join('\n');
-        const filename = `${(event.title || 'event').replace(/[^a-z0-9]/gi,'_')}_participants.csv`;
+        const filename = `${(event.title || 'event').replace(/[^a-z0-9]/gi, '_')}_participants.csv`;
         res.setHeader('Content-Type', 'text/csv');
         res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
         res.send(csv);
@@ -1366,8 +1408,8 @@ router.get('/events/:eventId/export-matches-csv', async (req, res) => {
         const matches = await Match.find({ event_id: eventId }).sort({ match_date: 1 }).lean();
         const rows = ['Match Number,Team A,Team B,Score A,Score B,Status,Date'];
         matches.forEach((m, i) => {
-            const teamA = `"${(m.team1_name || m.team_a_name || '').replace(/"/g,'""')}"`;
-            const teamB = `"${(m.team2_name || m.team_b_name || '').replace(/"/g,'""')}"`;
+            const teamA = `"${(m.team1_name || m.team_a_name || '').replace(/"/g, '""')}"`;
+            const teamB = `"${(m.team2_name || m.team_b_name || '').replace(/"/g, '""')}"`;
             const scoreA = m.score_team1 ?? m.score_a ?? '-';
             const scoreB = m.score_team2 ?? m.score_b ?? '-';
             const status = m.status || 'scheduled';
@@ -1375,7 +1417,7 @@ router.get('/events/:eventId/export-matches-csv', async (req, res) => {
             rows.push(`${i + 1},${teamA},${teamB},"${scoreA}","${scoreB}","${status}","${date}"`);
         });
         const csv = rows.join('\n');
-        const filename = `${(event.title || 'event').replace(/[^a-z0-9]/gi,'_')}_matches.csv`;
+        const filename = `${(event.title || 'event').replace(/[^a-z0-9]/gi, '_')}_matches.csv`;
         res.setHeader('Content-Type', 'text/csv');
         res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
         res.send(csv);

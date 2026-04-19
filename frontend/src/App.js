@@ -78,6 +78,7 @@ import AdminCoordinators from './pages/admin/AdminCoordinators';
 import AdminTiers from './pages/admin/AdminTiers';
 import AdminOperationalProof from './pages/admin/AdminOperationalProof';
 import AdminAcademicProof from './pages/admin/AdminAcademicProof';
+import AdminSearchDemo from './pages/admin/AdminSearchDemo';
 
 // Coordinator Pages
 import CoordinatorHome from './pages/coordinator/CoordinatorHome';
@@ -540,6 +541,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute allowedRoles={['admin']}>
               <AdminCommissions />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/search-demo"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminSearchDemo />
             </ProtectedRoute>
           }
         />
