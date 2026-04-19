@@ -1,5 +1,24 @@
 const DEFAULT_TIMEOUT_MS = Number(process.env.SOLR_TIMEOUT_MS || 1500);
 
+function buildSearchParams(params = {}) {
+  const searchParams = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') return;
+
+    if (Array.isArray(value)) {
+      value
+        .filter((item) => item !== undefined && item !== null && item !== '')
+        .forEach((item) => searchParams.append(key, String(item)));
+      return;
+    }
+
+    searchParams.append(key, String(value));
+  });
+
+  return searchParams;
+}
+
 function normalizeSolrBaseUrl(rawUrl) {
   const value = String(rawUrl || '').trim();
   if (!value) return '';
@@ -59,7 +78,15 @@ async function request(path, options = {}) {
     });
 
     const text = await response.text();
-    const payload = text ? JSON.parse(text) : {};
+    let payload = {};
+
+    if (text) {
+      try {
+        payload = JSON.parse(text);
+      } catch (parseErr) {
+        throw new Error(`Solr response parse failed: ${parseErr.message}`);
+      }
+    }
 
     if (!response.ok) {
       const reason = payload?.error?.msg || payload?.error || `HTTP ${response.status}`;
@@ -81,8 +108,29 @@ function selectCollection(collection) {
 }
 
 async function solrQuery(collection, params) {
-  const searchParams = new URLSearchParams(params || {});
+  const searchParams = buildSearchParams(params || {});
   return request(`${selectCollection(collection)}/select?${searchParams.toString()}`, { method: 'GET' });
+}
+
+async function solrPing(collection) {
+  return solrQuery(collection, {
+    q: '*:*',
+    wt: 'json',
+    rows: 0
+  });
+}
+
+async function solrSchemaFields(collection) {
+  return request(`${selectCollection(collection)}/schema/fields`, { method: 'GET' });
+}
+
+async function solrSampleDocs(collection, rows = 3) {
+  return solrQuery(collection, {
+    q: '*:*',
+    wt: 'json',
+    rows: Math.max(1, Number(rows) || 3),
+    fl: '*,score'
+  });
 }
 
 async function solrUpdate(collection, docs = [], commit = false) {
@@ -114,5 +162,8 @@ module.exports = {
   solrQuery,
   solrUpdate,
   solrDeleteByQuery,
-  solrCommit
+  solrCommit,
+  solrPing,
+  solrSchemaFields,
+  solrSampleDocs
 };

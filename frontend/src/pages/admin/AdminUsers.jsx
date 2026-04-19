@@ -191,16 +191,21 @@ const AdminUsers = () => {
     const [stats, setStats] = useState({ players: 0, managers: 0, organizers: 0, coordinators: 0 });
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(10);
+    const [searchPagination, setSearchPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
     const [entityModal, setEntityModal] = useState(null);
     const [toast, setToast] = useState(null);
     const [confirmDelete, setConfirmDelete] = useState(null);
+    const isSearchMode = searchTerm.trim().length > 0;
 
     const showToast = (msg, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3000); };
 
     const fetchAllUsers = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await axios.get(`${API_BASE_URL}/api/admin/users`, { withCredentials: true });
+            const response = await axios.get(`${API_BASE_URL}/api/admin/users`, {
+                params: { limit: 5000 },
+                withCredentials: true
+            });
             if (response.data.success) {
                 setUsers(response.data.users || []);
                 setStats(response.data.breakdown || {});
@@ -214,28 +219,37 @@ const AdminUsers = () => {
 
     // Debounced server-side Solr search — makes API calls visible in Network tab
     useEffect(() => {
-        if (!searchTerm.trim()) return; // skip if empty, use client-side filter
+        if (!isSearchMode) return; // skip if empty, use client-side filter
         const timer = setTimeout(async () => {
             try {
                 setLoading(true);
                 const res = await axios.get(`${API_BASE_URL}/api/admin/users`, {
-                    params: { q: searchTerm },
+                    params: {
+                        q: searchTerm,
+                        role: roleFilter !== 'all' ? roleFilter : undefined,
+                        page: currentPage,
+                        limit: itemsPerPage
+                    },
                     withCredentials: true
                 });
                 if (res.data.success) {
                     setUsers(res.data.users || []);
+                    setSearchPagination(res.data.pagination || { page: 1, limit: itemsPerPage, total: res.data.total || 0, totalPages: 1 });
                 }
             } catch (e) {
                 console.error('Search error:', e);
             } finally { setLoading(false); }
         }, 400);
         return () => clearTimeout(timer);
-    }, [searchTerm]);
+    }, [searchTerm, roleFilter, currentPage, itemsPerPage, isSearchMode]);
 
     // Re-fetch all when search is cleared
     useEffect(() => {
-        if (searchTerm === '') fetchAllUsers();
-    }, [searchTerm, fetchAllUsers]);
+        if (searchTerm === '') {
+            setSearchPagination({ page: 1, limit: itemsPerPage, total: 0, totalPages: 1 });
+            fetchAllUsers();
+        }
+    }, [searchTerm, fetchAllUsers, itemsPerPage]);
 
     const handleView = (user) => {
         setEntityModal({ type: user.role || 'user', id: user.id, name: user.name });
@@ -260,17 +274,19 @@ const AdminUsers = () => {
 
     // When searching server-side, users state already has filtered results
     // When not searching, apply client-side role filter
-    const filteredUsers = searchTerm.trim()
-        ? users.filter(u => roleFilter === 'all' || u.role === roleFilter)
-        : users.filter(user => {
+    const filteredUsers = isSearchMode
+        ? users
+        : users.filter((user) => {
             const matchesRole = roleFilter === 'all' || user.role === roleFilter;
             return matchesRole;
         });
 
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentUsers = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+    const indexOfLastItem = isSearchMode ? (searchPagination.page * searchPagination.limit) : (currentPage * itemsPerPage);
+    const indexOfFirstItem = isSearchMode ? ((searchPagination.page - 1) * searchPagination.limit) : (indexOfLastItem - itemsPerPage);
+    const currentUsers = isSearchMode ? filteredUsers : filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = isSearchMode ? (searchPagination.totalPages || 1) : Math.ceil(filteredUsers.length / itemsPerPage);
+    const totalRows = isSearchMode ? (searchPagination.total || filteredUsers.length) : filteredUsers.length;
+    const activePage = isSearchMode ? (searchPagination.page || 1) : currentPage;
 
     return (
         <AdminLayout>
@@ -344,7 +360,7 @@ const AdminUsers = () => {
                 <div className="bg-white rounded-xl shadow-md overflow-hidden">
                     <div className="px-6 py-4 border-b border-gray-200 bg-slate-50 flex justify-between items-center">
                         <h2 className="text-xl font-bold text-gray-800">Users Directory</h2>
-                        <span className="px-4 py-2 bg-slate-700 text-white rounded-full text-sm font-semibold">{filteredUsers.length} Total</span>
+                        <span className="px-4 py-2 bg-slate-700 text-white rounded-full text-sm font-semibold">{totalRows} Total</span>
                     </div>
 
                     {loading ? (
@@ -406,13 +422,13 @@ const AdminUsers = () => {
                     {/* Pagination */}
                     {!loading && totalPages > 1 && (
                         <div className="px-6 py-4 border-t bg-gray-50 flex items-center justify-between">
-                            <p className="text-sm text-gray-600">Showing {indexOfFirstItem + 1}–{Math.min(indexOfLastItem, filteredUsers.length)} of {filteredUsers.length}</p>
+                            <p className="text-sm text-gray-600">Showing {indexOfFirstItem + 1}–{Math.min(indexOfLastItem, totalRows)} of {totalRows}</p>
                             <div className="flex gap-2">
-                                <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-4 py-2 border rounded-lg text-sm disabled:opacity-50 hover:bg-gray-100">Previous</button>
+                                <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={activePage === 1} className="px-4 py-2 border rounded-lg text-sm disabled:opacity-50 hover:bg-gray-100">Previous</button>
                                 {[...Array(Math.min(totalPages, 7))].map((_, i) => (
-                                    <button key={i} onClick={() => setCurrentPage(i + 1)} className={`w-9 h-9 rounded-lg text-sm font-medium ${currentPage === i + 1 ? 'bg-slate-700 text-white' : 'border hover:bg-gray-100'}`}>{i + 1}</button>
+                                    <button key={i} onClick={() => setCurrentPage(i + 1)} className={`w-9 h-9 rounded-lg text-sm font-medium ${activePage === i + 1 ? 'bg-slate-700 text-white' : 'border hover:bg-gray-100'}`}>{i + 1}</button>
                                 ))}
-                                <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="px-4 py-2 border rounded-lg text-sm disabled:opacity-50 hover:bg-gray-100">Next</button>
+                                <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={activePage === totalPages} className="px-4 py-2 border rounded-lg text-sm disabled:opacity-50 hover:bg-gray-100">Next</button>
                             </div>
                         </div>
                     )}

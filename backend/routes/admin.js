@@ -35,11 +35,34 @@ const ensureAdminAuth = (req, res, next) => {
 // Apply admin authentication middleware to all routes
 router.use(ensureAdminAuth);
 
+function toPositiveInt(value, fallback) {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 1) return fallback;
+  return Math.floor(n);
+}
+
+function getSearchHeaderValues(searchMeta = {}) {
+  const engineKey = searchMeta.engine;
+  const engine = engineKey === 'solr'
+    ? 'SearchStax-Solr'
+    : engineKey === 'mongodb'
+      ? 'MongoDB-Fallback'
+      : 'none';
+
+  const provider = engineKey === 'solr'
+    ? 'SearchStax (Apache Solr)'
+    : 'MongoDB Fallback';
+
+  return { engine, provider };
+}
+
 // ─── Solr / SearchStax Search Endpoint ─────────────────────────────────────────
 router.get('/search', async (req, res) => {
   const startTime = Date.now();
   try {
-    const { q = '', type = 'all', page = 1, limit = 20, role } = req.query;
+    const { q = '', type = 'all', role } = req.query;
+    const page = toPositiveInt(req.query.page, 1);
+    const limit = toPositiveInt(req.query.limit, 20);
     const { searchEvents, searchTeams, searchUsers } = require('../services/searchService');
     const { solrConfig } = require('../config/solr');
 
@@ -47,28 +70,31 @@ router.get('/search', async (req, res) => {
     const engines = [];
 
     if (type === 'all' || type === 'events') {
-      const eventResult = await searchEvents({ search: q, page: Number(page), limit: Number(limit) });
+      const eventResult = await searchEvents({ search: q, page, limit });
       results.events = eventResult;
       if (eventResult.searchMeta) engines.push(eventResult.searchMeta.engine);
     }
     if (type === 'all' || type === 'teams') {
-      const teamResult = await searchTeams({ search: q, page: Number(page), limit: Number(limit) });
+      const teamResult = await searchTeams({ search: q, page, limit });
       results.teams = teamResult;
       if (teamResult.searchMeta) engines.push(teamResult.searchMeta.engine);
     }
     if (type === 'all' || type === 'users') {
-      const userResult = await searchUsers({ search: q, page: Number(page), limit: Number(limit), role });
+      const userResult = await searchUsers({ search: q, page, limit, role });
       results.users = userResult;
       if (userResult.searchMeta) engines.push(userResult.searchMeta.engine);
     }
 
     const elapsed = Date.now() - startTime;
-    const engine = engines.includes('solr') ? 'SearchStax-Solr' : 'MongoDB-Fallback';
+    const hasSolr = engines.includes('solr');
+    const hasFallback = engines.includes('mongodb');
+    const engine = hasSolr && hasFallback ? 'Mixed-Solr+Mongo' : hasSolr ? 'SearchStax-Solr' : 'MongoDB-Fallback';
+    const provider = hasSolr ? 'SearchStax (Apache Solr)' : 'MongoDB Fallback';
 
     // These headers are visible in the browser Network tab for professor demo
     res.set('X-Search-Engine', engine);
     res.set('X-Search-Time', `${elapsed}ms`);
-    res.set('X-Search-Provider', 'SearchStax (Apache Solr)');
+    res.set('X-Search-Provider', provider);
     res.set('X-Solr-Enabled', String(solrConfig.enabled));
     res.set('X-Solr-BaseUrl', solrConfig.baseUrl ? 'configured' : 'not-set');
 
@@ -76,10 +102,12 @@ router.get('/search', async (req, res) => {
       success: true,
       query: q,
       type,
+      page,
+      limit,
       results,
       searchMeta: {
         engine,
-        provider: 'SearchStax (Apache Solr)',
+        provider,
         solrEnabled: solrConfig.enabled,
         solrConfigured: !!solrConfig.baseUrl,
         responseTimeMs: elapsed,
@@ -551,18 +579,30 @@ router.get('/users', async (req, res) => {
   const startTime = Date.now();
   try {
     const q = req.query.q || req.query.search || '';
+    const role = req.query.role;
+    const page = toPositiveInt(req.query.page, 1);
+    const limit = toPositiveInt(req.query.limit, 20);
 
     // If search query provided, use Solr-powered search
     if (q.trim()) {
       const { searchUsers } = require('../services/searchService');
-      const { solrConfig } = require('../config/solr');
-      const result = await searchUsers({ search: q, limit: 100 });
+      const result = await searchUsers({ search: q, role, page, limit });
       const elapsed = Date.now() - startTime;
-      const engine = result.searchMeta?.engine === 'solr' ? 'SearchStax-Solr' : 'MongoDB-Fallback';
+      const { engine, provider } = getSearchHeaderValues(result.searchMeta);
       res.set('X-Search-Engine', engine);
       res.set('X-Search-Time', `${elapsed}ms`);
-      res.set('X-Search-Provider', 'SearchStax (Apache Solr)');
-      return res.json({ success: true, total: result.data.length, users: result.data, searchMeta: result.searchMeta });
+      res.set('X-Search-Provider', provider);
+
+      return res.json({
+        success: true,
+        users: result.results,
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+        pagination: result.pagination,
+        searchMeta: result.searchMeta
+      });
     }
 
     // No search — return all users as before
@@ -571,11 +611,34 @@ router.get('/users', async (req, res) => {
       adminController.getAllUsersByRole('manager'),
       adminController.getAllUsersByRole('organizer')
     ]);
-    const allUsers = [...players, ...managers, ...organizers];
+    const allUsers = [...players, ...managers, ...organizers]
+      .filter((user) => !role || role === 'all' || user.role === role);
+    const start = (page - 1) * limit;
+    const pagedUsers = allUsers.slice(start, start + limit);
+    const totalPages = Math.max(1, Math.ceil(allUsers.length / limit));
     const elapsed = Date.now() - startTime;
     res.set('X-Search-Engine', 'none');
     res.set('X-Search-Time', `${elapsed}ms`);
-    return res.json({ success: true, total: allUsers.length, breakdown: { players: players.length, managers: managers.length, organizers: organizers.length }, users: allUsers });
+
+    return res.json({
+      success: true,
+      total: allUsers.length,
+      page,
+      limit,
+      totalPages,
+      pagination: {
+        page,
+        limit,
+        total: allUsers.length,
+        totalPages
+      },
+      breakdown: {
+        players: players.length,
+        managers: managers.length,
+        organizers: organizers.length
+      },
+      users: pagedUsers
+    });
   } catch (err) {
     console.error('Error fetching all users:', err);
     return res.status(500).json({ success: false, message: 'Failed to fetch users', error: err.message });
@@ -587,25 +650,56 @@ router.get('/teams', async (req, res) => {
   const startTime = Date.now();
   try {
     const q = req.query.q || req.query.search || '';
+    const sportType = req.query.sportType;
+    const page = toPositiveInt(req.query.page, 1);
+    const limit = toPositiveInt(req.query.limit, 20);
 
     if (q.trim()) {
       const { searchTeams } = require('../services/searchService');
-      const result = await searchTeams({ search: q, limit: 100 });
+      const result = await searchTeams({ search: q, sportType, page, limit });
       const elapsed = Date.now() - startTime;
-      const engine = result.searchMeta?.engine === 'solr' ? 'SearchStax-Solr' : 'MongoDB-Fallback';
+      const { engine, provider } = getSearchHeaderValues(result.searchMeta);
       res.set('X-Search-Engine', engine);
       res.set('X-Search-Time', `${elapsed}ms`);
-      res.set('X-Search-Provider', 'SearchStax (Apache Solr)');
-      const formatted = (result.data || []).map(t => ({ ...t, id: (t._id || t.id || '').toString() }));
-      return res.json({ success: true, count: formatted.length, teams: formatted, searchMeta: result.searchMeta });
+      res.set('X-Search-Provider', provider);
+      const formatted = (result.results || []).map(t => ({ ...t, id: (t._id || t.id || '').toString() }));
+      return res.json({
+        success: true,
+        count: formatted.length,
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+        pagination: result.pagination,
+        teams: formatted,
+        searchMeta: result.searchMeta
+      });
     }
 
     const teams = await Team.getAllTeams();
-    const formattedTeams = teams.map(team => ({ ...team, id: team._id.toString() }));
+    const filteredTeams = teams.filter((team) => !sportType || String(team.sport_type || '').toLowerCase() === String(sportType).toLowerCase());
+    const start = (page - 1) * limit;
+    const pagedTeams = filteredTeams.slice(start, start + limit);
+    const formattedTeams = pagedTeams.map(team => ({ ...team, id: team._id.toString() }));
+    const totalPages = Math.max(1, Math.ceil(filteredTeams.length / limit));
     const elapsed = Date.now() - startTime;
     res.set('X-Search-Engine', 'none');
     res.set('X-Search-Time', `${elapsed}ms`);
-    return res.json({ success: true, count: formattedTeams.length, teams: formattedTeams || [] });
+    return res.json({
+      success: true,
+      count: formattedTeams.length,
+      total: filteredTeams.length,
+      page,
+      limit,
+      totalPages,
+      pagination: {
+        page,
+        limit,
+        total: filteredTeams.length,
+        totalPages
+      },
+      teams: formattedTeams || []
+    });
   } catch (err) {
     console.error('Error fetching teams:', err);
     return res.status(500).json({ success: false, message: 'Failed to fetch teams', error: err.message });
@@ -617,25 +711,62 @@ router.get('/events', async (req, res) => {
   const startTime = Date.now();
   try {
     const q = req.query.q || req.query.search || '';
+    const status = req.query.status;
+    const statuses = typeof req.query.statuses === 'string'
+      ? req.query.statuses.split(',').map((s) => s.trim()).filter(Boolean)
+      : [];
+    if (status && status !== 'all') statuses.push(status);
+    const page = toPositiveInt(req.query.page, 1);
+    const limit = toPositiveInt(req.query.limit, 20);
 
     if (q.trim()) {
       const { searchEvents } = require('../services/searchService');
-      const result = await searchEvents({ search: q, limit: 100 });
+      const result = await searchEvents({ search: q, page, limit, statuses: [...new Set(statuses)] });
       const elapsed = Date.now() - startTime;
-      const engine = result.searchMeta?.engine === 'solr' ? 'SearchStax-Solr' : 'MongoDB-Fallback';
+      const { engine, provider } = getSearchHeaderValues(result.searchMeta);
       res.set('X-Search-Engine', engine);
       res.set('X-Search-Time', `${elapsed}ms`);
-      res.set('X-Search-Provider', 'SearchStax (Apache Solr)');
-      const formatted = (result.data || []).map(e => ({ ...e, id: (e._id || e.id || '').toString() }));
-      return res.json({ success: true, count: formatted.length, events: formatted, searchMeta: result.searchMeta });
+      res.set('X-Search-Provider', provider);
+      const formatted = (result.results || []).map(e => ({ ...e, id: (e._id || e.id || '').toString() }));
+      return res.json({
+        success: true,
+        count: formatted.length,
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+        pagination: result.pagination,
+        events: formatted,
+        searchMeta: result.searchMeta
+      });
     }
 
     const events = await Event.getAllEvents();
-    const formattedEvents = events.map(event => ({ ...event, id: event._id.toString() }));
+    const filteredEvents = statuses.length > 0
+      ? events.filter((event) => statuses.includes(event.status))
+      : events;
+    const start = (page - 1) * limit;
+    const pagedEvents = filteredEvents.slice(start, start + limit);
+    const formattedEvents = pagedEvents.map(event => ({ ...event, id: event._id.toString() }));
+    const totalPages = Math.max(1, Math.ceil(filteredEvents.length / limit));
     const elapsed = Date.now() - startTime;
     res.set('X-Search-Engine', 'none');
     res.set('X-Search-Time', `${elapsed}ms`);
-    return res.json({ success: true, count: formattedEvents.length, events: formattedEvents || [] });
+    return res.json({
+      success: true,
+      count: formattedEvents.length,
+      total: filteredEvents.length,
+      page,
+      limit,
+      totalPages,
+      pagination: {
+        page,
+        limit,
+        total: filteredEvents.length,
+        totalPages
+      },
+      events: formattedEvents || []
+    });
   } catch (err) {
     console.error('Error fetching events:', err);
     return res.status(500).json({ success: false, message: 'Failed to fetch events', error: err.message });
@@ -691,18 +822,16 @@ router.get('/stats', async (req, res) => {
     // Get stats from admin controller
     const stats = await adminController.getDashboardStats();
 
-    res.render('admin/stats', {
-      title: 'System Statistics',
-      user: req.session.user,
-      stats: stats,
-      layout: 'layouts/dashboard',
-      path: '/admin/stats'
+    return res.json({
+      success: true,
+      data: stats
     });
   } catch (err) {
     console.error('Error generating stats:', err);
-    res.status(500).render('error', {
+    return res.status(500).json({
+      success: false,
       message: 'Failed to generate statistics',
-      error: err
+      error: err.message
     });
   }
 });
