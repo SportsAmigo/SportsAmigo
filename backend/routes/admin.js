@@ -548,90 +548,97 @@ router.get('/users/:role', async (req, res) => {
 
 // Get all users (unified view) - JSON API
 router.get('/users', async (req, res) => {
+  const startTime = Date.now();
   try {
-    console.log('API: Fetching all users (unified)');
+    const q = req.query.q || req.query.search || '';
 
-    // Fetch all user types
+    // If search query provided, use Solr-powered search
+    if (q.trim()) {
+      const { searchUsers } = require('../services/searchService');
+      const { solrConfig } = require('../config/solr');
+      const result = await searchUsers({ search: q, limit: 100 });
+      const elapsed = Date.now() - startTime;
+      const engine = result.searchMeta?.engine === 'solr' ? 'SearchStax-Solr' : 'MongoDB-Fallback';
+      res.set('X-Search-Engine', engine);
+      res.set('X-Search-Time', `${elapsed}ms`);
+      res.set('X-Search-Provider', 'SearchStax (Apache Solr)');
+      return res.json({ success: true, total: result.data.length, users: result.data, searchMeta: result.searchMeta });
+    }
+
+    // No search — return all users as before
     const [players, managers, organizers] = await Promise.all([
       adminController.getAllUsersByRole('player'),
       adminController.getAllUsersByRole('manager'),
       adminController.getAllUsersByRole('organizer')
     ]);
-
-    // Combine all users
     const allUsers = [...players, ...managers, ...organizers];
-
-    return res.json({
-      success: true,
-      total: allUsers.length,
-      breakdown: {
-        players: players.length,
-        managers: managers.length,
-        organizers: organizers.length
-      },
-      users: allUsers
-    });
+    const elapsed = Date.now() - startTime;
+    res.set('X-Search-Engine', 'none');
+    res.set('X-Search-Time', `${elapsed}ms`);
+    return res.json({ success: true, total: allUsers.length, breakdown: { players: players.length, managers: managers.length, organizers: organizers.length }, users: allUsers });
   } catch (err) {
     console.error('Error fetching all users:', err);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to fetch users',
-      error: err.message
-    });
+    return res.status(500).json({ success: false, message: 'Failed to fetch users', error: err.message });
   }
 });
 
 // Get all teams - JSON API
 router.get('/teams', async (req, res) => {
+  const startTime = Date.now();
   try {
-    console.log('API: Fetching all teams');
+    const q = req.query.q || req.query.search || '';
+
+    if (q.trim()) {
+      const { searchTeams } = require('../services/searchService');
+      const result = await searchTeams({ search: q, limit: 100 });
+      const elapsed = Date.now() - startTime;
+      const engine = result.searchMeta?.engine === 'solr' ? 'SearchStax-Solr' : 'MongoDB-Fallback';
+      res.set('X-Search-Engine', engine);
+      res.set('X-Search-Time', `${elapsed}ms`);
+      res.set('X-Search-Provider', 'SearchStax (Apache Solr)');
+      const formatted = (result.data || []).map(t => ({ ...t, id: (t._id || t.id || '').toString() }));
+      return res.json({ success: true, count: formatted.length, teams: formatted, searchMeta: result.searchMeta });
+    }
+
     const teams = await Team.getAllTeams();
-
-    // Transform _id to id for frontend compatibility
-    const formattedTeams = teams.map(team => ({
-      ...team,
-      id: team._id.toString()
-    }));
-
-    return res.json({
-      success: true,
-      count: formattedTeams.length,
-      teams: formattedTeams || []
-    });
+    const formattedTeams = teams.map(team => ({ ...team, id: team._id.toString() }));
+    const elapsed = Date.now() - startTime;
+    res.set('X-Search-Engine', 'none');
+    res.set('X-Search-Time', `${elapsed}ms`);
+    return res.json({ success: true, count: formattedTeams.length, teams: formattedTeams || [] });
   } catch (err) {
     console.error('Error fetching teams:', err);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to fetch teams',
-      error: err.message
-    });
+    return res.status(500).json({ success: false, message: 'Failed to fetch teams', error: err.message });
   }
 });
 
 // Get all events - JSON API
 router.get('/events', async (req, res) => {
+  const startTime = Date.now();
   try {
-    console.log('API: Fetching all events');
+    const q = req.query.q || req.query.search || '';
+
+    if (q.trim()) {
+      const { searchEvents } = require('../services/searchService');
+      const result = await searchEvents({ search: q, limit: 100 });
+      const elapsed = Date.now() - startTime;
+      const engine = result.searchMeta?.engine === 'solr' ? 'SearchStax-Solr' : 'MongoDB-Fallback';
+      res.set('X-Search-Engine', engine);
+      res.set('X-Search-Time', `${elapsed}ms`);
+      res.set('X-Search-Provider', 'SearchStax (Apache Solr)');
+      const formatted = (result.data || []).map(e => ({ ...e, id: (e._id || e.id || '').toString() }));
+      return res.json({ success: true, count: formatted.length, events: formatted, searchMeta: result.searchMeta });
+    }
+
     const events = await Event.getAllEvents();
-
-    // Transform _id to id for frontend compatibility
-    const formattedEvents = events.map(event => ({
-      ...event,
-      id: event._id.toString()
-    }));
-
-    return res.json({
-      success: true,
-      count: formattedEvents.length,
-      events: formattedEvents || []
-    });
+    const formattedEvents = events.map(event => ({ ...event, id: event._id.toString() }));
+    const elapsed = Date.now() - startTime;
+    res.set('X-Search-Engine', 'none');
+    res.set('X-Search-Time', `${elapsed}ms`);
+    return res.json({ success: true, count: formattedEvents.length, events: formattedEvents || [] });
   } catch (err) {
     console.error('Error fetching events:', err);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to fetch events',
-      error: err.message
-    });
+    return res.status(500).json({ success: false, message: 'Failed to fetch events', error: err.message });
   }
 });
 
