@@ -7,22 +7,25 @@ const AdminActivityLogs = () => {
     const [activities, setActivities] = useState([]);
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage] = useState(12);
+    const [itemsPerPage] = useState(15);
+    const [selectedType, setSelectedType] = useState('all');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [dateFrom, setDateFrom] = useState('');
+    const [dateTo, setDateTo] = useState('');
 
-    useEffect(() => {
-        fetchActivities();
-    }, []);
+    useEffect(() => { fetchActivities(); }, []);
 
     const fetchActivities = async () => {
         try {
             setLoading(true);
-            // Fetch real activity logs from dedicated endpoint
-            const response = await axios.get(`${API_BASE_URL}/api/admin/activity-logs`, { 
+            const response = await axios.get(`${API_BASE_URL}/api/admin/activity-logs`, {
                 withCredentials: true,
-                params: { limit: 100 } // Get more activities for comprehensive view
+                params: { limit: 200 }
             });
             if (response.data.success) {
-                setActivities(response.data.activities || []);
+                const rows = response.data.activities || response.data.data?.activities || [];
+                setActivities(Array.isArray(rows) ? rows : []);
+                setCurrentPage(1);
             }
         } catch (error) {
             console.error('Error fetching activities:', error);
@@ -33,68 +36,140 @@ const AdminActivityLogs = () => {
     };
 
     const getActivityIcon = (type) => {
-        switch(type) {
-            case 'registration': return 'fa-user-plus';
-            case 'event_creation': return 'fa-calendar-plus';
-            case 'event_update': return 'fa-calendar-check';
-            case 'team_creation': return 'fa-users';
-            case 'team_update': return 'fa-users-cog';
-            case 'match_update': return 'fa-futbol';
-            case 'login': return 'fa-sign-in-alt';
-            case 'user_approval': return 'fa-user-check';
-            default: return 'fa-bell';
-        }
+        const icons = {
+            registration: 'fa-user-plus', event_creation: 'fa-calendar-plus', event_update: 'fa-calendar-check',
+            team_creation: 'fa-users', team_update: 'fa-users-cog', match_update: 'fa-futbol',
+            login: 'fa-sign-in-alt', user_approval: 'fa-user-check', subscription_purchase: 'fa-id-card',
+            subscription_cancelled: 'fa-id-badge', vas_purchase: 'fa-gem', payout_processed: 'fa-hand-holding-usd',
+            commission_update: 'fa-coins', coordinator_action: 'fa-clipboard-check',
+            cache_anomaly: 'fa-bolt', deploy_status_change: 'fa-rocket',
+        };
+        return icons[type] || 'fa-bell';
     };
 
     const getActivityColor = (type) => {
-        switch(type) {
-            case 'registration': return 'bg-blue-100 text-blue-600';
-            case 'event_creation': return 'bg-emerald-100 text-emerald-600';
-            case 'event_update': return 'bg-teal-100 text-teal-600';
-            case 'team_creation': return 'bg-violet-100 text-violet-600';
-            case 'team_update': return 'bg-purple-100 text-purple-600';
-            case 'match_update': return 'bg-amber-100 text-amber-600';
-            case 'login': return 'bg-gray-100 text-gray-600';
-            case 'user_approval': return 'bg-green-100 text-green-600';
-            default: return 'bg-gray-100 text-gray-600';
-        }
+        const colors = {
+            registration: 'bg-blue-100 text-blue-600', event_creation: 'bg-emerald-100 text-emerald-600',
+            event_update: 'bg-teal-100 text-teal-600', team_creation: 'bg-violet-100 text-violet-600',
+            team_update: 'bg-purple-100 text-purple-600', match_update: 'bg-amber-100 text-amber-600',
+            login: 'bg-gray-100 text-gray-600', user_approval: 'bg-green-100 text-green-600',
+            subscription_purchase: 'bg-indigo-100 text-indigo-600', vas_purchase: 'bg-cyan-100 text-cyan-600',
+            payout_processed: 'bg-emerald-100 text-emerald-600', commission_update: 'bg-lime-100 text-lime-600',
+            coordinator_action: 'bg-sky-100 text-sky-600', cache_anomaly: 'bg-yellow-100 text-yellow-700',
+            deploy_status_change: 'bg-orange-100 text-orange-700',
+        };
+        return colors[type] || 'bg-gray-100 text-gray-600';
     };
 
-    // Pagination logic
+    const filteredActivities = activities.filter((a) => {
+        const matchType = selectedType === 'all' || a.type === selectedType;
+        const matchSearch = !searchTerm || (
+            (a.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (a.userName || a.user?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        const ts = a.timestamp ? new Date(a.timestamp) : null;
+        const matchFrom = !dateFrom || (ts && ts >= new Date(dateFrom));
+        const matchTo = !dateTo || (ts && ts <= new Date(dateTo + 'T23:59:59'));
+        return matchType && matchSearch && matchFrom && matchTo;
+    });
+
+    useEffect(() => { setCurrentPage(1); }, [selectedType, searchTerm, dateFrom, dateTo]);
+
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentActivities = activities.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(activities.length / itemsPerPage);
+    const currentActivities = filteredActivities.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredActivities.length / itemsPerPage);
+    const uniqueTypes = ['all', ...new Set(activities.map((a) => a.type).filter(Boolean))];
 
-    const goToNextPage = () => {
-        if (currentPage < totalPages) {
-            setCurrentPage(currentPage + 1);
-        }
-    };
-
-    const goToPrevPage = () => {
-        if (currentPage > 1) {
-            setCurrentPage(currentPage - 1);
-        }
-    };
-
-    const goToPage = (pageNumber) => {
-        setCurrentPage(pageNumber);
+    // CSV Export
+    const exportCSV = () => {
+        const headers = ['Type', 'User', 'Role', 'Description', 'Timestamp'];
+        const rows = filteredActivities.map(a => [
+            a.type || '',
+            a.userName || a.user?.name || 'System',
+            a.userRole || a.user?.role || '',
+            (a.description || '').replace(/,/g, ';'),
+            a.timestamp ? new Date(a.timestamp).toLocaleString() : ''
+        ]);
+        const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'activity_logs.csv'; a.click();
+        URL.revokeObjectURL(url);
     };
 
     return (
         <AdminLayout>
-            <div className="p-6">
-                <div className="mb-6">
-                    <h1 className="text-3xl font-bold text-gray-800 mb-2">Activity Logs</h1>
-                    <p className="text-gray-600">Recent platform activities and user actions</p>
+            <div className="p-6 bg-gradient-to-b from-slate-50 to-slate-100 min-h-screen">
+                <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-800 mb-1">Activity Logs</h1>
+                        <p className="text-gray-600">Recent platform activities and user actions</p>
+                    </div>
+                    <button onClick={exportCSV}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-slate-700 text-white rounded-xl font-semibold hover:bg-slate-800 transition-all text-sm shadow">
+                        <i className="fas fa-download"></i> Export CSV
+                    </button>
+                </div>
+
+                {/* Summary Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    {[
+                        { label: 'Total Activities', count: activities.length, icon: 'fa-chart-line', color: 'from-slate-600 to-slate-800' },
+                        { label: 'Registrations', count: activities.filter(a => a.type === 'registration').length, icon: 'fa-user-plus', color: 'from-blue-500 to-blue-700' },
+                        { label: 'Events Created', count: activities.filter(a => a.type === 'event_creation').length, icon: 'fa-calendar-plus', color: 'from-emerald-500 to-emerald-700' },
+                        { label: 'Teams Formed', count: activities.filter(a => a.type === 'team_creation').length, icon: 'fa-users', color: 'from-violet-500 to-violet-700' },
+                    ].map(card => (
+                        <div key={card.label} className={`bg-gradient-to-br ${card.color} rounded-xl p-4 text-white shadow`}>
+                            <div className="flex items-center justify-between">
+                                <i className={`fas ${card.icon} text-2xl text-white/70`}></i>
+                                <span className="text-3xl font-black">{card.count}</span>
+                            </div>
+                            <p className="text-sm font-semibold text-white/80 mt-2">{card.label}</p>
+                        </div>
+                    ))}
                 </div>
 
                 <div className="bg-white rounded-xl shadow-md overflow-hidden">
-                    <div className="px-6 py-4 border-b bg-slate-50 flex justify-between items-center">
-                        <h2 className="text-xl font-bold text-gray-800">Recent Activities</h2>
-                        <span className="px-4 py-2 bg-slate-700 text-white rounded-full text-sm font-semibold">
-                            {activities.length} Total Activities
+                    {/* Filters bar */}
+                    <div className="px-6 py-4 border-b bg-slate-50 flex flex-wrap gap-3 items-center">
+                        <input
+                            type="text"
+                            placeholder="Search user or description..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            className="border rounded-xl px-4 py-2 text-sm flex-1 min-w-[180px] focus:ring-2 focus:ring-slate-400 outline-none"
+                        />
+                        <select
+                            value={selectedType}
+                            onChange={e => setSelectedType(e.target.value)}
+                            className="border rounded-xl px-3 py-2 text-sm bg-white"
+                        >
+                            {uniqueTypes.map(t => (
+                                <option key={t} value={t}>{t === 'all' ? 'All Types' : t.replaceAll('_', ' ')}</option>
+                            ))}
+                        </select>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <span>From:</span>
+                            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
+                                className="border rounded-xl px-3 py-2 text-sm" />
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <span>To:</span>
+                            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
+                                className="border rounded-xl px-3 py-2 text-sm" />
+                        </div>
+                        <button onClick={() => { setSearchTerm(''); setSelectedType('all'); setDateFrom(''); setDateTo(''); }}
+                            className="text-sm text-slate-600 hover:text-slate-900 px-3 py-2 rounded-xl border hover:bg-slate-100">
+                            Clear
+                        </button>
+                        <button onClick={fetchActivities}
+                            className="text-sm px-3 py-2 border rounded-xl hover:bg-gray-100">
+                            <i className="fas fa-sync-alt mr-1"></i>Refresh
+                        </button>
+                        <span className="px-4 py-2 bg-slate-700 text-white rounded-full text-sm font-semibold ml-auto">
+                            {filteredActivities.length} Activities
                         </span>
                     </div>
 
@@ -107,7 +182,11 @@ const AdminActivityLogs = () => {
                         <div className="p-12 text-center">
                             <i className="fas fa-history text-6xl text-gray-300 mb-4"></i>
                             <p className="text-gray-600">No activities yet</p>
-                            <p className="text-gray-500 text-sm mt-2">Platform activities will appear here</p>
+                        </div>
+                    ) : filteredActivities.length === 0 ? (
+                        <div className="p-12 text-center">
+                            <i className="fas fa-search text-4xl text-gray-300 mb-4"></i>
+                            <p className="text-gray-500">No activities match your filters</p>
                         </div>
                     ) : (
                         <>
@@ -130,15 +209,18 @@ const AdminActivityLogs = () => {
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <div>
-                                                        <p className="font-medium text-gray-900">{activity.userName || activity.user?.name || 'System'}</p>
-                                                        <p className="text-sm text-gray-500">{activity.userRole || activity.user?.role || 'System'}</p>
-                                                    </div>
+                                                    <p className="font-medium text-gray-900">{activity.userName || activity.user?.name || 'System'}</p>
+                                                    <p className="text-sm text-gray-500 capitalize">{activity.userRole || activity.user?.role || 'System'}</p>
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <p className="text-gray-800">{activity.description || 'New activity'}</p>
+                                                    {activity.type && (
+                                                        <span className="inline-block mt-1 px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs capitalize">
+                                                            {activity.type.replaceAll('_', ' ')}
+                                                        </span>
+                                                    )}
                                                 </td>
-                                                <td className="px-6 py-4 text-sm text-gray-500">
+                                                <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
                                                     {activity.timestamp ? new Date(activity.timestamp).toLocaleString() : 'Just now'}
                                                 </td>
                                             </tr>
@@ -151,79 +233,23 @@ const AdminActivityLogs = () => {
                             {totalPages > 1 && (
                                 <div className="px-6 py-4 border-t bg-gray-50 flex items-center justify-between">
                                     <div className="text-sm text-gray-600">
-                                        Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, activities.length)} of {activities.length} activities
+                                        {indexOfFirstItem + 1}–{Math.min(indexOfLastItem, filteredActivities.length)} of {filteredActivities.length}
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={goToPrevPage}
-                                            disabled={currentPage === 1}
-                                            className="px-4 py-2 border rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
-                                        >
-                                            <i className="fas fa-chevron-left mr-2"></i>
-                                            Previous
+                                        <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
+                                            className="px-4 py-2 border rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-gray-100">
+                                            <i className="fas fa-chevron-left mr-1"></i>Prev
                                         </button>
-                                        
-                                        <div className="flex gap-1">
-                                            {[...Array(totalPages)].map((_, i) => (
-                                                <button
-                                                    key={i + 1}
-                                                    onClick={() => goToPage(i + 1)}
-                                                    className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${
-                                                        currentPage === i + 1
-                                                            ? 'bg-slate-700 text-white'
-                                                            : 'border hover:bg-gray-100'
-                                                    }`}
-                                                >
-                                                    {i + 1}
-                                                </button>
-                                            ))}
-                                        </div>
-
-                                        <button
-                                            onClick={goToNextPage}
-                                            disabled={currentPage === totalPages}
-                                            className="px-4 py-2 border rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
-                                        >
-                                            Next
-                                            <i className="fas fa-chevron-right ml-2"></i>
+                                        <span className="text-sm text-gray-600">Page {currentPage} / {totalPages}</span>
+                                        <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
+                                            className="px-4 py-2 border rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-gray-100">
+                                            Next<i className="fas fa-chevron-right ml-1"></i>
                                         </button>
                                     </div>
                                 </div>
                             )}
                         </>
                     )}
-                </div>
-
-                {/* Activity Summary */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
-                    <div className="bg-white rounded-xl p-6 shadow-md text-center">
-                        <i className="fas fa-user-plus text-4xl text-blue-600 mb-3"></i>
-                        <h3 className="text-2xl font-bold text-gray-800 mb-1">
-                            {activities.filter(a => a.type === 'registration').length}
-                        </h3>
-                        <p className="text-gray-600 text-sm">New Registrations</p>
-                    </div>
-                    <div className="bg-white rounded-xl p-6 shadow-md text-center">
-                        <i className="fas fa-calendar-plus text-4xl text-emerald-600 mb-3"></i>
-                        <h3 className="text-2xl font-bold text-gray-800 mb-1">
-                            {activities.filter(a => a.type === 'event_creation').length}
-                        </h3>
-                        <p className="text-gray-600 text-sm">Events Created</p>
-                    </div>
-                    <div className="bg-white rounded-xl p-6 shadow-md text-center">
-                        <i className="fas fa-users text-4xl text-violet-600 mb-3"></i>
-                        <h3 className="text-2xl font-bold text-gray-800 mb-1">
-                            {activities.filter(a => a.type === 'team_creation').length}
-                        </h3>
-                        <p className="text-gray-600 text-sm">Teams Formed</p>
-                    </div>
-                    <div className="bg-white rounded-xl p-6 shadow-md text-center">
-                        <i className="fas fa-chart-line text-4xl text-amber-600 mb-3"></i>
-                        <h3 className="text-2xl font-bold text-gray-800 mb-1">
-                            {activities.length}
-                        </h3>
-                        <p className="text-gray-600 text-sm">Total Activities</p>
-                    </div>
                 </div>
             </div>
         </AdminLayout>

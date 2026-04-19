@@ -6,10 +6,15 @@
  */
 
 import csrfService from './csrfService';
+import { API_BASE_URL as DEFAULT_API_BASE_URL } from '../utils/constants';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || API_BASE_URL;
+const API_BASE_URL = process.env.REACT_APP_API_URL || DEFAULT_API_BASE_URL;
 
 class ApiService {
+    async getCsrfToken() {
+        return csrfService.getCsrfToken();
+    }
+
     /**
      * Makes a GET request
      * @param {string} endpoint - API endpoint (e.g., '/api/users')

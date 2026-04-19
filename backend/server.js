@@ -17,6 +17,8 @@ const redisClient = require('./config/redis');
 
 const User = require('./models/user');
 const app = express();
+// Trust Render/Heroku reverse proxy so req.secure works and secure cookies are sent
+app.set('trust proxy', 1);
 const port = process.env.PORT || 5000;
 const mongoose = require('./config/mongodb');
 const mongoUri =
@@ -41,9 +43,12 @@ const allowedOrigins = [
     process.env.FRONTEND_URL
 ].filter(Boolean);
 
-app.use(cors({
+const corsOptions = {
     origin: function (origin, callback) {
-        if (!origin || allowedOrigins.includes(origin)) {
+        // Allow requests with no origin (mobile apps, curl, Postman)
+        if (!origin) return callback(null, true);
+        // Allow exact matches and Vercel preview deployments (*.vercel.app)
+        if (allowedOrigins.includes(origin) || /\.vercel\.app$/.test(origin)) {
             callback(null, true);
         } else {
             callback(null, false);
@@ -51,10 +56,13 @@ app.use(cors({
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'CSRF-Token']
-}));
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'CSRF-Token'],
+    exposedHeaders: ['Set-Cookie']
+};
 
-app.options('*', cors());
+app.use(cors(corsOptions));
+// Use the same corsOptions for preflight so credentials are preserved
+app.options('*', cors(corsOptions));
 
 const logsDir = path.join(__dirname, 'logs');
 if (!fs.existsSync(logsDir)) {
@@ -138,21 +146,21 @@ const csrfProtection = csrf({
 if (process.env.NODE_ENV === 'test') {
     app.use((req, res, next) => next());
 } else {
-app.use((req, res, next) => {
-    if (req.path === '/api/health' ||
-        req.path === '/health' ||
-        req.path === '/api/csrf-token' ||
-        req.path.startsWith('/auth/') ||
-        req.path.startsWith('/api/auth/') ||
-        req.path.startsWith('/api/shop-login/') ||
-        req.path.startsWith('/api/subscription/') ||
-        req.path.startsWith('/api/vas/') ||
-        req.path.startsWith('/api/v1/') ||
-        req.path.startsWith('/api-docs')) {
-        return next();
-    }
-    csrfProtection(req, res, next);
-});
+    app.use((req, res, next) => {
+        if (req.path === '/api/health' ||
+            req.path === '/health' ||
+            req.path === '/api/csrf-token' ||
+            req.path.startsWith('/auth/') ||
+            req.path.startsWith('/api/auth/') ||
+            req.path.startsWith('/api/shop-login/') ||
+            req.path.startsWith('/api/subscription/') ||
+            req.path.startsWith('/api/vas/') ||
+            req.path.startsWith('/api/v1/') ||
+            req.path.startsWith('/api-docs')) {
+            return next();
+        }
+        csrfProtection(req, res, next);
+    });
 } // end else (non-test CSRF block)
 
 app.get('/api/csrf-token', csrfProtection, (req, res) => {
