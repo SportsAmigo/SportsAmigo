@@ -31,11 +31,18 @@ function cacheMiddleware(ttlSeconds = 60) {
         const userId = req.session?.user?._id?.toString() || 'anon';
         const cacheKey = `cache:${userId}:${req.originalUrl}`;
 
+        const startTime = Date.now();
+        
         try {
             const cachedData = await redisClient.get(cacheKey);
+            
             if (cachedData) {
+                const duration = Date.now() - startTime;
                 res.setHeader('X-Cache-Status', 'HIT');
                 res.setHeader('X-Cache-TTL', ttlSeconds);
+                // Report the cache hit time to the browser's Timings tab
+                res.setHeader('Server-Timing', `redis;desc="Redis Cache Hit";dur=${duration}`);
+                
                 return res.status(200).json(
                     typeof cachedData === 'string' ? JSON.parse(cachedData) : cachedData
                 );
@@ -45,11 +52,16 @@ function cacheMiddleware(ttlSeconds = 60) {
             // Do not block the request if Redis fails — fall through
         }
 
+        const redisWaitTime = Date.now() - startTime;
+
         // Intercept res.json to store the successful response in Redis
         const originalJson = res.json.bind(res);
         res.json = async (data) => {
             res.setHeader('X-Cache-Status', 'MISS');
             res.setHeader('X-Cache-TTL', ttlSeconds);
+            // Report the miss time to the browser's Timings tab
+            res.setHeader('Server-Timing', `db;desc="DB Fetch (Cache Miss)";dur=${Date.now() - startTime}`);
+            
             try {
                 if (res.statusCode === 200) {
                     await redisClient.set(cacheKey, JSON.stringify(data), { ex: ttlSeconds });
