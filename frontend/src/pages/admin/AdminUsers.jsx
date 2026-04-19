@@ -212,6 +212,31 @@ const AdminUsers = () => {
 
     useEffect(() => { fetchAllUsers(); }, [fetchAllUsers]);
 
+    // Debounced server-side Solr search — makes API calls visible in Network tab
+    useEffect(() => {
+        if (!searchTerm.trim()) return; // skip if empty, use client-side filter
+        const timer = setTimeout(async () => {
+            try {
+                setLoading(true);
+                const res = await axios.get(`${API_BASE_URL}/api/admin/users`, {
+                    params: { q: searchTerm },
+                    withCredentials: true
+                });
+                if (res.data.success) {
+                    setUsers(res.data.users || []);
+                }
+            } catch (e) {
+                console.error('Search error:', e);
+            } finally { setLoading(false); }
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
+    // Re-fetch all when search is cleared
+    useEffect(() => {
+        if (searchTerm === '') fetchAllUsers();
+    }, [searchTerm, fetchAllUsers]);
+
     const handleView = (user) => {
         setEntityModal({ type: user.role || 'user', id: user.id, name: user.name });
     };
@@ -233,11 +258,14 @@ const AdminUsers = () => {
         }
     };
 
-    const filteredUsers = users.filter(user => {
-        const matchesSearch = user.name?.toLowerCase().includes(searchTerm.toLowerCase()) || user.email?.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-        return matchesSearch && matchesRole;
-    });
+    // When searching server-side, users state already has filtered results
+    // When not searching, apply client-side role filter
+    const filteredUsers = searchTerm.trim()
+        ? users.filter(u => roleFilter === 'all' || u.role === roleFilter)
+        : users.filter(user => {
+            const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+            return matchesRole;
+        });
 
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;

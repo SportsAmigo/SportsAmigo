@@ -37,6 +37,25 @@ const AdminTeams = () => {
 
     useEffect(() => { fetchTeams(); }, [fetchTeams]);
 
+    // Debounced server-side Solr search
+    useEffect(() => {
+        if (!searchTerm.trim()) return;
+        const timer = setTimeout(async () => {
+            try {
+                setLoading(true);
+                const res = await axios.get(`${API_BASE_URL}/api/admin/teams`, {
+                    params: { q: searchTerm },
+                    withCredentials: true
+                });
+                if (res.data.success) setTeams(res.data.teams || []);
+            } catch (e) { console.error('Search error:', e); }
+            finally { setLoading(false); }
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
+    useEffect(() => { if (searchTerm === '') fetchTeams(); }, [searchTerm, fetchTeams]);
+
     const handleDelete = async (team) => {
         try {
             const response = await secureDelete(`/api/admin/teams/${team.id}`);
@@ -47,11 +66,12 @@ const AdminTeams = () => {
 
     const sportTypes = ['all', ...new Set(teams.map(t => t.sport_type).filter(Boolean))];
 
-    const filtered = teams.filter(t => {
-        const textMatch = (t.name || '').toLowerCase().includes(searchTerm.toLowerCase());
-        const sportMatch = sportFilter === 'all' || t.sport_type === sportFilter;
-        return textMatch && sportMatch;
-    });
+    const filtered = searchTerm.trim()
+        ? teams.filter(t => sportFilter === 'all' || t.sport_type === sportFilter)
+        : teams.filter(t => {
+            const sportMatch = sportFilter === 'all' || t.sport_type === sportFilter;
+            return sportMatch;
+        });
 
     useEffect(() => { setCurrentPage(1); }, [searchTerm, sportFilter]);
     const indexOfLast = currentPage * itemsPerPage;

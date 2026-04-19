@@ -39,6 +39,25 @@ const AdminEvents = () => {
 
     useEffect(() => { fetchEvents(); }, [fetchEvents]);
 
+    // Debounced server-side Solr search
+    useEffect(() => {
+        if (!searchTerm.trim()) return;
+        const timer = setTimeout(async () => {
+            try {
+                setLoading(true);
+                const res = await axios.get(`${API_BASE_URL}/api/admin/events`, {
+                    params: { q: searchTerm },
+                    withCredentials: true
+                });
+                if (res.data.success) setEvents(res.data.events || []);
+            } catch (e) { console.error('Search error:', e); }
+            finally { setLoading(false); }
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
+    useEffect(() => { if (searchTerm === '') fetchEvents(); }, [searchTerm, fetchEvents]);
+
     const handleDelete = async (event) => {
         try {
             const response = await secureDelete(`/api/admin/events/${event.id}`);
@@ -47,11 +66,12 @@ const AdminEvents = () => {
         } catch (e) { showToast('Delete failed', 'error'); }
     };
 
-    const filtered = events.filter(e => {
-        const textMatch = (e.title || e.name || '').toLowerCase().includes(searchTerm.toLowerCase());
-        const statusMatch = statusFilter === 'all' || (e.status || '').toLowerCase() === statusFilter;
-        return textMatch && statusMatch;
-    });
+    const filtered = searchTerm.trim()
+        ? events.filter(e => statusFilter === 'all' || (e.status || '').toLowerCase() === statusFilter)
+        : events.filter(e => {
+            const statusMatch = statusFilter === 'all' || (e.status || '').toLowerCase() === statusFilter;
+            return statusMatch;
+        });
 
     useEffect(() => { setCurrentPage(1); }, [searchTerm, statusFilter]);
     const indexOfLast = currentPage * itemsPerPage;
