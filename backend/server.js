@@ -57,10 +57,16 @@ const corsOptions = {
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'CSRF-Token'],
-    exposedHeaders: ['Set-Cookie', 'X-Cache-Status', 'X-Cache-TTL']
+    exposedHeaders: ['Set-Cookie', 'X-Cache-Status', 'X-Cache-TTL', 'Server-Timing']
 };
 
 app.use(cors(corsOptions));
+
+// Explicitly allow the browser to plot Server-Timing metrics for cross-origin frontend requests
+app.use((req, res, next) => {
+    res.setHeader('Timing-Allow-Origin', '*');
+    next();
+});
 // Use the same corsOptions for preflight so credentials are preserved
 app.options('*', cors(corsOptions));
 
