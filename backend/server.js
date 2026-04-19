@@ -120,6 +120,15 @@ const uploadProfile = upload.single('profileImage');
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 app.use('/images', express.static(path.join(__dirname, 'public', 'images')));
 
+// Cross-site deployments (e.g. Vercel frontend → Render backend) require
+// SameSite=None + Secure=true.  Render does NOT set NODE_ENV automatically,
+// so we support explicit env var overrides as a safe fallback.
+const isProduction = process.env.NODE_ENV === 'production';
+const cookieSecure = process.env.COOKIE_SECURE !== undefined
+    ? process.env.COOKIE_SECURE === 'true'
+    : isProduction;
+const cookieSameSite = process.env.COOKIE_SAME_SITE || (isProduction ? 'none' : 'lax');
+
 app.use(session({
     secret: process.env.SESSION_SECRET || 'sportsamigo-app-secret-2023',
     resave: false,
@@ -132,8 +141,8 @@ app.use(session({
     cookie: {
         maxAge: 30 * 24 * 60 * 60 * 1000,
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+        secure: cookieSecure,
+        sameSite: cookieSameSite
     }
 }));
 
