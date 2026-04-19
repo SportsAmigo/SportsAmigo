@@ -935,13 +935,12 @@ router.put('/team/:id', async (req, res) => {
         const updatedTeam = await Team.updateTeam(teamId, updatedData);
 
         // Invalidate this manager's team cache
-        const managerId = req.session.user._id.toString();
         await invalidateCacheByPrefixes([
             `/api/manager/team/${teamId}`,
             '/api/manager/my-teams',
             '/api/manager/',
             '/api/manager/dashboard'
-        ], managerId);
+        ], managerId.toString());
         
         return res.json({
             success: true,
