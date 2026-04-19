@@ -57,7 +57,19 @@ const corsOptions = {
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'CSRF-Token'],
-    exposedHeaders: ['Set-Cookie', 'X-Cache-Status', 'X-Cache-TTL', 'Server-Timing']
+    exposedHeaders: [
+        'Set-Cookie',
+        'X-Cache-Status',
+        'X-Cache-TTL',
+        'Server-Timing',
+        'X-Search-Engine',
+        'X-Search-Time',
+        'X-Search-Provider',
+        'X-Search-Strategy',
+        'X-Solr-Enabled',
+        'X-Solr-BaseUrl',
+        'X-Solr-Reindex-Time'
+    ]
 };
 
 app.use(cors(corsOptions));

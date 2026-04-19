@@ -37,13 +37,14 @@ function buildEdismaxQuery(searchText) {
     .join(' ');
 }
 
-function buildBaseMeta({ engine, collection, fallbackReason, elapsedMs }) {
+function buildBaseMeta({ engine, collection, fallbackReason, elapsedMs, strategy }) {
   return {
     engine,
     provider: engine === 'solr' ? 'SearchStax-Solr' : 'MongoDB-Fallback',
     collection,
     elapsedMs,
-    fallbackReason: fallbackReason || null
+    fallbackReason: fallbackReason || null,
+    strategy: strategy || null
   };
 }
 
@@ -160,6 +161,15 @@ function buildRegexSearch(search) {
   return new RegExp(escaped, 'i');
 }
 
+function isMissingTextIndexError(err) {
+  if (!err) return false;
+  const message = String(err.message || '').toLowerCase();
+  return (
+    message.includes('text index required')
+    || message.includes('index required for $text query')
+  );
+}
+
 async function searchEvents({ search = '', page = 1, limit = DEFAULT_LIMIT, statuses = [] } = {}) {
   const started = Date.now();
   const paging = normalizePaging(page, limit);
@@ -190,7 +200,7 @@ async function searchEvents({ search = '', page = 1, limit = DEFAULT_LIMIT, stat
         page: paging.page,
         limit: paging.limit,
         total,
-        searchMeta: buildBaseMeta({ engine: 'solr', collection: 'events', elapsedMs })
+        searchMeta: buildBaseMeta({ engine: 'solr', collection: 'events', elapsedMs, strategy: 'edismax' })
       });
       logSearch('events', search, paging.page, paging.limit, 'solr', total, elapsedMs);
       return payload;
@@ -199,30 +209,68 @@ async function searchEvents({ search = '', page = 1, limit = DEFAULT_LIMIT, stat
     }
   }
 
-  const regex = buildRegexSearch(search);
+  const normalizedSearch = String(search || '').trim();
   const mongoQuery = {};
+  let mongoStrategy = 'none';
+  let docs = [];
+  let total = 0;
 
   if (normalizedStatuses.length > 0) {
     mongoQuery.status = { $in: normalizedStatuses };
   }
 
-  if (regex) {
-    mongoQuery.$or = [
-      { title: regex },
-      { description: regex },
-      { location: regex },
-      { sport_type: regex }
-    ];
-  }
+  if (normalizedSearch) {
+    const textQuery = { ...mongoQuery, $text: { $search: normalizedSearch } };
+    try {
+      [docs, total] = await Promise.all([
+        EventSchema.find(textQuery, { score: { $meta: 'textScore' } })
+          .sort({ score: { $meta: 'textScore' }, event_date: -1, created_at: -1 })
+          .skip(paging.start)
+          .limit(paging.limit)
+          .lean(),
+        EventSchema.countDocuments(textQuery)
+      ]);
+      mongoStrategy = 'text-index';
+    } catch (textErr) {
+      if (!fallbackReason) {
+        fallbackReason = textErr.message;
+      }
 
-  const [docs, total] = await Promise.all([
-    EventSchema.find(mongoQuery)
-      .sort({ event_date: -1, created_at: -1 })
-      .skip(paging.start)
-      .limit(paging.limit)
-      .lean(),
-    EventSchema.countDocuments(mongoQuery)
-  ]);
+      const regex = buildRegexSearch(normalizedSearch);
+      if (regex) {
+        mongoQuery.$or = [
+          { title: regex },
+          { description: regex },
+          { location: regex },
+          { sport_type: regex }
+        ];
+      }
+
+      [docs, total] = await Promise.all([
+        EventSchema.find(mongoQuery)
+          .sort({ event_date: -1, created_at: -1 })
+          .skip(paging.start)
+          .limit(paging.limit)
+          .lean(),
+        EventSchema.countDocuments(mongoQuery)
+      ]);
+
+      mongoStrategy = 'regex';
+
+      if (!isMissingTextIndexError(textErr)) {
+        console.warn(`[Search][events] Mongo text query fallback used: ${textErr.message}`);
+      }
+    }
+  } else {
+    [docs, total] = await Promise.all([
+      EventSchema.find(mongoQuery)
+        .sort({ event_date: -1, created_at: -1 })
+        .skip(paging.start)
+        .limit(paging.limit)
+        .lean(),
+      EventSchema.countDocuments(mongoQuery)
+    ]);
+  }
 
   const mapped = docs.map(mapEventResult);
   const elapsedMs = Date.now() - started;
@@ -235,7 +283,8 @@ async function searchEvents({ search = '', page = 1, limit = DEFAULT_LIMIT, stat
       engine: 'mongodb',
       collection: 'events',
       fallbackReason,
-      elapsedMs
+      elapsedMs,
+      strategy: mongoStrategy
     })
   });
 
@@ -271,7 +320,7 @@ async function searchTeams({ search = '', page = 1, limit = DEFAULT_LIMIT, sport
         page: paging.page,
         limit: paging.limit,
         total,
-        searchMeta: buildBaseMeta({ engine: 'solr', collection: 'teams', elapsedMs })
+        searchMeta: buildBaseMeta({ engine: 'solr', collection: 'teams', elapsedMs, strategy: 'edismax' })
       });
       logSearch('teams', search, paging.page, paging.limit, 'solr', total, elapsedMs);
       return payload;
@@ -280,29 +329,67 @@ async function searchTeams({ search = '', page = 1, limit = DEFAULT_LIMIT, sport
     }
   }
 
-  const regex = buildRegexSearch(search);
+  const normalizedSearch = String(search || '').trim();
   const mongoQuery = {};
+  let mongoStrategy = 'none';
+  let docs = [];
+  let total = 0;
 
   if (normalizedSportType) {
     mongoQuery.sport_type = new RegExp(`^${normalizedSportType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
   }
 
-  if (regex) {
-    mongoQuery.$or = [
-      { name: regex },
-      { description: regex },
-      { sport_type: regex }
-    ];
-  }
+  if (normalizedSearch) {
+    const textQuery = { ...mongoQuery, $text: { $search: normalizedSearch } };
+    try {
+      [docs, total] = await Promise.all([
+        TeamSchema.find(textQuery, { score: { $meta: 'textScore' } })
+          .sort({ score: { $meta: 'textScore' }, name: 1, created_at: -1 })
+          .skip(paging.start)
+          .limit(paging.limit)
+          .lean(),
+        TeamSchema.countDocuments(textQuery)
+      ]);
+      mongoStrategy = 'text-index';
+    } catch (textErr) {
+      if (!fallbackReason) {
+        fallbackReason = textErr.message;
+      }
 
-  const [docs, total] = await Promise.all([
-    TeamSchema.find(mongoQuery)
-      .sort({ name: 1, created_at: -1 })
-      .skip(paging.start)
-      .limit(paging.limit)
-      .lean(),
-    TeamSchema.countDocuments(mongoQuery)
-  ]);
+      const regex = buildRegexSearch(normalizedSearch);
+      if (regex) {
+        mongoQuery.$or = [
+          { name: regex },
+          { description: regex },
+          { sport_type: regex }
+        ];
+      }
+
+      [docs, total] = await Promise.all([
+        TeamSchema.find(mongoQuery)
+          .sort({ name: 1, created_at: -1 })
+          .skip(paging.start)
+          .limit(paging.limit)
+          .lean(),
+        TeamSchema.countDocuments(mongoQuery)
+      ]);
+
+      mongoStrategy = 'regex';
+
+      if (!isMissingTextIndexError(textErr)) {
+        console.warn(`[Search][teams] Mongo text query fallback used: ${textErr.message}`);
+      }
+    }
+  } else {
+    [docs, total] = await Promise.all([
+      TeamSchema.find(mongoQuery)
+        .sort({ name: 1, created_at: -1 })
+        .skip(paging.start)
+        .limit(paging.limit)
+        .lean(),
+      TeamSchema.countDocuments(mongoQuery)
+    ]);
+  }
 
   const mapped = docs.map(mapTeamResult);
   const elapsedMs = Date.now() - started;
@@ -315,7 +402,8 @@ async function searchTeams({ search = '', page = 1, limit = DEFAULT_LIMIT, sport
       engine: 'mongodb',
       collection: 'teams',
       fallbackReason,
-      elapsedMs
+      elapsedMs,
+      strategy: mongoStrategy
     })
   });
 
@@ -352,7 +440,7 @@ async function searchUsers({ search = '', page = 1, limit = DEFAULT_LIMIT, role 
         page: paging.page,
         limit: paging.limit,
         total,
-        searchMeta: buildBaseMeta({ engine: 'solr', collection: 'users', elapsedMs })
+        searchMeta: buildBaseMeta({ engine: 'solr', collection: 'users', elapsedMs, strategy: 'edismax' })
       });
       logSearch('users', search, paging.page, paging.limit, 'solr', total, elapsedMs);
       return payload;
@@ -361,31 +449,69 @@ async function searchUsers({ search = '', page = 1, limit = DEFAULT_LIMIT, role 
     }
   }
 
-  const regex = buildRegexSearch(search);
+  const normalizedSearch = String(search || '').trim();
   const mongoQuery = {};
+  let mongoStrategy = 'none';
+  let docs = [];
+  let total = 0;
 
   if (normalizedRole) {
     mongoQuery.role = normalizedRole;
   }
 
-  if (regex) {
-    mongoQuery.$or = [
-      { first_name: regex },
-      { last_name: regex },
-      { email: regex },
-      { role: regex },
-      { phone: regex }
-    ];
-  }
+  if (normalizedSearch) {
+    const textQuery = { ...mongoQuery, $text: { $search: normalizedSearch } };
+    try {
+      [docs, total] = await Promise.all([
+        UserSchema.find(textQuery, { score: { $meta: 'textScore' } })
+          .sort({ score: { $meta: 'textScore' }, created_at: -1 })
+          .skip(paging.start)
+          .limit(paging.limit)
+          .lean(),
+        UserSchema.countDocuments(textQuery)
+      ]);
+      mongoStrategy = 'text-index';
+    } catch (textErr) {
+      if (!fallbackReason) {
+        fallbackReason = textErr.message;
+      }
 
-  const [docs, total] = await Promise.all([
-    UserSchema.find(mongoQuery)
-      .sort({ created_at: -1 })
-      .skip(paging.start)
-      .limit(paging.limit)
-      .lean(),
-    UserSchema.countDocuments(mongoQuery)
-  ]);
+      const regex = buildRegexSearch(normalizedSearch);
+      if (regex) {
+        mongoQuery.$or = [
+          { first_name: regex },
+          { last_name: regex },
+          { email: regex },
+          { role: regex },
+          { phone: regex }
+        ];
+      }
+
+      [docs, total] = await Promise.all([
+        UserSchema.find(mongoQuery)
+          .sort({ created_at: -1 })
+          .skip(paging.start)
+          .limit(paging.limit)
+          .lean(),
+        UserSchema.countDocuments(mongoQuery)
+      ]);
+
+      mongoStrategy = 'regex';
+
+      if (!isMissingTextIndexError(textErr)) {
+        console.warn(`[Search][users] Mongo text query fallback used: ${textErr.message}`);
+      }
+    }
+  } else {
+    [docs, total] = await Promise.all([
+      UserSchema.find(mongoQuery)
+        .sort({ created_at: -1 })
+        .skip(paging.start)
+        .limit(paging.limit)
+        .lean(),
+      UserSchema.countDocuments(mongoQuery)
+    ]);
+  }
 
   const mapped = docs.map(mapUserResult);
   const elapsedMs = Date.now() - started;
@@ -398,7 +524,8 @@ async function searchUsers({ search = '', page = 1, limit = DEFAULT_LIMIT, role 
       engine: 'mongodb',
       collection: 'users',
       fallbackReason,
-      elapsedMs
+      elapsedMs,
+      strategy: mongoStrategy
     })
   });
 

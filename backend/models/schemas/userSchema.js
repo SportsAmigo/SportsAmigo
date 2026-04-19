@@ -179,4 +179,25 @@ const userSchema = new Schema({
   }
 });
 
+// Text index supports MongoDB full-text fallback search when Solr is unavailable.
+userSchema.index(
+  {
+    first_name: 'text',
+    last_name: 'text',
+    email: 'text',
+    role: 'text',
+    phone: 'text'
+  },
+  {
+    name: 'user_text_search_idx',
+    weights: {
+      first_name: 8,
+      last_name: 8,
+      email: 10,
+      role: 2,
+      phone: 1
+    }
+  }
+);
+
 module.exports = mongoose.model('User', userSchema); 

@@ -127,6 +127,7 @@ const AdminLayout = ({ children }) => {
 
 
                         <NavLink to="/admin/verification" icon="fa-clipboard-check" label="Verification Hub" />
+                        <NavLink to="/admin/search-demo" icon="fa-search" label="Search Demo" />
                         <NavLink to="/admin/stats" icon="fa-chart-line" label="Statistics" />
                         <NavLink to="/admin/activity-logs" icon="fa-history" label="Activity Logs" />
 
