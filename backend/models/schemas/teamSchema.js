@@ -129,4 +129,11 @@ teamSchema.pre('save', async function(next) {
   }
 });
 
+// Text index supports MongoDB full-text fallback search when Solr is unavailable.
+teamSchema.index({
+  name: 'text',
+  description: 'text',
+  sport_type: 'text'
+});
+
 module.exports = mongoose.model('Team', teamSchema); 

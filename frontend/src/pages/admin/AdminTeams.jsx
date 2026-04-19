@@ -4,6 +4,7 @@ import AdminEntityModal from '../../components/admin/AdminEntityModal';
 import axios from 'axios';
 import { API_BASE_URL } from '../../utils/constants';
 import { del as secureDelete } from '../../services/apiService';
+import useFuseSearch from '../../hooks/useFuseSearch';
 
 const Toast = ({ msg, type, onClose }) => (
     <div className={`fixed top-6 right-6 z-[9999] flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl text-white font-semibold ${type === 'success' ? 'bg-emerald-600' : 'bg-red-600'}`}>
@@ -84,12 +85,11 @@ const AdminTeams = () => {
 
     const sportTypes = ['all', ...new Set(teams.map(t => t.sport_type).filter(Boolean))];
 
-    const filtered = isSearchMode
-        ? teams
-        : teams.filter(t => {
-            const sportMatch = sportFilter === 'all' || t.sport_type === sportFilter;
-            return sportMatch;
-        });
+    const sportFilteredTeams = teams.filter((t) => sportFilter === 'all' || t.sport_type === sportFilter);
+    const filtered = useFuseSearch(sportFilteredTeams, searchTerm, {
+        keys: ['name', 'description', 'sport_type', 'manager_name'],
+        threshold: 0.36
+    });
 
     useEffect(() => { setCurrentPage(1); }, [searchTerm, sportFilter]);
     const indexOfLast = isSearchMode ? (searchPagination.page * searchPagination.limit) : (currentPage * itemsPerPage);

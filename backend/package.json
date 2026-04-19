@@ -12,6 +12,7 @@
     "perf:redis": "node scripts/benchmark-redis-cache.js",
     "reindex:solr": "node scripts/reindex-solr.js",
     "verify:solr": "node scripts/verify-solr-index.js",
+    "ensure:text-indexes": "node scripts/ensure-text-indexes.js",
     "sync:solr": "node scripts/solr-sync.js --full-reindex",
     "sync:solr:watch": "node scripts/solr-sync.js --full-reindex --watch",
     "seed:shop": "node seedShop.js",

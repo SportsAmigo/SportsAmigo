@@ -75,6 +75,7 @@ import AdminVASRevenue from './pages/admin/AdminVASRevenue';
 import AdminCommissions from './pages/admin/AdminCommissions';
 import AdminVerificationHub from './pages/admin/AdminVerificationHub';
 import AdminCoordinators from './pages/admin/AdminCoordinators';
+import AdminSearchDemo from './pages/admin/AdminSearchDemo';
 
 // Coordinator Pages
 import CoordinatorHome from './pages/coordinator/CoordinatorHome';
@@ -569,6 +570,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute allowedRoles={['admin']}>
               <AdminActivityLogs />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/search-demo"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminSearchDemo />
             </ProtectedRoute>
           }
         />

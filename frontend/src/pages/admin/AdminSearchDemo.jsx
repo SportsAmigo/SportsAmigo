@@ -37,6 +37,7 @@ const AdminSearchDemo = () => {
                 'X-Search-Engine': res.headers['x-search-engine'] || 'N/A',
                 'X-Search-Time': res.headers['x-search-time'] || 'N/A',
                 'X-Search-Provider': res.headers['x-search-provider'] || 'N/A',
+                'X-Search-Strategy': res.headers['x-search-strategy'] || 'N/A',
                 'X-Solr-Enabled': res.headers['x-solr-enabled'] || 'N/A'
             });
         } catch (err) {

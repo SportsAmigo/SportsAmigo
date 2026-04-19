@@ -4,6 +4,7 @@ import AdminEntityModal from '../../components/admin/AdminEntityModal';
 import axios from 'axios';
 import { API_BASE_URL } from '../../utils/constants';
 import { del as secureDelete } from '../../services/apiService';
+import useFuseSearch from '../../hooks/useFuseSearch';
 
 const Toast = ({ msg, type, onClose }) => (
     <div className={`fixed top-6 right-6 z-[9999] flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl text-white font-semibold ${type === 'success' ? 'bg-emerald-600' : 'bg-red-600'}`}>
@@ -84,12 +85,13 @@ const AdminEvents = () => {
         } catch (e) { showToast('Delete failed', 'error'); }
     };
 
-    const filtered = isSearchMode
-        ? events
-        : events.filter(e => {
-            const statusMatch = statusFilter === 'all' || (e.status || '').toLowerCase() === statusFilter;
-            return statusMatch;
-        });
+    const statusFilteredEvents = events.filter(
+        (e) => statusFilter === 'all' || (e.status || '').toLowerCase() === statusFilter
+    );
+    const filtered = useFuseSearch(statusFilteredEvents, searchTerm, {
+        keys: ['title', 'name', 'description', 'sport_type', 'location', 'organizer_name', 'status'],
+        threshold: 0.36
+    });
 
     useEffect(() => { setCurrentPage(1); }, [searchTerm, statusFilter]);
     const indexOfLast = isSearchMode ? (searchPagination.page * searchPagination.limit) : (currentPage * itemsPerPage);

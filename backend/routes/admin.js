@@ -68,26 +68,31 @@ router.get('/search', async (req, res) => {
 
     const results = {};
     const engines = [];
+    const strategies = [];
 
     if (type === 'all' || type === 'events') {
       const eventResult = await searchEvents({ search: q, page, limit });
       results.events = eventResult;
       if (eventResult.searchMeta) engines.push(eventResult.searchMeta.engine);
+      if (eventResult.searchMeta?.strategy) strategies.push(eventResult.searchMeta.strategy);
     }
     if (type === 'all' || type === 'teams') {
       const teamResult = await searchTeams({ search: q, page, limit });
       results.teams = teamResult;
       if (teamResult.searchMeta) engines.push(teamResult.searchMeta.engine);
+      if (teamResult.searchMeta?.strategy) strategies.push(teamResult.searchMeta.strategy);
     }
     if (type === 'all' || type === 'users') {
       const userResult = await searchUsers({ search: q, page, limit, role });
       results.users = userResult;
       if (userResult.searchMeta) engines.push(userResult.searchMeta.engine);
+      if (userResult.searchMeta?.strategy) strategies.push(userResult.searchMeta.strategy);
     }
 
     const elapsed = Date.now() - startTime;
     const hasSolr = engines.includes('solr');
     const hasFallback = engines.includes('mongodb');
+    const strategy = [...new Set(strategies)].join(',') || 'n/a';
     const engine = hasSolr && hasFallback ? 'Mixed-Solr+Mongo' : hasSolr ? 'SearchStax-Solr' : 'MongoDB-Fallback';
     const provider = hasSolr ? 'SearchStax (Apache Solr)' : 'MongoDB Fallback';
 
@@ -95,6 +100,7 @@ router.get('/search', async (req, res) => {
     res.set('X-Search-Engine', engine);
     res.set('X-Search-Time', `${elapsed}ms`);
     res.set('X-Search-Provider', provider);
+    res.set('X-Search-Strategy', strategy);
     res.set('X-Solr-Enabled', String(solrConfig.enabled));
     res.set('X-Solr-BaseUrl', solrConfig.baseUrl ? 'configured' : 'not-set');
 
@@ -108,6 +114,7 @@ router.get('/search', async (req, res) => {
       searchMeta: {
         engine,
         provider,
+        strategy,
         solrEnabled: solrConfig.enabled,
         solrConfigured: !!solrConfig.baseUrl,
         responseTimeMs: elapsed,
@@ -527,8 +534,17 @@ router.get('/dashboard', async (req, res) => {
         players: stats.users.players,
         managers: stats.users.managers,
         organizers: stats.users.organizers,
+        coordinators: stats.users.coordinators,
         teams: stats.teams.total,
         events: stats.events.total
+      },
+      kpis: {
+        activeSubscriptions: stats.subscriptions.active,
+        expiringSubscriptions: stats.subscriptions.expiringIn7Days,
+        vasMonthlyRevenue: stats.vas.monthlyRevenue,
+        pendingPayoutCount: stats.commissions.pendingPayoutCount,
+        pendingOrganizerVerifications: stats.verification.pendingOrganizers,
+        coordinatorActionsToday: stats.coordinator.actionsToday
       },
       activities: recentActivities,
       upcomingEvents: upcomingEvents
@@ -548,10 +564,10 @@ router.get('/users/:role', async (req, res) => {
   try {
     const { role } = req.params;
 
-    if (!['player', 'manager', 'organizer'].includes(role)) {
+    if (!['player', 'manager', 'organizer', 'coordinator'].includes(role)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid role. Must be player, manager, or organizer.'
+        message: 'Invalid role. Must be player, manager, organizer, or coordinator.'
       });
     }
 
@@ -592,6 +608,7 @@ router.get('/users', async (req, res) => {
       res.set('X-Search-Engine', engine);
       res.set('X-Search-Time', `${elapsed}ms`);
       res.set('X-Search-Provider', provider);
+      res.set('X-Search-Strategy', result.searchMeta?.strategy || 'n/a');
 
       return res.json({
         success: true,
@@ -662,6 +679,7 @@ router.get('/teams', async (req, res) => {
       res.set('X-Search-Engine', engine);
       res.set('X-Search-Time', `${elapsed}ms`);
       res.set('X-Search-Provider', provider);
+      res.set('X-Search-Strategy', result.searchMeta?.strategy || 'n/a');
       const formatted = (result.results || []).map(t => ({ ...t, id: (t._id || t.id || '').toString() }));
       return res.json({
         success: true,
@@ -727,6 +745,7 @@ router.get('/events', async (req, res) => {
       res.set('X-Search-Engine', engine);
       res.set('X-Search-Time', `${elapsed}ms`);
       res.set('X-Search-Provider', provider);
+      res.set('X-Search-Strategy', result.searchMeta?.strategy || 'n/a');
       const formatted = (result.results || []).map(e => ({ ...e, id: (e._id || e.id || '').toString() }));
       return res.json({
         success: true,
@@ -861,10 +880,10 @@ router.get('/api/stats', async (req, res) => {
         SubscriptionSchema.countDocuments({ status: 'active', endDate: { $gte: now, $lte: sevenDaysLater } }),
         UserSchema.countDocuments({
           role: 'organizer', $or: [
-            { verification_status: 'pending' }, { verification_status: { $exists: false } }
+            { verificationStatus: 'pending' }, { verificationStatus: { $exists: false } }
           ]
         }),
-        UserSchema.countDocuments({ role: 'coordinator' })
+        UserSchema.countDocuments({ role: { $in: ['coordinator', 'moderator'] } })
       ]);
 
     const userCounts = { total: 0, players: 0, managers: 0, organizers: 0, coordinators: 0 };
@@ -873,7 +892,7 @@ router.get('/api/stats', async (req, res) => {
       if (r._id === 'player') userCounts.players = r.count;
       else if (r._id === 'manager') userCounts.managers = r.count;
       else if (r._id === 'organizer') userCounts.organizers = r.count;
-      else if (r._id === 'coordinator') userCounts.coordinators = r.count;
+      else if (r._id === 'coordinator' || r._id === 'moderator') userCounts.coordinators += r.count;
     });
 
     return res.json({
@@ -2146,7 +2165,7 @@ router.get('/verification/overview', async (req, res) => {
     const [orgStatusAgg, pendingEventsCount] = await Promise.all([
       UserSchema.aggregate([
         { $match: { role: 'organizer' } },
-        { $group: { _id: '$verification_status', count: { $sum: 1 } } }
+        { $group: { _id: '$verificationStatus', count: { $sum: 1 } } }
       ]),
       EventSchema.countDocuments({ status: { $in: ['pending', 'pending_approval'] } })
     ]);
@@ -2171,31 +2190,158 @@ router.get('/verification/overview', async (req, res) => {
   }
 });
 
+// ── Verification Decisions (Verified/Rejected by Coordinators) ───────────────
+router.get('/verification/decisions', async (req, res) => {
+  try {
+    const page = toPositiveInt(req.query.page, 1);
+    const limit = toPositiveInt(req.query.limit, 20);
+    const search = String(req.query.search || '').trim();
+    const status = String(req.query.status || '').trim().toLowerCase();
+    const allowedStatuses = ['verified', 'rejected'];
+
+    const match = {
+      role: 'organizer',
+      verificationStatus: { $in: allowedStatuses },
+      'verificationDocuments.reviewedBy': { $exists: true, $ne: null },
+      'verificationDocuments.reviewedAt': { $exists: true, $ne: null }
+    };
+
+    if (allowedStatuses.includes(status)) {
+      match.verificationStatus = status;
+    }
+
+    if (search) {
+      const regex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+      match.$or = [
+        { first_name: regex },
+        { last_name: regex },
+        { email: regex },
+        { 'profile.organization_name': regex }
+      ];
+    }
+
+    const skip = (page - 1) * limit;
+    const [decisionsRaw, total, statusCounts] = await Promise.all([
+      UserSchema.find(match)
+        .select('first_name last_name email verificationStatus verificationDocuments profile.organization_name')
+        .populate('verificationDocuments.reviewedBy', 'first_name last_name email')
+        .sort({ 'verificationDocuments.reviewedAt': -1, created_at: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      UserSchema.countDocuments(match),
+      UserSchema.aggregate([
+        {
+          $match: {
+            role: 'organizer',
+            verificationStatus: { $in: allowedStatuses },
+            'verificationDocuments.reviewedBy': { $exists: true, $ne: null }
+          }
+        },
+        { $group: { _id: '$verificationStatus', count: { $sum: 1 } } }
+      ])
+    ]);
+
+    const summary = { verified: 0, rejected: 0 };
+    statusCounts.forEach((row) => {
+      if (summary[row._id] !== undefined) summary[row._id] = row.count;
+    });
+
+    const decisions = decisionsRaw.map((org) => {
+      const reviewer = org.verificationDocuments?.reviewedBy;
+      const reviewerName = reviewer
+        ? `${reviewer.first_name || ''} ${reviewer.last_name || ''}`.trim() || reviewer.email || 'Coordinator'
+        : 'Coordinator';
+
+      return {
+        organizerId: String(org._id),
+        organizerName: `${org.first_name || ''} ${org.last_name || ''}`.trim() || 'Unnamed Organizer',
+        organizerEmail: org.email || '',
+        organization: org.profile?.organization_name || 'N/A',
+        status: org.verificationStatus || 'pending',
+        reviewedBy: reviewerName,
+        reviewedAt: org.verificationDocuments?.reviewedAt || null,
+        rejectionReason: org.verificationDocuments?.rejectionReason || ''
+      };
+    });
+
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+
+    return res.json({
+      success: true,
+      data: {
+        summary,
+        decisions,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages
+        }
+      }
+    });
+  } catch (err) {
+    console.error('Verification decisions error:', err);
+    return res.status(500).json({ success: false, message: 'Failed to load verification decisions', error: err.message });
+  }
+});
+
 // ── Coordinator Activity ───────────────────────────────────────────────────────
 router.get('/coordinator-activity', async (req, res) => {
   try {
     const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
 
-    // Get coordinators and their recent actions from events they've been involved with
-    const coordinators = await UserSchema.find({ role: 'coordinator' })
-      .select('first_name last_name email').lean();
+    const [reviewedEvents, reviewedOrganizers] = await Promise.all([
+      EventSchema.find({
+        'approvalStatus.reviewedBy': { $exists: true, $ne: null },
+        'approvalStatus.reviewedAt': { $exists: true, $ne: null }
+      })
+        .select('title name status approvalStatus')
+        .populate('approvalStatus.reviewedBy', 'first_name last_name email role')
+        .sort({ 'approvalStatus.reviewedAt': -1 })
+        .limit(50)
+        .lean(),
+      UserSchema.find({
+        role: 'organizer',
+        'verificationDocuments.reviewedBy': { $exists: true, $ne: null },
+        'verificationDocuments.reviewedAt': { $exists: true, $ne: null }
+      })
+        .select('first_name last_name email verificationStatus verificationDocuments')
+        .populate('verificationDocuments.reviewedBy', 'first_name last_name email role')
+        .sort({ 'verificationDocuments.reviewedAt': -1 })
+        .limit(50)
+        .lean()
+    ]);
 
-    // Build basic activity records from coordinators' actions
-    // (In a real system this would come from an audit log; we synthesize from available data)
-    const events = await EventSchema.find({ 'coordinator_id': { $exists: true } })
-      .select('title name status coordinator_id updatedAt').sort({ updatedAt: -1 }).limit(50).lean();
-
-    const actions = [];
-    events.forEach(e => {
-      const coord = coordinators.find(c => String(c._id) === String(e.coordinator_id));
-      actions.push({
-        coordinator: coord ? `${coord.first_name || ''} ${coord.last_name || ''}`.trim() : 'Coordinator',
-        subtype: e.status === 'approved' ? 'approve_event' : e.status === 'rejected' ? 'reject_event' : 'review_event',
-        targetName: e.title || e.name,
-        result: e.status,
-        timestamp: e.updatedAt || e.created_at
-      });
-    });
+    const actions = [
+      ...reviewedEvents.map((event) => {
+        const reviewer = event.approvalStatus?.reviewedBy;
+        const reviewerName = reviewer
+          ? `${reviewer.first_name || ''} ${reviewer.last_name || ''}`.trim() || reviewer.email || 'Coordinator'
+          : 'Coordinator';
+        return {
+          coordinator: reviewerName,
+          subtype: event.status === 'approved' ? 'approve_event' : event.status === 'rejected' ? 'reject_event' : 'review_event',
+          targetName: event.title || event.name || 'Event',
+          result: event.status || 'reviewed',
+          timestamp: event.approvalStatus?.reviewedAt || null
+        };
+      }),
+      ...reviewedOrganizers.map((org) => {
+        const reviewer = org.verificationDocuments?.reviewedBy;
+        const reviewerName = reviewer
+          ? `${reviewer.first_name || ''} ${reviewer.last_name || ''}`.trim() || reviewer.email || 'Coordinator'
+          : 'Coordinator';
+        const organizerName = `${org.first_name || ''} ${org.last_name || ''}`.trim() || org.email || 'Organizer';
+        return {
+          coordinator: reviewerName,
+          subtype: org.verificationStatus === 'verified' ? 'verify_organizer' : 'reject_organizer',
+          targetName: organizerName,
+          result: org.verificationStatus || 'reviewed',
+          timestamp: org.verificationDocuments?.reviewedAt || null
+        };
+      })
+    ].sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime());
 
     const actionsToday = actions.filter(a => a.timestamp && new Date(a.timestamp) >= startOfDay).length;
 

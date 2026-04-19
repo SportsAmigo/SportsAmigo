@@ -5,6 +5,7 @@ import AdminEntityModal from '../../components/admin/AdminEntityModal';
 import axios from 'axios';
 import { API_BASE_URL } from '../../utils/constants';
 import { getCsrfToken } from '../../services/csrfService';
+import useFuseSearch from '../../hooks/useFuseSearch';
 
 const ROLE_COLORS = {
     player: { badge: 'bg-violet-100 text-violet-800', btn: 'bg-violet-600', icon: 'fa-user-friends' },
@@ -272,14 +273,11 @@ const AdminUsers = () => {
         }
     };
 
-    // When searching server-side, users state already has filtered results
-    // When not searching, apply client-side role filter
-    const filteredUsers = isSearchMode
-        ? users
-        : users.filter((user) => {
-            const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-            return matchesRole;
-        });
+    const roleFilteredUsers = users.filter((user) => roleFilter === 'all' || user.role === roleFilter);
+    const filteredUsers = useFuseSearch(roleFilteredUsers, searchTerm, {
+        keys: ['name', 'email', 'role', 'team', 'organization', 'sport'],
+        threshold: 0.38
+    });
 
     const indexOfLastItem = isSearchMode ? (searchPagination.page * searchPagination.limit) : (currentPage * itemsPerPage);
     const indexOfFirstItem = isSearchMode ? ((searchPagination.page - 1) * searchPagination.limit) : (indexOfLastItem - itemsPerPage);

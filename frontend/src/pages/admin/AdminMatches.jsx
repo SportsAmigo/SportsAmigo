@@ -4,6 +4,7 @@ import AdminEntityModal from '../../components/admin/AdminEntityModal';
 import axios from 'axios';
 import { API_BASE_URL } from '../../utils/constants';
 import { del as secureDelete } from '../../services/apiService';
+import useFuseSearch from '../../hooks/useFuseSearch';
 
 const Toast = ({ msg, type, onClose }) => (
     <div className={`fixed top-6 right-6 z-[9999] flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl text-white font-semibold ${type === 'success' ? 'bg-emerald-600' : 'bg-red-600'}`}>
@@ -47,11 +48,14 @@ const AdminMatches = () => {
         } catch (e) { showToast('Delete failed', 'error'); }
     };
 
-    const filtered = matches.filter(m => {
-        const textMatch = `${m.team1_name || m.team_a_name || ''} ${m.team2_name || m.team_b_name || ''} ${m.event_name || ''}`.toLowerCase().includes(searchTerm.toLowerCase());
-        const statusMatch = statusFilter === 'all' || (m.status || '').toLowerCase() === statusFilter;
-        return textMatch && statusMatch;
+    const statusFilteredMatches = matches.filter(
+        (m) => statusFilter === 'all' || (m.status || '').toLowerCase() === statusFilter
+    );
+    const fuseMatches = useFuseSearch(statusFilteredMatches, searchTerm, {
+        keys: ['team1_name', 'team2_name', 'team_a_name', 'team_b_name', 'event_name', 'venue', 'status'],
+        threshold: 0.38
     });
+    const filtered = searchTerm.trim() ? fuseMatches : statusFilteredMatches;
 
     useEffect(() => { setCurrentPage(1); }, [searchTerm, statusFilter]);
     const indexOfLast = currentPage * itemsPerPage;

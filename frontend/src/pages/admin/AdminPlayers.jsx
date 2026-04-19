@@ -4,6 +4,7 @@ import AdminEntityModal from '../../components/admin/AdminEntityModal';
 import axios from 'axios';
 import { API_BASE_URL } from '../../utils/constants';
 import { del as secureDelete } from '../../services/apiService';
+import useFuseSearch from '../../hooks/useFuseSearch';
 
 const Toast = ({ msg, type, onClose }) => (
     <div className={`fixed top-6 right-6 z-[9999] flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl text-white font-semibold ${type === 'success' ? 'bg-emerald-600' : 'bg-red-600'}`}>
@@ -45,11 +46,12 @@ const AdminPlayers = () => {
         } catch (e) { showToast('Delete failed', 'error'); }
     };
 
-    const filteredPlayers = players.filter(p => {
-        const match = `${p.name} ${p.email}`.toLowerCase().includes(searchTerm.toLowerCase());
-        const statusOk = filterStatus === 'all' || (p.status || 'active').toLowerCase() === filterStatus;
-        return match && statusOk;
+    const statusFilteredPlayers = players.filter((p) => filterStatus === 'all' || (p.status || 'active').toLowerCase() === filterStatus);
+    const fusePlayers = useFuseSearch(statusFilteredPlayers, searchTerm, {
+        keys: ['name', 'email', 'sport', 'team'],
+        threshold: 0.4
     });
+    const filteredPlayers = searchTerm.trim() ? fusePlayers : statusFilteredPlayers;
 
     useEffect(() => { setCurrentPage(1); }, [searchTerm, filterStatus]);
 

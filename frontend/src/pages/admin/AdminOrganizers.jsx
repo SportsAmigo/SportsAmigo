@@ -4,6 +4,7 @@ import AdminEntityModal from '../../components/admin/AdminEntityModal';
 import axios from 'axios';
 import { API_BASE_URL } from '../../utils/constants';
 import { del as secureDelete } from '../../services/apiService';
+import useFuseSearch from '../../hooks/useFuseSearch';
 
 const Toast = ({ msg, type, onClose }) => (
     <div className={`fixed top-6 right-6 z-[9999] flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl text-white font-semibold ${type === 'success' ? 'bg-emerald-600' : 'bg-red-600'}`}>
@@ -45,11 +46,14 @@ const AdminOrganizers = () => {
         } catch (e) { showToast('Delete failed', 'error'); }
     };
 
-    const filtered = organizers.filter(o => {
-        const textMatch = `${o.name} ${o.email}`.toLowerCase().includes(searchTerm.toLowerCase());
-        const statusMatch = statusFilter === 'all' || (o.verificationStatus || '').toLowerCase() === statusFilter;
-        return textMatch && statusMatch;
+    const statusFilteredOrganizers = organizers.filter(
+        (o) => statusFilter === 'all' || (o.verificationStatus || '').toLowerCase() === statusFilter
+    );
+    const fuseOrganizers = useFuseSearch(statusFilteredOrganizers, searchTerm, {
+        keys: ['name', 'email', 'organization', 'tier', 'verificationStatus'],
+        threshold: 0.38
     });
+    const filtered = searchTerm.trim() ? fuseOrganizers : statusFilteredOrganizers;
 
     useEffect(() => { setCurrentPage(1); }, [searchTerm, statusFilter]);
     const indexOfLast = currentPage * itemsPerPage;

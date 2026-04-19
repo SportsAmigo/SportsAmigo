@@ -44,8 +44,10 @@ module.exports = {
                 throw new Error('Invalid role');
             }
 
-            // Get users by role using our User model's getAllUsers method
-            const users = await User.getAllUsers({ role });
+            // Coordinators are represented by either coordinator or moderator role in existing data.
+            const users = role === 'coordinator'
+                ? await UserSchema.find({ role: { $in: ['coordinator', 'moderator'] } }).sort({ first_name: 1, last_name: 1 })
+                : await User.getAllUsers({ role });
 
             // Format users based on role
             const formattedUsers = [];
@@ -56,7 +58,7 @@ module.exports = {
                     id: user._id,
                     name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unnamed',
                     email: user.email,
-                    role: user.role,
+                    role: role === 'coordinator' ? 'coordinator' : user.role,
                     profile_image: user.profile_image,
                     joinedDate: user.created_at,
                     status: 'Active', // Default status
@@ -507,7 +509,7 @@ module.exports = {
             const playerCount = allUsers.filter(user => user.role === 'player').length;
             const managerCount = allUsers.filter(user => user.role === 'manager').length;
             const organizerCount = allUsers.filter(user => user.role === 'organizer').length;
-            const coordinatorCount = allUsers.filter(user => user.role === 'coordinator').length;
+            const coordinatorCount = allUsers.filter(user => user.role === 'coordinator' || user.role === 'moderator').length;
 
             // Team stats - get all teams and count them
             const allTeams = await Team.getAllTeams();
