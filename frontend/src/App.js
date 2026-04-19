@@ -69,6 +69,15 @@ import AdminEvents from './pages/admin/AdminEvents';
 import AdminMatches from './pages/admin/AdminMatches';
 import AdminStats from './pages/admin/AdminStats';
 import AdminActivityLogs from './pages/admin/AdminActivityLogs';
+import AdminFinancialOverview from './pages/admin/AdminFinancialOverview';
+import AdminSubscriptions from './pages/admin/AdminSubscriptions';
+import AdminVASRevenue from './pages/admin/AdminVASRevenue';
+import AdminCommissions from './pages/admin/AdminCommissions';
+import AdminVerificationHub from './pages/admin/AdminVerificationHub';
+import AdminCoordinators from './pages/admin/AdminCoordinators';
+import AdminTiers from './pages/admin/AdminTiers';
+import AdminOperationalProof from './pages/admin/AdminOperationalProof';
+import AdminAcademicProof from './pages/admin/AdminAcademicProof';
 
 // Coordinator Pages
 import CoordinatorHome from './pages/coordinator/CoordinatorHome';
@@ -495,10 +504,59 @@ const AppContent = () => {
           }
         />
         <Route
-          path="/admin/events"
+          path="/admin/coordinators"
           element={
             <ProtectedRoute allowedRoles={['admin']}>
-              <AdminEvents />
+              <AdminCoordinators />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/financial"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminFinancialOverview />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/subscriptions"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminSubscriptions />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/vas"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminVASRevenue />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/commissions"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminCommissions />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/tiers"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminTiers />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/academic-proof"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminAcademicProof />
             </ProtectedRoute>
           }
         />
@@ -514,7 +572,7 @@ const AppContent = () => {
         <Route
           path="/moderator/dashboard"
           element={
-            <ProtectedRoute allowedRoles={['admin', 'moderator', 'coordinator']}>
+            <ProtectedRoute allowedRoles={['moderator', 'coordinator']}>
               <CoordinatorHome />
             </ProtectedRoute>
           }
@@ -522,7 +580,7 @@ const AppContent = () => {
         <Route
           path="/coordinator/dashboard"
           element={
-            <ProtectedRoute allowedRoles={['admin', 'moderator', 'coordinator']}>
+            <ProtectedRoute allowedRoles={['moderator', 'coordinator']}>
               <CoordinatorHome />
             </ProtectedRoute>
           }
@@ -530,7 +588,7 @@ const AppContent = () => {
         <Route
           path="/coordinator/pending-organizers"
           element={
-            <ProtectedRoute allowedRoles={['admin', 'moderator', 'coordinator']}>
+            <ProtectedRoute allowedRoles={['moderator', 'coordinator']}>
               <PendingOrganizers />
             </ProtectedRoute>
           }
@@ -538,7 +596,7 @@ const AppContent = () => {
         <Route
           path="/coordinator/pending-events"
           element={
-            <ProtectedRoute allowedRoles={['admin', 'moderator', 'coordinator']}>
+            <ProtectedRoute allowedRoles={['moderator', 'coordinator']}>
               <PendingEvents />
             </ProtectedRoute>
           }
@@ -546,7 +604,7 @@ const AppContent = () => {
         <Route
           path="/coordinator/approved-organizers"
           element={
-            <ProtectedRoute allowedRoles={['admin', 'moderator', 'coordinator']}>
+            <ProtectedRoute allowedRoles={['moderator', 'coordinator']}>
               <ApprovedOrganizers />
             </ProtectedRoute>
           }
@@ -554,7 +612,7 @@ const AppContent = () => {
         <Route
           path="/coordinator/approved-events"
           element={
-            <ProtectedRoute allowedRoles={['admin', 'moderator', 'coordinator']}>
+            <ProtectedRoute allowedRoles={['moderator', 'coordinator']}>
               <ApprovedEvents />
             </ProtectedRoute>
           }
@@ -562,7 +620,7 @@ const AppContent = () => {
         <Route
           path="/coordinator/rejected"
           element={
-            <ProtectedRoute allowedRoles={['admin', 'moderator', 'coordinator']}>
+            <ProtectedRoute allowedRoles={['moderator', 'coordinator']}>
               <RejectedApplications />
             </ProtectedRoute>
           }
@@ -570,7 +628,7 @@ const AppContent = () => {
         <Route
           path="/coordinator/activity-log"
           element={
-            <ProtectedRoute allowedRoles={['admin', 'moderator', 'coordinator']}>
+            <ProtectedRoute allowedRoles={['moderator', 'coordinator']}>
               <ActivityLog />
             </ProtectedRoute>
           }
