@@ -459,7 +459,7 @@ module.exports = {
 
             return res.status(200).json({ 
                 success: true, 
-                message: 'Email verified successfully! Your account has been created.',
+                message: 'mail verified successfully! Your account has been created.',
                 user: {
                     email: verifiedUser.email,
                     role: verifiedUser.role,
@@ -492,7 +492,7 @@ module.exports = {
             if (!user) {
                 return res.status(404).json({ 
                     success: false, 
-                    message: 'No account found with this email address.' 
+                    message: 'No account found with this mail address.' 
                 });
             }
 
@@ -510,7 +510,7 @@ module.exports = {
 
             return res.status(200).json({ 
                 success: true, 
-                message: 'Password reset code sent to your email. Please check your inbox.',
+                message: 'Password reset code sent to your mail. Please check your inbox.',
                 expiresIn: '10 minutes'
             });
 
