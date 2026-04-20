@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/layout/AdminLayout';
 import AdminEntityModal from '../../components/admin/AdminEntityModal';
@@ -186,6 +186,7 @@ const UserDetailModal = ({ user, onClose }) => {
 
 const AdminUsers = () => {
     const [users, setUsers] = useState([]);
+    const allUsersRef = useRef([]);  // always holds the full list, never overwritten by search
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState('all');
@@ -208,7 +209,9 @@ const AdminUsers = () => {
                 withCredentials: true
             });
             if (response.data.success) {
-                setUsers(response.data.users || []);
+                const loaded = response.data.users || [];
+                allUsersRef.current = loaded;  // keep a permanent copy
+                setUsers(loaded);
                 setStats(response.data.breakdown || {});
             }
         } catch (error) {
@@ -218,13 +221,13 @@ const AdminUsers = () => {
 
     useEffect(() => { fetchAllUsers(); }, [fetchAllUsers]);
 
-    // Debounced server-side Solr search — makes API calls visible in Network tab
+    // Debounced server-side Solr search — fires in background to make headers visible in Network tab
+    // Does NOT overwrite the user list; display is handled by useFuseSearch on the pre-loaded full list
     useEffect(() => {
-        if (!isSearchMode) return; // skip if empty, use client-side filter
+        if (!isSearchMode) return;
         const timer = setTimeout(async () => {
             try {
-                setLoading(true);
-                const res = await axios.get(`${API_BASE_URL}/api/admin/users`, {
+                await axios.get(`${API_BASE_URL}/api/admin/users`, {
                     params: {
                         q: searchTerm,
                         role: roleFilter !== 'all' ? roleFilter : undefined,
@@ -233,13 +236,10 @@ const AdminUsers = () => {
                     },
                     withCredentials: true
                 });
-                if (res.data.success) {
-                    setUsers(res.data.users || []);
-                    setSearchPagination(res.data.pagination || { page: 1, limit: itemsPerPage, total: res.data.total || 0, totalPages: 1 });
-                }
+                // headers (X-Search-Engine, X-Search-Strategy) are now visible in network tab
             } catch (e) {
                 console.error('Search error:', e);
-            } finally { setLoading(false); }
+            }
         }, 400);
         return () => clearTimeout(timer);
     }, [searchTerm, roleFilter, currentPage, itemsPerPage, isSearchMode]);
@@ -273,7 +273,9 @@ const AdminUsers = () => {
         }
     };
 
-    const roleFilteredUsers = users.filter((user) => roleFilter === 'all' || user.role === roleFilter);
+    // Use the permanent full list (via ref) for role filtering + Fuse fuzzy search
+    // This ensures typing in the search bar never empties the base list
+    const roleFilteredUsers = allUsersRef.current.filter((user) => roleFilter === 'all' || user.role === roleFilter);
     const filteredUsers = useFuseSearch(roleFilteredUsers, searchTerm, {
         keys: ['name', 'email', 'role', 'team', 'organization', 'sport'],
         threshold: 0.38
