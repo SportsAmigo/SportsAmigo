@@ -231,8 +231,10 @@ async function searchEvents({ search = '', page = 1, limit = DEFAULT_LIMIT, stat
         EventSchema.countDocuments(textQuery)
       ]);
       mongoStrategy = 'text-index';
+      // $text only matches whole words; fall to regex for partial terms like "Vish" -> "Vishal"
+      if (docs.length === 0) throw new Error('text-index:empty');
     } catch (textErr) {
-      if (!fallbackReason) {
+      if (!fallbackReason && textErr.message !== 'text-index:empty') {
         fallbackReason = textErr.message;
       }
 
@@ -257,7 +259,7 @@ async function searchEvents({ search = '', page = 1, limit = DEFAULT_LIMIT, stat
 
       mongoStrategy = 'regex';
 
-      if (!isMissingTextIndexError(textErr)) {
+      if (!isMissingTextIndexError(textErr) && textErr.message !== 'text-index:empty') {
         console.warn(`[Search][events] Mongo text query fallback used: ${textErr.message}`);
       }
     }
@@ -351,8 +353,9 @@ async function searchTeams({ search = '', page = 1, limit = DEFAULT_LIMIT, sport
         TeamSchema.countDocuments(textQuery)
       ]);
       mongoStrategy = 'text-index';
+      if (docs.length === 0) throw new Error('text-index:empty');
     } catch (textErr) {
-      if (!fallbackReason) {
+      if (!fallbackReason && textErr.message !== 'text-index:empty') {
         fallbackReason = textErr.message;
       }
 
@@ -376,7 +379,7 @@ async function searchTeams({ search = '', page = 1, limit = DEFAULT_LIMIT, sport
 
       mongoStrategy = 'regex';
 
-      if (!isMissingTextIndexError(textErr)) {
+      if (!isMissingTextIndexError(textErr) && textErr.message !== 'text-index:empty') {
         console.warn(`[Search][teams] Mongo text query fallback used: ${textErr.message}`);
       }
     }
@@ -471,8 +474,9 @@ async function searchUsers({ search = '', page = 1, limit = DEFAULT_LIMIT, role 
         UserSchema.countDocuments(textQuery)
       ]);
       mongoStrategy = 'text-index';
+      if (docs.length === 0) throw new Error('text-index:empty');
     } catch (textErr) {
-      if (!fallbackReason) {
+      if (!fallbackReason && textErr.message !== 'text-index:empty') {
         fallbackReason = textErr.message;
       }
 
@@ -498,7 +502,7 @@ async function searchUsers({ search = '', page = 1, limit = DEFAULT_LIMIT, role 
 
       mongoStrategy = 'regex';
 
-      if (!isMissingTextIndexError(textErr)) {
+      if (!isMissingTextIndexError(textErr) && textErr.message !== 'text-index:empty') {
         console.warn(`[Search][users] Mongo text query fallback used: ${textErr.message}`);
       }
     }
